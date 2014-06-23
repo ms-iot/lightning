@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>Microsoft.IoT.Galileo.Arduino</id>
+    <version>0.1.0.4</version>
+    <title>Galileo C++ SDK</title>
+    <authors>Microsoft Corporation</authors>
+    <owners>Microsoft Corporation</owners>
+    <licenseUrl>http://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx</licenseUrl>
+    <projectUrl>https://www.windowsondevices.com/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The Galileo C++ SDK allows rapid prototyping of Internet of Things devices using the familiar Arduino interface.</description>
+    <summary>Galileo C++ SDK</summary>
+    <releaseNotes />
+    <copyright>Copyright 2013</copyright>
+    <tags>galileo arduino microsoft native nativepackage</tags>
+  </metadata>
+</package>
