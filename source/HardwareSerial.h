@@ -1,6 +1,6 @@
-/*
- * Documentation Format: http://msdn.microsoft.com/en-us/library/ms177227.aspx
- */
+// Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
+// Licensed under the BSD 2-Clause License.  
+// See License.txt in the project root for license information.
 
 #ifndef HARDWARE_SERIAL_H
 #define HARDWARE_SERIAL_H
