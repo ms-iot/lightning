@@ -1,3 +1,7 @@
+// Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
+// Licensed under the BSD 2-Clause License.  
+// See License.txt in the project root for license information.
+
 #ifndef WINDOWS_TIME_H
 #define WINDOWS_TIME_H
 
