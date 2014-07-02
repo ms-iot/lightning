@@ -12,7 +12,7 @@
     <description>The Galileo C++ SDK allows rapid prototyping of Internet of Things devices using the familiar Arduino interface.</description>
     <summary>Galileo C++ SDK</summary>
     <releaseNotes />
-    <copyright>Copyright 2013</copyright>
+    <copyright>Copyright 2014</copyright>
     <tags>galileo arduino microsoft native nativepackage</tags>
   </metadata>
 </package>
