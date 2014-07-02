@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Microsoft.IoT.Galileo.Arduino</id>
-    <version>0.1.0.4</version>
+    <version>1.0.0.0</version>
     <title>Galileo C++ SDK</title>
     <authors>Microsoft Corporation</authors>
     <owners>Microsoft Corporation</owners>
