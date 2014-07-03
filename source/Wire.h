@@ -25,6 +25,7 @@ class TwoWire
 public:
 	TwoWire() :
 		i2c(nullptr),
+		i2cHasBeenEnabled(false),
 		connectionSlaveAddress(0),
 		slaveWriteAddress(0),
 		writeBuf(),
@@ -167,6 +168,16 @@ public:
 		return bytesReturned;
 	}
 
+	bool getI2cHasBeenEnabled()
+	{
+		return i2cHasBeenEnabled;
+	}
+
+	void setI2cHasBeenEnabled(bool enable)
+	{
+		i2cHasBeenEnabled = enable;
+	}
+
 	virtual size_t write(uint8_t data)
 	{
 		this->writeBuf.push_back(data);
@@ -261,7 +272,7 @@ private:
 		}
 	}
 
-	static void EnableI2C(bool enable)
+	void EnableI2C(bool enable)
 	{
 		HRESULT hr = GpioSetDir(GPORT1_BIT5, 1);
 		if (FAILED(hr))
@@ -274,9 +285,13 @@ private:
 		{
 			ThrowError("Failed to configure I2C_CONTROLLER mux");
 		}
+		i2cHasBeenEnabled = enable;
 	}
 
 	I2C_CONTROLLER *i2c;
+
+	// stores the fact that I2C has been explicitely enabled.
+	bool i2cHasBeenEnabled;
 
 	// stores the slave address that is currently opened by I2C handle
 	ULONG connectionSlaveAddress;
