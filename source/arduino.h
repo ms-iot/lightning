@@ -511,7 +511,7 @@ __declspec (noinline) inline void _InitializePin(int pin)
 {
     // Get the current state of the I2C MUX.
     bool I2cWasEnabled = Wire.getI2cHasBeenEnabled();
-    bool done;
+	bool done = false;
 
     Wire.begin();
 
@@ -532,12 +532,12 @@ __declspec (noinline) inline void _InitializePin(int pin)
 
             // Indicate the data for this pin is now initialized.
             _pinData[pin].pinInitialized = TRUE;
-        }
+		
+			done = true;
+		}
 
         // Read the MUX configuration for this pin.
         _ReadPinMuxConfig(pin, &(_pinData[pin]));
-
-        done = true;
     }
     catch (const _arduino_fatal_error &)
     {
@@ -552,6 +552,17 @@ __declspec (noinline) inline void _InitializePin(int pin)
         _pinData[pin].pinInitialized = TRUE;		// Avoid recursive loop calling pinMode()!
         _pinData[pin].currentMode = OUTPUT;			// Force update of pin direction
         pinMode(pin, INPUT);
+
+		// If this is a PWM pin:
+		if (_PwmPinMap[pin] != 0)
+		{
+			// If the MUX is set to alternate:
+			if (_pinData[pin].currentMux == ALTERNATE_MUX)
+			{
+				// Indicate that PWM is enabled on this pin.
+				_pinData[pin].pwmIsEnabled = TRUE;
+			}
+		}
     }
 
     // If the pin is an SPI pin:
