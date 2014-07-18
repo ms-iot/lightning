@@ -49,6 +49,13 @@
 #define IO19_A5_MUX GPORT0_BIT4		// Encoded port and bit for IO19/A5 MUX
 #define IO_A_MUX_TO_IO 1			// IOnn/An MUX bit state for IO through MUX
 
+#define A0 14						// Analog pin 0 is digital "pin 14"
+#define A1 15						// Analog pin 1 is digital "pin 15"
+#define A2 16						// Analog pin 2 is digital "pin 16"
+#define A3 17						// Analog pin 3 is digital "pin 17"
+#define A4 18						// Analog pin 4 is digital "pin 18"
+#define A5 19						// Analog pin 5 is digital "pin 19"
+
 // Closest Galileo value to the 490hz used by most UNO PWMs, while still 
 // allowing full 8-bit PWM pulse width resolution, is 367 hz.
 #define PWM_HZ 367
@@ -950,11 +957,19 @@ public:
     //
     int analogRead(int pin)
     {
+		LONG pinL = pin;
+
+		// Allow for pins to be specified as A0-A5.
+		if ((pinL >= A0) && (pinL <= A5))
+		{
+			pinL = pinL - A0;
+		}
+
         // special value -1 means temp sense conversion
-        if ( (pin < -1) || (pin >= NUM_ANALOG_PINS) )
+        if ( (pinL < -1) || (pinL >= NUM_ANALOG_PINS) )
         {
-            ThrowError("Invalid pin number (%d). Pin must be in the range [-1, %d).\n",
-                pin, NUM_ANALOG_PINS);
+			ThrowError("Invalid pin number (%d). Pin must be in the range [-1, %d] or [A0, A5].\n",
+                pinL, NUM_ANALOG_PINS);
         }
 
         if ( this->adc == nullptr )
@@ -962,7 +977,7 @@ public:
             ThrowError("Arduino not initialized");
         }
 
-        LONG result = AdcSampleChannel(this->adc, pin);
+        LONG result = AdcSampleChannel(this->adc, (ULONG) pinL);
         if ( result < 0 )
         {
             ThrowError("AdcSampleChannel failed");
