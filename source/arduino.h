@@ -695,6 +695,12 @@ inline void pinMode(int pin, int mode)
     _ValidatePinOkToChange(pin);
     _InitializePinIfNeeded(pin);
 
+	if (_pinData[pin].pwmIsEnabled)
+	{
+		PwmStop(_PwmPinMap[pin]);
+		_pinData[pin].pwmIsEnabled = FALSE;
+	}
+
     if (_pinData[pin].currentMode != mode)
     {
         HRESULT hr = GpioSetDir(_ArduinoToGalileoPinMap[pin], mode);
@@ -837,11 +843,6 @@ inline void _RevertPinToDigital(int pin)
 {
     _ValidatePinOkToChange(pin);
 
-    if (_pinData[pin].pwmIsEnabled)
-    {
-        PwmStop(_PwmPinMap[pin]);
-        _pinData[pin].pwmIsEnabled = FALSE;
-    }
     if (_pinData[pin].pinInUseI2c)
     {
         GpioWrite(I2C_MUX, I2C_MUX_DISABLE);
