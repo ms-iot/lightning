@@ -5,6 +5,9 @@
 #ifndef ARDUINO_ERROR_H
 #define ARDUINO_ERROR_H
 
+#include <stdexcept>
+#include <strsafe.h>
+
 class _arduino_fatal_error : public std::runtime_error
 {
 public:
