@@ -7,8 +7,15 @@
 
 // Arduino compatibility header for inclusion by user programs
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+
+#ifdef USE_NETWORKSERIAL
 #include <winsock2.h>
 #include <WS2tcpip.h>
+#endif
 #include <strsafe.h>
 #include <stdint.h>
 #include <stdexcept>
