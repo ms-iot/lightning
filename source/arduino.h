@@ -1078,9 +1078,7 @@ inline long random(long min, long max)
     return random(diff) + min;
 }
 
-inline uint16_t makeWord(unsigned int w) { return w; }
 inline uint16_t makeWord(unsigned char h, unsigned char l) { return (h << 8) | l; }
-
 
 // Bits and Bytes
 #define lowByte(w) ((uint8_t) ((w) & 0xff))
