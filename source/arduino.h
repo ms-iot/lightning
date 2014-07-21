@@ -16,9 +16,7 @@
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #endif
-#include <strsafe.h>
-#include <stdint.h>
-#include <stdexcept>
+#include <cstdint>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
