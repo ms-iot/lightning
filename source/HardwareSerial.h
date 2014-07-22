@@ -11,6 +11,13 @@
 #include <string>
 
 
+enum base_t : int {
+    BIN = 2,
+    OCT = 8,
+    DEC = 10,
+    HEX = 16,
+};
+
 /// <summary>
 ///   Used for communication between the Arduino board and a computer
 ///   or other devices.
@@ -24,13 +31,6 @@
 /// </remarks>
 class HardwareSerial
 {
-    enum base_t : int {
-        BIN = 2,
-        OCT = 8,
-        DEC = 10,
-        HEX = 16,
-    };
-
     enum serial_config_t : uint8_t {
         SERIAL_5N1 = 0x00,
         SERIAL_6N1 = 0x02,
@@ -463,7 +463,7 @@ public:
     /// <returns>
     ///   size_t : returns the number of bytes written
     /// </returns>
-    virtual size_t write(const uint8_t *buffer, size_t size);
+    virtual size_t write(const uint8_t *buffer, size_t size) { return 0; }
     size_t write(const char *str) { return 0; }
     virtual size_t write(uint8_t c_) { return 0; }
     inline size_t write(unsigned long n_) { return write(static_cast<uint8_t>(n_)); }
