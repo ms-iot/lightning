@@ -133,9 +133,11 @@ inline long map(long x, long in_min, long in_max, long out_min, long out_max)
 }
 
 // Function prototypes.
-inline void _RevertPinToDigital(int pin);
 inline void pinMode(int pin, int mode);
-inline bool pinFunction(ULONG pin, ULONG function);
+
+// Internal functions (call at your own risk)
+inline void _RevertPinToDigital(int pin);
+inline bool _PinFunction(ULONG pin, ULONG function);
 inline void _InitializePin(int pin);
 
 // Type of struct used to store state and configuration information
@@ -599,7 +601,7 @@ __declspec (noinline) inline void _InitializePin(int pin)
     if (_ArduinoToPortBitMap[pin].IsAnalogPin)
     {
         // Set the MUX to the default state (MUX for IO).
-        pinFunction(pin, ALTERNATE_MUX);
+        _PinFunction(pin, ALTERNATE_MUX);
     }
 }
 
@@ -831,7 +833,7 @@ inline bool _SetImplicitPinFunction(ULONG pin, ULONG function)
 //       pin that is already locked for an incompatible use
 //     - An error is returned from a called routine.
 //
-inline bool pinFunction(ULONG pin, ULONG function)
+inline bool _PinFunction(ULONG pin, ULONG function)
 {
     _ValidateArduinoPinNumber(pin);
 
@@ -846,7 +848,7 @@ inline bool pinFunction(ULONG pin, ULONG function)
 // Revert a pin to its last explicitely set function.
 inline void _RevertImplicitPinFunction(int pin)
 {
-    pinFunction(pin, _pinData[pin].muxSet);
+    _PinFunction(pin, _pinData[pin].muxSet);
 }
 
 // Revert the pin to digital I/O use if needed.
@@ -899,7 +901,7 @@ inline void analogWrite(int pin, int value)
     if (!_pinData[pin].pwmIsEnabled)
     {
         // Prepare the pin for PWM use.
-        pinFunction(pin, _PwmMuxFunction[pin]);
+        _PinFunction(pin, _PwmMuxFunction[pin]);
         _SetImplicitPinMode(pin, OUTPUT);
         _pinData[pin].stateIsKnown = FALSE;
 
