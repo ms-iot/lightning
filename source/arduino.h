@@ -24,6 +24,7 @@
 #include "ArduinoError.h"
 #include "WindowsRandom.h"
 #include "WindowsTime.h"
+#include "WString.h"
 #include "embprpusr.h"
 #include "galileo.h"
 #include "binary.h"
