@@ -2,7 +2,7 @@
 This repository is for generating the Windows Developer Program for IoT Intel Galileo Nuget package
 
 ##Configure Visual Studio
-You’ll want to redirect visual studio’s *user templates* to the repository you are working in.
+You'll want to redirect visual studio's *user templates* to the repository you are working in.
 *Tools -> Options*
 
 ![Template Config](images/Nuget_TemplateConfig.png)
@@ -48,7 +48,7 @@ You can now goto *File -> New Project* then Select *Templates -> Visual C++ -> G
 You can now build the application. Please refer to the [Hello Blinky Sample](HelloBlinky.htm) for details on how to build and deploy an application.
 
 ###Iterate in the Nuget Package
-Now you need to make changes to the Nuget Package, you’ll need to uninstall it first. Right click on the Project in the solution and select *Manage Nuget Packages*.
+Now you need to make changes to the Nuget Package, you'll need to uninstall it first. Right click on the Project in the solution and select *Manage Nuget Packages*.
 
 Now Uninstall the Galileo SDK by clicking the uninstall button:
 
@@ -63,5 +63,5 @@ Your updates will be there.
 
 ### Notes!
 * While you can change your local headers, they will get nuked when reinstalling the nuget package.
-* Don’t check in your packages...
-* Don’t check in binaries
+* Don't check in your packages...
+* Don't check in binaries
