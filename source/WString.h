@@ -8,7 +8,7 @@
 #include <iostream>
 
 #ifndef byte
-#define byte char
+typedef unsigned char byte;
 #endif
 
 // The String class, part of the core as of version 0019,
@@ -73,11 +73,17 @@ class String {
         const unsigned int n_
     );
 	
+    // Allows you access to the individual characters of a string.
+    char
+    operator[] (
+        const unsigned int n_
+    ) const;
+
     // Combines, or concatenates two strings into one new String.
     // The second string is appended to the first, and the result
     // is placed in a new String. Works the same as string.concat().
     String
-        operator+ (
+    operator+ (
         const String &s_
     ) const;
 

@@ -53,6 +53,13 @@ String::operator[] (
     return _buffer[n_];
 }
 
+char
+String::operator[] (
+    const unsigned int n_
+) const {
+    return _buffer[n_];
+}
+
 String
 String::operator+ (
     const String &s_
@@ -129,7 +136,8 @@ String::getBytes (
     byte * const buffer_,
     const size_t length_
 ) const {
-    return _buffer.copy(buffer_, length_);
+    strncpy_s(reinterpret_cast<char *>(buffer_), length_, _buffer.c_str(), _TRUNCATE);
+    return strlen(reinterpret_cast<char *>(buffer_));
 }
 
 size_t
@@ -218,7 +226,8 @@ String::toCharArray (
     char * const buffer_,
     const size_t length_
 ) const {
-    return _buffer.copy(buffer_, length_);
+    strncpy_s(reinterpret_cast<char *>(buffer_), length_, _buffer.c_str(), _TRUNCATE);
+    return strlen(reinterpret_cast<char *>(buffer_));
 }
 
 long int
