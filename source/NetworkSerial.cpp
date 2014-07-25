@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
-// Licensed under the BSD 2-Clause License.  
+// Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.
+// Licensed under the BSD 2-Clause License.
 // See License.txt in the project root for license information.
 
 
@@ -100,29 +100,28 @@ Exit:
 
 int NetworkSerial::available(void)
 {
-    char recvbuf[DEFAULT_BUFLEN];
-    int recvbuflen = DEFAULT_BUFLEN;
-    int iResult = recv(_clientSocket, recvbuf, recvbuflen, MSG_PEEK);
+    unsigned char recvbuf;
+    int recvbuflen = sizeof(recvbuf);
+    int iResult = recv(_clientSocket, (char*)&recvbuf, recvbuflen, MSG_PEEK);
     return iResult > 0;
 }
 
 int NetworkSerial::read(void)
 {
-	  OutputDebugStringA("We are reading from serial\n"); 
-    char recvbuf[DEFAULT_BUFLEN];
-    int recvbuflen = DEFAULT_BUFLEN;
-    int iResult = recv(_clientSocket, recvbuf, recvbuflen, 0);
+    unsigned char recvbuf;
+    int recvbuflen = sizeof(recvbuf);
+    int iResult = recv(_clientSocket, (char*)&recvbuf, recvbuflen, 0);
     if (iResult > 0)
     {
-        return recvbuf[0];
+        return (int)recvbuf;
     }
     else
     {
         begin(0);
-        int iResult = recv(_clientSocket, recvbuf, recvbuflen, 0);
+        int iResult = recv(_clientSocket, (char*)&recvbuf, recvbuflen, 0);
         if (iResult > 0)
         {
-            return recvbuf[0];
+            return (int)recvbuf;
         }
     }
 
