@@ -14,7 +14,7 @@ Under *Projects and Solutions*, select *General*
 *Tools -> Library Package Manager -> Package Manager Settings*
 
 ![Package Config](images/Nuget_PackageSourceConfig_VSU2013.png)
-<br/>
+
 
 1. Click the "+" button to add a new source
 1. Set the name to something descriptive, such as: "Local Source"
@@ -25,7 +25,7 @@ Under *Projects and Solutions*, select *General*
 *Tools -> Nuget Package Manager -> Package Manager Settings*
 
 ![Package Config](images/Nuget_PackageSourceConfig_VSE2013.png)
-<br/>
+
 
 1. Click the "+" button to add a new source
 1. Set the name to something descriptive, such as: "Local Source"
