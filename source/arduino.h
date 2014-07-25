@@ -1082,6 +1082,7 @@ inline long random(long min, long max)
 }
 
 inline uint16_t makeWord(unsigned char h, unsigned char l) { return (h << 8) | l; }
+#define word(x, y) makeWord(x, y)
 
 // Bits and Bytes
 #define lowByte(w) ((uint8_t) ((w) & 0xff))
