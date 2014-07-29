@@ -3,6 +3,7 @@
 // See License.txt in the project root for license information.
 
 #include "arduino.h"
+#include "Servo.h"
 
 Servo::Servo()
 : _servoIndex(0)
@@ -15,11 +16,15 @@ Servo::Servo()
 uint8_t Servo::attach(int pin)
 {
     pin;
+
+    return 0;
 }
 
 uint8_t Servo::attach(int pin, int min, int max)
 {
     pin; min; max;
+
+    return 0;
 }
 
 void Servo::detach()
