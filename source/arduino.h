@@ -1096,12 +1096,9 @@ inline uint16_t makeWord(unsigned char h, unsigned char l) { return (h << 8) | l
 #define bit(b) (1UL << (b))
 #define __attribute__(x)
 
-#ifdef USE_NETWORKSERIAL
-#include "NetworkSerial.h"
-#else
-#include "HardwareSerial.h"
-#endif
+#define _CRT_SECURE_NO_WARNINGS
 
 #include "Stream.h"
+#include "HardwareSerial.h"
 #include "Wire.h"
 #endif // _WINDOWS_ARDUINO_H_
