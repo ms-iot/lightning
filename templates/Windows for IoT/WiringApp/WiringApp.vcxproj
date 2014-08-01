@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5CD71A4C-A67E-444A-9A8F-FAB3B4701454}</ProjectGuid>
+    <ProjectGuid>$guid1$ </ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>$safeprojectname$</RootNamespace>
   </PropertyGroup>
@@ -96,6 +96,5 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\Microsoft.IoT.Galileo.Arduino.0.1.0.4\build\native\Microsoft.IoT.Galileo.Arduino.targets" Condition="Exists('..\packages\Microsoft.IoT.Galileo.Arduino.0.1.0.4\build\native\Microsoft.IoT.Galileo.Arduino.targets')" />
   </ImportGroup>
 </Project>
