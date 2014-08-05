@@ -1,5 +1,5 @@
 ## Microsoft.IoT.Galileo.Arduino Nuget package
-This repository is for generating the Windows Developer Program for IoT Intel Galileo Nuget package
+This repository is for generating the Windows Developer Program for IoT Nuget package
 
 ##Configure Visual Studio
 You'll want to redirect visual studio's *user templates* to the repository you are working in.
@@ -18,7 +18,7 @@ Under *Projects and Solutions*, select *General*
 
 1. Click the "+" button to add a new source
 1. Set the name to something descriptive, such as: "Local Source"
-1. Click the "..." button and navigate to your local sources directory
+1. Click the "..." button and navigate to your local sources directory (.\source folder)
 1. Click the "Update" button to save the Package Sources changes
 
 ###For Visual Studio Express
@@ -29,11 +29,12 @@ Under *Projects and Solutions*, select *General*
 
 1. Click the "+" button to add a new source
 1. Set the name to something descriptive, such as: "Local Source"
-1. Click the "..." button and navigate to your local sources directory
+1. Click the "..." button and navigate to your local sources directory (.\source folder)
 1. Click the "Update" button to save the Package Sources changes
 
 ##Build the Nuget package
-Please download the Nuget command line utility [nuget.exe](http://nuget.org/nuget.exe) into the Galileo-SDK source folder.
+Please download the Nuget command line utility [nuget.exe](http://nuget.org/nuget.exe) into the Galileo-SDK .\source folder.
+Run the Nuget package builder from the .\source folder:
 
 {% highlight PowerShell %}
 build-nupkg.cmd
