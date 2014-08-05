@@ -2,13 +2,19 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-#ifndef HARDWARE_SERIAL_H
-#define HARDWARE_SERIAL_H
+#pragma once
+
+// Application indicates they want network serial instead of hardware serial.
+// Some libraries will directly include hardware serial, so we switch here instead of in arduino.h
+#ifdef USE_NETWORKSERIAL
+#include "NetworkSerial.h"
+#else
 
 #include "stdint.h"
 #include "stdlib.h"
 #include <functional>
 #include <string>
+#include "Stream.h"
 
 
 enum base_t : int {
@@ -29,7 +35,7 @@ enum base_t : int {
 ///   these functions, you cannot also use pins 0 and 1 for digital input or
 ///   output.
 /// </remarks>
-class HardwareSerial
+class HardwareSerial : public Stream
 {
     enum serial_config_t : uint8_t {
         SERIAL_5N1 = 0x00,
