@@ -1014,6 +1014,42 @@ inline int analogRead(int channel)
     return _ArduinoStatic.analogRead(channel);
 }
 
+inline uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_)
+{
+    uint8_t buffer(0);
+
+    for (uint8_t loop_count = 0, bit_index = 0 ; loop_count < 8 ; ++loop_count) {
+        if (bit_order_ == LSBFIRST) {
+            bit_index = loop_count;
+        } else {
+            bit_index = (7 - loop_count);
+        }
+
+        digitalWrite(clock_pin_, HIGH);
+        buffer |= (digitalRead(data_pin_) << bit_index);
+        digitalWrite(clock_pin_, LOW);
+    }
+
+    return buffer;
+}
+
+inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, uint8_t byte_)
+{
+    for (uint8_t loop_count = 0, bit_mask = 0; loop_count < 8; ++loop_count) {
+        if (bit_order_ == LSBFIRST) {
+            bit_mask = (1 << loop_count);
+        } else {
+            bit_mask = (1 << (7 - loop_count));
+        }
+
+        digitalWrite(data_pin_, (byte_ & bit_mask));
+        digitalWrite(clock_pin_, HIGH);
+        digitalWrite(clock_pin_, LOW);
+    }
+
+    return;
+}
+
 //
 // Arduino Sketch Plumbing
 //
