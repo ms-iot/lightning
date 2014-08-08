@@ -38,6 +38,10 @@ class WindowsTime {
 		return 0;
 	}
 
+    void operator= (WindowsTime &wt_) {
+        UNREFERENCED_PARAMETER(wt_);
+    }
+
 public:
 
 	WindowsTime()

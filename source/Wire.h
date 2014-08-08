@@ -116,6 +116,8 @@ public:
     {
         DWORD bytesReturned;
 
+        UNREFERENCED_PARAMETER(sendStop);
+
         if (quantity < 0)
             ThrowError("quantity must be positive: %d", quantity);
 

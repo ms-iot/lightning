@@ -134,7 +134,7 @@ inline long map(long x, long in_min, long in_max, long out_min, long out_max)
 }
 
 // Function prototypes.
-inline void pinMode(int pin, int mode);
+inline void pinMode(unsigned int pin, unsigned int mode);
 
 // Internal functions (call at your own risk)
 inline void _RevertPinToDigital(int pin);
@@ -409,14 +409,14 @@ __declspec (noinline) inline void _ReadPinConfiguration(int pin, PPIN_DATA pinDa
     Wire.endTransmission(FALSE);						// Dont' send STOP
 
     // Read the configuration registers.
-    retVal = Wire.requestFrom(CY8_ADDRESS, PORT_CONFIG_REG_COUNT);
+    retVal = static_cast<BYTE>(Wire.requestFrom(CY8_ADDRESS, PORT_CONFIG_REG_COUNT));
     if (retVal != PORT_CONFIG_REG_COUNT)
     {
         ThrowError("Error reported by Wire.requestFrom() for pin (%d).", pin);
     }
     for (i = 0; i < PORT_CONFIG_REG_COUNT; i++)
     {
-        portConfig[i] = Wire.read();
+        portConfig[i] = static_cast<BYTE>(Wire.read());
     }
 
     // Determine whether the port pin is configured as an input or output.
@@ -452,14 +452,14 @@ __declspec (noinline) inline void _ReadPinConfiguration(int pin, PPIN_DATA pinDa
             Wire.endTransmission(FALSE);					// Don't send STOP
 
             // Read the PWM configuration registers.
-            retVal = Wire.requestFrom(CY8_ADDRESS, PWM_CONFIG_REG_COUNT);
+            retVal = static_cast<BYTE>(Wire.requestFrom(CY8_ADDRESS, PWM_CONFIG_REG_COUNT));
             if (retVal != PWM_CONFIG_REG_COUNT)
             {
                 ThrowError("Error reported by Wire.requestFrom() for pin (%d).", pin);
             }
             for (i = 0; i < PWM_CONFIG_REG_COUNT; i++)
             {
-                pwmConfig[i] = Wire.read();
+                pwmConfig[i] = static_cast<BYTE>(Wire.read());
             }
 
             pinData->pwmDutyCycle = pwmConfig[PULSE_WIDTH_PWM];
@@ -483,12 +483,12 @@ __declspec (noinline) inline void _ReadPinMuxConfig(int pin, PPIN_DATA pinData)
         Wire.endTransmission(FALSE);					// Don't send STOP
 
         // Read the output port register.
-        retVal = Wire.requestFrom(CY8_ADDRESS, 1);
+        retVal = static_cast<BYTE>(Wire.requestFrom(CY8_ADDRESS, 1));
         if (retVal != 1)
         {
             ThrowError("Error reported by Wire.requestFrom() for pin (%d).", pin);
         }
-        muxConfig = Wire.read();
+        muxConfig = static_cast<BYTE>(Wire.read());
 
         // Determine whether the MUX is set to default or alternate value.
         muxConfig = (muxConfig >> _ArduinoToPortBitMap[pin].MuxBit) & 0x01;
@@ -639,7 +639,7 @@ inline void _ValidatePinOkToChange(int pin)
 //  // set A1 low
 //  digitalWrite(15, 0);
 //
-inline void digitalWrite(int pin, int state)
+inline void digitalWrite(unsigned int pin, unsigned int state)
 {
     _ValidateArduinoPinNumber(pin);
 
@@ -704,7 +704,7 @@ inline int digitalRead(int pin)
 //  // Set IO4 as input.
 //  pinMode(4, INPUT);
 //
-inline void pinMode(int pin, int mode)
+inline void pinMode(unsigned int pin, unsigned int mode)
 {
     _ValidateArduinoPinNumber(pin);
     _ValidatePinOkToChange(pin);
@@ -735,7 +735,7 @@ inline void pinMode(int pin, int mode)
 // This function assumes the pin number has already been verified to be in the
 // legal range.
 //
-inline void _SetImplicitPinMode(int pin, int mode)
+inline void _SetImplicitPinMode(unsigned int pin, unsigned int mode)
 {
     _InitializePinIfNeeded(pin);
 
@@ -751,7 +751,7 @@ inline void _SetImplicitPinMode(int pin, int mode)
 }
 
 // Revert a pin to its last explicitely set mode.
-inline void _RevertImplicitPinMode(int pin)
+inline void _RevertImplicitPinMode(unsigned int pin)
 {
     pinMode(pin, _pinData[pin].modeSet);
 }
