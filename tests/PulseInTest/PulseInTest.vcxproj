@@ -37,7 +37,7 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros">
-    <NuGetPackageImportStamp>15f54459</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>79705847</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -98,12 +98,12 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\Microsoft.IoT.Galileo.Arduino.1.0.2-alpha\build\native\Microsoft.IoT.Galileo.Arduino.targets" Condition="Exists('..\packages\Microsoft.IoT.Galileo.Arduino.1.0.2-alpha\build\native\Microsoft.IoT.Galileo.Arduino.targets')" />
+    <Import Project="..\packages\Microsoft.IoT.Galileo.Arduino.1.0.1\build\native\Microsoft.IoT.Galileo.Arduino.targets" Condition="Exists('..\packages\Microsoft.IoT.Galileo.Arduino.1.0.1\build\native\Microsoft.IoT.Galileo.Arduino.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.IoT.Galileo.Arduino.1.0.2-alpha\build\native\Microsoft.IoT.Galileo.Arduino.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.IoT.Galileo.Arduino.1.0.2-alpha\build\native\Microsoft.IoT.Galileo.Arduino.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.IoT.Galileo.Arduino.1.0.1\build\native\Microsoft.IoT.Galileo.Arduino.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.IoT.Galileo.Arduino.1.0.1\build\native\Microsoft.IoT.Galileo.Arduino.targets'))" />
   </Target>
 </Project>
