@@ -23,6 +23,14 @@ class TwoWire
 {
 
 public:
+    enum TwiError {
+        SUCCESS = 0,
+        TWI_BUFFER_OVERRUN = 1,
+        ADDR_NACK_RECV = 2,
+        DATA_NACK_RECV = 3,
+        OTHER_ERROR = 4,
+    };
+
     TwoWire() :
         i2c(nullptr),
         i2cHasBeenEnabled(false),
@@ -82,7 +90,7 @@ public:
 
     int endTransmission(int sendStop)
     {
-        DWORD bytesWritten;
+        DWORD bytesWritten = 0;
 
         if (sendStop)
         {
@@ -94,17 +102,13 @@ public:
 
             if (FAILED(hr))
             {
-                ThrowError("I2C_CONTROLLER IO failed");
+                return ADDR_NACK_RECV;
             }
 
             this->slaveWriteAddress = 0;
         }
-        else
-        {
-            bytesWritten = this->writeBuf.size();
-        }
 
-        return bytesWritten;
+        return SUCCESS;
     }
 
     int requestFrom(int address, int quantity)
