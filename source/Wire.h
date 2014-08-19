@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "ArduinoError.h"
-#include "embprpusr.h"
+//#include "embprpusr.h"
 #include "galileo.h"
 
 #ifndef TWI_FREQ
@@ -32,7 +32,7 @@ public:
     };
 
     TwoWire() :
-        i2c(nullptr),
+        //i2c(nullptr),
         i2cHasBeenEnabled(false),
         connectionSlaveAddress(0),
         slaveWriteAddress(0),
@@ -47,20 +47,20 @@ public:
     {
         EnableI2C(false);
 
-        if (this->i2c != nullptr)
-        {
-            I2CFree(i2c);
-            this->i2c = nullptr;
-        }
+//        if (this->i2c != nullptr)
+//        {
+//            I2CFree(i2c);
+//            this->i2c = nullptr;
+//        }
     }
 
     void begin()
     {
-        if (this->i2c != nullptr)
-        {
-            I2CFree(i2c);
-            this->i2c = nullptr;
-        }
+        //if (this->i2c != nullptr)
+        //{
+        //    I2CFree(i2c);
+        //    this->i2c = nullptr;
+        //}
 
         this->connectionSlaveAddress = 0;
         this->slaveWriteAddress = 0;
@@ -94,16 +94,16 @@ public:
 
         if (sendStop)
         {
-            HRESULT hr = I2CWrite(
-                this->i2c,
-                this->writeBuf.data(),
-                this->writeBuf.size(),
-                &bytesWritten);
+            //HRESULT hr = I2CWrite(
+            //    this->i2c,
+            //    this->writeBuf.data(),
+            //    this->writeBuf.size(),
+            //    &bytesWritten);
 
-            if (FAILED(hr))
-            {
-                return ADDR_NACK_RECV;
-            }
+            //if (FAILED(hr))
+            //{
+            //    return ADDR_NACK_RECV;
+            //}
 
             this->slaveWriteAddress = 0;
         }
@@ -138,34 +138,34 @@ public:
             // SPB controller lock mechanism, we can support the special
             // case of a single write/read sequence which covers the
             // majority of uses that require repeated starts.
-            HRESULT hr = I2CWriteReadAtomic(
-                this->i2c,
-                this->writeBuf.data(),
-                this->writeBuf.size(),
-                this->readBuf.data(),
-                this->readBuf.size(),
-                &bytesReturned);
+            //HRESULT hr = I2CWriteReadAtomic(
+            //    this->i2c,
+            //    this->writeBuf.data(),
+            //    this->writeBuf.size(),
+            //    this->readBuf.data(),
+            //    this->readBuf.size(),
+            //    &bytesReturned);
 
-            if (FAILED(hr))
-            {
-                ThrowError("I2C_CONTROLLER IO failed");
-            }
+            //if (FAILED(hr))
+            //{
+            //    ThrowError("I2C_CONTROLLER IO failed");
+            //}
 
             // indicate that pending write has been flushed
             this->slaveWriteAddress = 0;
         }
         else
         {
-            HRESULT hr = I2CRead(
-                this->i2c,
-                this->readBuf.data(),
-                this->readBuf.size(),
-                &bytesReturned);
+            //HRESULT hr = I2CRead(
+            //    this->i2c,
+            //    this->readBuf.data(),
+            //    this->readBuf.size(),
+            //    &bytesReturned);
 
-            if (FAILED(hr))
-            {
-                ThrowError("I2C_CONTROLLER IO failed");
-            }
+            //if (FAILED(hr))
+            //{
+            //    ThrowError("I2C_CONTROLLER IO failed");
+            //}
         }
 
         this->readBuf.resize(bytesReturned);
@@ -238,10 +238,10 @@ public:
     inline size_t write(unsigned int n) { return write((uint8_t)n); }
     inline size_t write(int n) { return write((uint8_t)n); }
 
-    I2C_CONTROLLER *handle() const
-    {
-        return this->i2c;
-    }
+    //I2C_CONTROLLER *handle() const
+    //{
+    //    return this->i2c;
+    //}
 
 private:
 
@@ -256,23 +256,23 @@ private:
         // if the address is different, we need to reopen the connection
         if (this->connectionSlaveAddress != address)
         {
-            // if a connection is open, close it
-            if (this->i2c != nullptr)
-            {
-                I2CFree(this->i2c);
-                this->i2c = nullptr;
-            }
+            //// if a connection is open, close it
+            //if (this->i2c != nullptr)
+            //{
+            //    //I2CFree(this->i2c);
+            //    this->i2c = nullptr;
+            //}
 
-            HRESULT hr = I2CCreateInstance(
-                I2C_CONTROLLER_INDEX,
-                address,
-                I2C_CONNECTION_SPEED,
-                &this->i2c);
+            //HRESULT hr = I2CCreateInstance(
+            //    I2C_CONTROLLER_INDEX,
+            //    address,
+            //    I2C_CONNECTION_SPEED,
+            //    &this->i2c);
 
-            if (FAILED(hr))
-            {
-                ThrowError("Failed to create I2C_CONTROLLER instance");
-            }
+            //if (FAILED(hr))
+            //{
+            //    ThrowError("Failed to create I2C_CONTROLLER instance");
+            //}
 
             this->connectionSlaveAddress = address;
         }
@@ -280,21 +280,21 @@ private:
 
     void EnableI2C(bool enable)
     {
-        HRESULT hr = GpioSetDir(GPORT1_BIT5, 1);
-        if (FAILED(hr))
-        {
-            ThrowError("Failed to configure I2C_CONTROLLER mux");
-        }
+        //HRESULT hr = GpioSetDir(GPORT1_BIT5, 1);
+        //if (FAILED(hr))
+        //{
+        //    ThrowError("Failed to configure I2C_CONTROLLER mux");
+        //}
 
-        hr = GpioWrite(GPORT1_BIT5, enable ? 0 : 1);
-        if (FAILED(hr))
-        {
-            ThrowError("Failed to configure I2C_CONTROLLER mux");
-        }
-        i2cHasBeenEnabled = enable;
+        ////hr = GpioWrite(GPORT1_BIT5, enable ? 0 : 1);
+        //if (FAILED(hr))
+        //{
+        //    ThrowError("Failed to configure I2C_CONTROLLER mux");
+        //}
+        //i2cHasBeenEnabled = enable;
     }
 
-    I2C_CONTROLLER *i2c;
+    //I2C_CONTROLLER *i2c;
 
     // stores the fact that I2C has been explicitely enabled.
     bool i2cHasBeenEnabled;

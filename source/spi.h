@@ -2,194 +2,217 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-#ifndef _WINDOWS_SPI_H_
-#define _WINDOWS_SPI_H_
+#ifndef _SPI_H_
+#define _SPI_H_
 
-#include "arduino.h"
+#include <Windows.h>
 
-// Define SPI modes.  Different modes have different clock
-// polarities and/or clock edge for bit shift vs capture.
-#define SPI_MODE0    0  // Clock sits low, capture on rising edge
-#define SPI_MODE1    1  // Clock sits low, shift on rising edge
-#define SPI_MODE2    2  // Clock sites high, capture on falling edge
-#define SPI_MODE3    3  // Clock sits high, shift on falling edge
+#include "ArduinoCommon.h"
+#include "ArduinoError.h"
+#include "SpiController.h"
+#include "PinSupport.h"
 
-// Define the Arduino pin numbers for SPI functions.
-#define SPI1_MOSI 11
-#define SPI1_MISO 12
-#define SPI1_SCK 13
+// SPI clock values in KHz.
+#define SPI_CLOCK_DIV2 8000
+#define SPI_CLOCK_DIV4 4000
+#define SPI_CLOCK_DIV8 2000
+#define SPI_CLOCK_DIV16 1000
+#define SPI_CLOCK_DIV32 500
+#define SPI_CLOCK_DIV64 250
+#define SPI_CLOCK_DIV128 125
 
-// Define the externally accessible SPI bus characteristics.
-#define SPI1_SPEED 1000000UL  // Default speed is 1 Mhz
-#define SPI1_BITS_PER_WORD 8  // Send/receive 8 bit words
-#define SPI1_MODE SPI_MODE0   // Clock sits low between words,
-                              //  capture data on rising edge
-
-// Define SPI clock divider values.
-#define SPI_CLOCK_DIV_MIN 1
-#define SPI_CLOCK_DIV2 1
-#define SPI_CLOCK_DIV4 2
-#define SPI_CLOCK_DIV8 3
-#define SPI_CLOCK_DIV16 4
-#define SPI_CLOCK_DIV32 5
-#define SPI_CLOCK_DIV64 6
-#define SPI_CLOCK_DIV128 7
-#define SPI_CLOCK_DIV_MAX 7
-#define SPI_CLOCK_DIV_DEFAULT 2
+// SPI mode values
+#define SPI_MODE0 0
+#define SPI_MODE1 1
+#define SPI_MODE2 2
+#define SPI_MODE3 3
 
 class SPIClass
 {
 public:
-	SPIClass() : spi(nullptr) { }
-
-	virtual ~SPIClass()
-	{
-		this->end();
-	}
-
-	void begin()
-	{
-		SPI_CONTROLLER_CONFIG cfg;
-
-		if (this->spi == nullptr)
-		{
-			_ValidatePinOkToChange(SPI1_MOSI);
-			_ValidatePinOkToChange(SPI1_MISO);
-			_ValidatePinOkToChange(SPI1_SCK);
-
-			HRESULT hr = SpiCreateInstance(SPI_CONTROLLER_INDEX, &this->spi);
-			if (FAILED(hr))
-			{
-				ThrowError("Failed to initialize SPI_CONTROLLER");
-			}
-
-			cfg.ConnectionSpeed = SPI1_SPEED;
-			cfg.DataBitLength = SPI1_BITS_PER_WORD;
-			cfg.SpiMode = SPI1_MODE;
-
-			hr = SpiSetControllerConfig(this->spi, &cfg);
-			if (FAILED(hr))
-			{
-				ThrowError("Failed to set controller configuration");
-			}
-
-			// Set up pin for SPI MOSI use.
-			_SetImplicitPinMode(SPI1_MOSI, OUTPUT);
-			_SetImplicitPinFunction(SPI1_MOSI, ALTERNATE_MUX);
-			_pinData[SPI1_MOSI].pinInUseSpi = TRUE;
-			_pinData[SPI1_MOSI].pinIsLocked = TRUE;
-
-			// Set up pin for SPI MISO use.
-			_SetImplicitPinMode(SPI1_MISO, INPUT);
-			_SetImplicitPinFunction(SPI1_MISO, ALTERNATE_MUX);
-			_pinData[SPI1_MISO].pinInUseSpi = TRUE;
-			_pinData[SPI1_MISO].pinIsLocked = TRUE;
-
-			// Set up pin for SPI Clock use.
-			_SetImplicitPinMode(SPI1_SCK, OUTPUT);
-			_SetImplicitPinFunction(SPI1_SCK, ALTERNATE_MUX);
-			_pinData[SPI1_SCK].pinInUseSpi = TRUE;
-			_pinData[SPI1_SCK].pinIsLocked = TRUE;
-
-		}
+    SPIClass()
+    {
+        m_controller = nullptr;
+        m_bitOrder = MSBFIRST;      // Default bit order is MSB First
+        m_clockKHz = 4000;          // Default clock rate is 4 MHz
+        m_mode = SPI_MODE0;         // Default to Mode 0
     }
 
-	void end()
-	{
-		if (this->spi != nullptr)
-		{
-			SpiFree(this->spi);
-			this->spi = nullptr;
+    virtual ~SPIClass()
+    {
+        this->end();
+    }
 
-			_pinData[SPI1_MOSI].pinInUseSpi = FALSE;
-			_pinData[SPI1_MOSI].pinIsLocked = FALSE;
-			_RevertImplicitPinFunction(SPI1_MOSI);
-			pinMode(SPI1_MOSI, OUTPUT);
+    //
+    // Initialize the externally accessible SPI bus for use.
+    //
+    void begin()
+    {
+        if (m_controller == nullptr)
+        {
+            m_controller = new SPIControllerClass;
+        }
 
-			_pinData[SPI1_MISO].pinInUseSpi = FALSE;
-			_pinData[SPI1_MISO].pinIsLocked = FALSE;
-			_RevertImplicitPinFunction(SPI1_MISO);
-			pinMode(SPI1_MISO, INPUT);
+        // Set SCK and MOSI as outputs dedicated to SPI, and pulled LOW.
+        if (!_setPinFunction(PIN_SCK, FUNC_SPI))
+        {
+            ThrowError("An error occurred configuring pinSCK for SPI use: %08x", GetLastError());
+        }
 
-			_pinData[SPI1_SCK].pinInUseSpi = FALSE;
-			_pinData[SPI1_SCK].pinIsLocked = FALSE;
-			_RevertImplicitPinFunction(SPI1_SCK);
-			pinMode(SPI1_SCK, OUTPUT);
-		}
-	}
+        if (!_setPinState(PIN_SCK, LOW))
+        {
+            ThrowError("An error occurred setting pinSCK LOW: %08x", GetLastError());
+        }
 
-	// sets the specified mode, assuming 8-bit data length
-	// mode should be SPI_MODE0 ... SPI_MODE3
-	void setDataMode(int mode)
-	{
-		SPI_CONTROLLER_CONFIG cfg;
+        if (!_setPinFunction(PIN_MOSI, FUNC_SPI))
+        {
+            ThrowError("An error occurred configuring pinMOSI for SPI use: %08x", GetLastError());
+        }
 
-		HRESULT hr = SpiGetControllerConfig(this->spi, &cfg);
-		if (FAILED(hr))
-		{
-			ThrowError("Failed to get SPI_CONTROLLER controller configuration");
-		}
+        if (!_setPinState(PIN_MOSI, LOW))
+        {
+            ThrowError("An error occurred setting pinMOSI LOW: %08x", GetLastError());
+        }
 
-		cfg.SpiMode = mode;
-		hr = SpiSetControllerConfig(this->spi, &cfg);
-		if (FAILED(hr))
-		{
-			ThrowError("Failed to set SPI_CONTROLLER controller configuration");
-		}
-	}
+        // Set MISO as an input dedicated to SPI.
+        if (!_setPinFunction(PIN_MISO, FUNC_SPI))
+        {
+            ThrowError("An error occurred configuring pinMISO for SPI use: %08x", GetLastError());
+        }
 
-	void setClockDivider(int clockDiv)
-	{
-		ULONG div = 0;
-		SPI_CONTROLLER_CONFIG cfg;
+        // Set the desired SPI bit shifting order.
+        if (m_bitOrder == MSBFIRST)
+        {
+            m_controller->setMsbFirstBitOrder();
+        }
+        else
+        {
+            m_controller->setLsbFirstBitOrder();
+        }
 
-		if ((clockDiv < SPI_CLOCK_DIV_MIN) || (clockDiv > SPI_CLOCK_DIV_MAX))
-		{
-			div = 1UL << SPI_CLOCK_DIV_DEFAULT;
-		}
-		else
-		{
-			div = 1UL << clockDiv;
-		}
+        // Map the SPI1 controller registers into memory.
+        if (!m_controller->begin(EXTERNAL_SPI_BUS, m_mode, m_clockKHz))
+        {
+            ThrowError("An error occurred initializing the SPI controller: %08x", GetLastError());
+        }
+    }
 
-		HRESULT hr = SpiGetControllerConfig(this->spi, &cfg);
-		if (FAILED(hr))
-		{
-			ThrowError("Failed to get SPI_CONTROLLER controller configuration");
-		}
+    // Free up the external SPI bus so its pins can be used for other functions.
+    void end()
+    {
+        delete m_controller;
+        m_controller = nullptr;
+    }
 
-		// Arduino UNO clock speed is 16Mhz
-		cfg.ConnectionSpeed = ARDUINO_CLOCK_SPEED / div;
+    // Set the SPI bit shift order.  Expected valuse are MSBFIRST or LSBFIRST.
+    void setBitOrder(int bitOrder)
+    {
+        if ((bitOrder != MSBFIRST) && (bitOrder != LSBFIRST))
+        {
+            ThrowError("SPI bit order must be MSBFIRST or LSBFIRST.");
+        }
+        m_bitOrder = bitOrder;
 
-		hr = SpiSetControllerConfig(this->spi, &cfg);
-		if (FAILED(hr))
-		{
-			ThrowError("Failed to set SPI_CONTROLLER controller configuration");
-		}
-	}
+        if (m_controller != nullptr)
+        {
+            if (bitOrder == MSBFIRST)
+            {
+                m_controller->setMsbFirstBitOrder();
+            }
+            else
+            {
+                m_controller->setLsbFirstBitOrder();
+            }
+        }
+    }
 
-	// Transfer one byte over the SPI in each direction (send one, receive one).
-	unsigned char transfer(unsigned char val)
-	{
-		unsigned char ret;
-		HRESULT hr = SpiTransfer(this->spi, 0, &val, sizeof(val), &ret, sizeof(ret));
-		if (FAILED(hr))
-		{
-			ThrowError("SPI_CONTROLLER transfer failed");
-		}
+    //
+    // Set the SPI clock speed.
+    // For Arduino UNO compatibiltiy, this method takes one of the following defined values:
+    //  SPI_CLOCK_DIV2 - Sets 8 MHz clock
+    //  SPI_CLOCK_DIV4 - Sets 4 MHz clock
+    //  SPI_CLOCK_DIV8 - Sets 2 MHz clock
+    //  SPI_CLOCK_DIV16 - Sets 1 MHz clock
+    //  SPI_CLICK_DIV32 - Sets 500 KHz clock
+    //  SPI_CLICK_DIV64 - Sets 250 KHz clock
+    //  SPI_CLICK_DIV128 - Sets 125 KHz clock
+    //
+    // The actual value passed to this routine is the desired speed in KHz, with
+    // an acceptable range of 125 or higher.  Underlying software layers may set a 
+    // clock value that is different than the one requested to map onto supported
+    // clock generator settigns, however the clock speed set will not be higher 
+    // than the speed requested.
+    //
+    void setClockDivider(ULONG clockKHz)
+    {
+        if (clockKHz < 125)
+        {
+            ThrowError("SPI clock value must be 125 KHz or higher.");
+        }
+        m_clockKHz = clockKHz;
 
-		return ret;
-	}
+        if (m_controller != nullptr)
+        {
+            if (!m_controller->setClock(clockKHz))
+            {
+                ThrowError("An error occurred setting the SPI clock rate: %d", GetLastError());
+            }
+        }
+    }
 
-	SPI_CONTROLLER *handle() const
-	{
-		return spi;
-	}
+    // Set the SPI mode (clock polarity and phase).
+    // Usually, the default (Mode 0) will work, so SPI mode does not need to be set.
+    // The expected values are SPI_MODE0, SPI_MODE1, SPI_MODE2 or SPI_MODE3.
+    void setDataMode(UINT mode)
+    {
+        if ((mode != SPI_MODE0) && (mode != SPI_MODE1) && (mode != SPI_MODE2) && (mode != SPI_MODE3))
+        {
+            ThrowError("Spi Mode must be SPI_MODE0, SPI_MODE1, SPI_MODE2 or SPI_MODE3.");
+        }
+        m_mode = mode;
 
+        if (m_controller != nullptr)
+        {
+            if (!m_controller->setMode(mode))
+            {
+                ThrowError("An error occurred setting the SPI mode: %d", GetLastError());
+            }
+        }
+    }
+
+    // Transfer one byte in each direction on the SPI bus.
+    inline ULONG transfer(ULONG val)
+    {
+        ULONG dataReturn = 0;
+
+        if (m_controller == nullptr)
+        {
+            ThrowError("Can't transfer on SPI bus until an SPI.begin() has been done.");
+        }
+
+        // Transfer the data.
+        if (!m_controller->transfer8(val, dataReturn))
+        {
+            ThrowError("An error occurred atempting to transfer SPI data: %d", GetLastError());
+        }
+        return dataReturn;
+    }
+    
 private:
-	SPI_CONTROLLER *spi;
+
+    // Underlying SPI Controller object that really does the work.
+    SPIControllerClass *m_controller;
+
+    // Bit order (LSBFIRST or MSBFIRST)
+    ULONG m_bitOrder;
+
+    // SPI clock rate, based on the "Clock Divider" value.
+    ULONG m_clockKHz;
+
+    // SPI mode to use.
+    ULONG m_mode;
 };
 
 __declspec(selectany) SPIClass SPI;
 
-#endif
+#endif  // _SPI_H_
