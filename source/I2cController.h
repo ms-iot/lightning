@@ -559,7 +559,10 @@ private:
         BOOL error = ERROR_SUCCESS;
         PVOID baseAddress = nullptr;
 
-        status = GetControllerBaseAddress(dmapI2cDeviceName, m_hController, baseAddress);
+        status = GetControllerBaseAddress(  dmapI2cDeviceName,
+                                            m_hController,
+                                            baseAddress,
+                                            FILE_SHARE_READ | FILE_SHARE_WRITE );
         if (!status)
         {
             error = GetLastError();
@@ -757,11 +760,21 @@ public:
         m_pXfrQueueTail = nullptr;
         m_cmdsOutstanding = 0;
         m_readsOutstanding = 0;
+        m_hI2cLock = CreateMutex(NULL, FALSE, L"Global\\I2c_Controller_Mutex");
+        if (m_hI2cLock == NULL)
+        {
+            m_hI2cLock = INVALID_HANDLE_VALUE;
+        }
     }
 
     virtual ~I2cTransactionClass()
     {
         reset();
+        if (m_hI2cLock != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(m_hI2cLock);
+            m_hI2cLock = INVALID_HANDLE_VALUE;
+        }
     }
 
     // Prepare this transaction for re-use.
@@ -792,12 +805,21 @@ public:
         BOOL status = TRUE;
         BOOL error = ERROR_SUCCESS;
 
-        if ((slaveAdr < 0x08) || (slaveAdr >= 0x77))
+
+        // Verify we successfully create the I2C Controller Lock.
+        if (m_hI2cLock == INVALID_HANDLE_VALUE)
+        {
+            status = FALSE;
+            error = ERROR_CREATE_FAILED;
+        }
+
+        if (status && ((slaveAdr < 0x08) || (slaveAdr >= 0x77)))
         {
             status = FALSE;
             error = ERROR_INVALID_ADDRESS;
         }
-        else
+
+        if (status)
         {
             m_slaveAddress = slaveAdr;
         }
@@ -923,12 +945,35 @@ public:
         BOOL error = ERROR_SUCCESS;
         I2cTransferClass* pXfr = nullptr;
         I2cTransferClass* pReadXfr = nullptr;
+        DWORD lockResult = 0;
+        BOOL haveLock = FALSE;
 
 
         // TODO: Verify transaction parameters are set up properly (?)
 
+        // Verify we successfully created the I2C Controller Lock.
+        if (m_hI2cLock == INVALID_HANDLE_VALUE)
+        {
+            status = FALSE;
+            error = ERROR_CREATE_FAILED;
+        }
+
         // Claim the I2C controller.
-        // TODO: Add lock...
+        lockResult = WaitForSingleObject(m_hI2cLock, 5000);
+        if ((lockResult == WAIT_OBJECT_0) || (lockResult == WAIT_ABANDONED))
+        {
+            haveLock = TRUE;
+        }
+        else if (lockResult == WAIT_TIMEOUT)
+        {
+            status = FALSE;
+            error = ERROR_TIMEOUT;
+        }
+        else
+        {
+            status = FALSE;
+            error = GetLastError();
+        }
 
         // Initialize the controller.
         status = _initializeI2cForTransaction();
@@ -945,7 +990,12 @@ public:
         }
 
         // Release this transaction's claim on the controller.
-        // TODO: Add lock...
+        if (haveLock)
+        {
+            status = ReleaseMutex(m_hI2cLock);
+            if (!status) { error = GetLastError(); }
+            haveLock = FALSE;
+        }
 
         if (!status) { SetLastError(error); }
         return status;
@@ -977,6 +1027,8 @@ private:
     // The wait time for outstanding reads.
     ULONG m_readWaitCount;
 
+    // The I2C Mutex handle.
+    HANDLE m_hI2cLock;
 
     // Method to queue a transfer as part of this transaction.
     void _queueTransfer(I2cTransferClass* pXfr)

@@ -16,6 +16,7 @@
 
 //
 // Routine to get the base address of a controller in the SOC.
+// Exclusive, non-shared, access to the controller is requested.
 //
 // INPUT:
 //  deviceName - The name of the PCI device used to map the controller in question.
@@ -29,5 +30,22 @@
 //  FALSE - An error occurred, use GetLastError() to get more information.
 //
 BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress);
+
+//
+// Routine to get the base address of a controller in the SOC with a sharing specification.
+//
+// INPUT:
+//  deviceName - The name of the PCI device used to map the controller in question.
+//
+// OUTPUT:
+//  handle - Handle opened to the device specified by deviceName.
+//  baseAddress - Base address of the controller in questions.
+//  shareMode - Sharing specifier as specified to Createfile().
+//
+// RETURN:
+//  TRUE - Success
+//  FALSE - An error occurred, use GetLastError() to get more information.
+//
+BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode);
 
 #endif // _DMAP_SUPPORT_H_

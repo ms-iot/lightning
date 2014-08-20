@@ -20,6 +20,26 @@
 //
 BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress)
 {
+    return GetControllerBaseAddress(deviceName, handle, baseAddress, 0);
+}
+
+//
+// Routine to get the base address of a controller in the SOC with a sharing specification.
+//
+// INPUT:
+//  deviceName - The name of the PCI device used to map the controller in question.
+//
+// OUTPUT:
+//  handle - Handle opened to the device specified by deviceName.
+//  baseAddress - Base address of the controller in questions.
+//  shareMode - Sharing specifier as specified to Createfile().
+//
+// RETURN:
+//  TRUE - Success
+//  FALSE - An error occurred, use GetLastError() to get more information.
+//
+BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode)
+{
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
     DMAP_MAPMEMORY_OUTPUT_BUFFER buf = { 0 };
@@ -31,7 +51,7 @@ BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAd
         handle = CreateFile(
             deviceName,
             GENERIC_READ | GENERIC_WRITE,
-            0,
+            shareMode,
             NULL,
             OPEN_EXISTING,
             FILE_ATTRIBUTE_NORMAL,
