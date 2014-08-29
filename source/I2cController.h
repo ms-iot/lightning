@@ -6,17 +6,13 @@
 #define _I2C_CONTROLLER_H_
 
 #include <Windows.h>
+#include <functional>
 
 #include "PinSupport.h"
 #include "DmapSupport.h"
 
 #define CMD_WRITE 0
 #define CMD_READ 1
-
-//
-// I2C Callback Routine.  Used to execute code in the middle of an I2C transaction.
-//
-typedef BOOL I2cCallback(PVOID context, DWORD ctxSize);
 
 //
 // Class that is used to interact with the I2C Controller hardware.
@@ -108,6 +104,11 @@ public:
     inline void setAddress(ULONG adr)       // Supports 7 or 10 bit addressing
     {
         m_controller->IC_TAR.IC_TAR = (adr & 0x3FF);
+    }
+
+    inline ULONG getAddress()
+    {
+        return m_controller->IC_TAR.IC_TAR;
     }
 
     inline BOOL txFifoNotFull()
@@ -644,6 +645,29 @@ public:
     // if the read buffer is full.
     inline PUCHAR getNextReadLocation();
 
+    // Method to associate a callback routine with this transfer.
+    BOOL setCallback(std::function<BOOL()> callBack)
+    {
+        m_callBack = callBack;
+        return TRUE;
+    }
+
+    // Method to invoke any callback routine associated with this transfer.
+    inline BOOL invokeCallback()
+    {
+        if (hasCallback())
+        {
+            return m_callBack();
+        }
+        return TRUE;
+    }
+
+    // Return TRUE if this transfer specifies a callback function.
+    inline BOOL hasCallback() const
+    {
+        return m_callBack != nullptr;
+    }
+
 private:
 
     //
@@ -673,6 +697,9 @@ private:
 
     // TRUE to start transfer with a RESTART.
     BOOL m_preRestart;
+
+    // Pointer to any callback function associated with this transfer.
+    std::function<BOOL()> m_callBack;
 };
 
 //
@@ -716,28 +743,37 @@ public:
     BOOL setAddress(UCHAR slaveAdr);
 
     // Add a write transfer to the transaction.
-    BOOL write(PUCHAR buffer, ULONG bufferBytes)
+    BOOL queueWrite(PUCHAR buffer, ULONG bufferBytes)
     {
-        return write(buffer, bufferBytes, FALSE);
+        return queueWrite(buffer, bufferBytes, FALSE);
     }
 
-    BOOL write(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart);
+    BOOL queueWrite(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart);
 
     // Add a read transfer to the transaction.
-    BOOL read(PUCHAR buffer, ULONG bufferBytes)
+    BOOL queueRead(PUCHAR buffer, ULONG bufferBytes)
     {
-        return read(buffer, bufferBytes, FALSE);
+        return queueRead(buffer, bufferBytes, FALSE);
     }
 
-    BOOL read(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart);
+    BOOL queueRead(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart);
+
+    // Method to queue a callback routine at the current point in the transaction.
+    BOOL queueCallback(std::function<BOOL()> callBack);
 
     // Method to perform the transfers associated with this transaction.
     BOOL execute();
 
-    // Method to get the number of loops done to purge outstanding reads.
-    inline void getReadWaitCount(ULONG & waits)
+    // Method to get the number of 1 mSec ticsk that occurred while waiting for outstanding reads.
+    inline void getReadWaitTicks(ULONG & waits)
     {
-        waits = m_readWaitCount;
+        waits = m_maxWaitTicks;
+    }
+
+    // Method to determine if a transfer is the last transfer in the transaction.
+    inline BOOL isLastTransfer(I2cTransferClass* pXfr)
+    {
+        return (pXfr == m_pXfrQueueTail);
     }
 
 private:
@@ -762,14 +798,14 @@ private:
     // Number of I2C reads outstanding.
     LONG m_readsOutstanding;
 
-    // The wait time for outstanding reads.
-    ULONG m_readWaitCount;
+    // The max wait time (in mSec) for outstanding reads.
+    ULONG m_maxWaitTicks;
 
     // The I2C Mutex handle.
     HANDLE m_hI2cLock;
 
     //
-    // I2cTransactionClass private members functions.
+    // I2cTransactionClass private member functions.
     //
 
     // Method to queue a transfer as part of this transaction.
@@ -781,9 +817,15 @@ private:
     // Method to process each transfer in this transaction.
     BOOL _processTransfers();
 
+    // Method to perform a set of transfers that happen together on the I2C bus.
+    BOOL _performContiguousTransfers(I2cTransferClass* & pXfr);
+
     // Method to shut down the I2C Controller after a transaction is done with it.
     BOOL _shutDownI2cAfterTransaction();
 
+    // Method to calculate the command and read counts for the current section
+    // of the transaction.
+    BOOL _calculateCurrentCounts(I2cTransferClass* nextXfr);
 };
 
 #endif // _I2C_CONTROLLER_H_

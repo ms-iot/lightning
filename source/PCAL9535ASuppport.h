@@ -56,14 +56,14 @@ public:
             }
 
             // Prepare to send the address of the output port to the I/O Expander chip.
-            status = transaction->write(outputPortBuffer, 1);
+            status = transaction->queueWrite(outputPortBuffer, 1);
             if (!status) { error = GetLastError(); }
         }
 
         if (status)
         {
             // Prepare to read the port contents from the I/O Expander chip.
-            status = transaction->read(dataBuffer, sizeof(dataBuffer));
+            status = transaction->queueRead(dataBuffer, sizeof(dataBuffer));
             if (!status) { error = GetLastError(); }
         }
 
@@ -90,13 +90,13 @@ public:
                 transaction->reset();
 
                 // Prepare to send the address of the output port to the I/O Expander chip.
-                status = transaction->write(outputPortBuffer, 1);
+                status = transaction->queueWrite(outputPortBuffer, 1);
                 if (!status) { error = GetLastError(); }
 
                 if (status)
                 {
                     // Prepare to send the port contents to the I/O Expander chip.
-                    status = transaction->write(dataBuffer, sizeof(dataBuffer));
+                    status = transaction->queueWrite(dataBuffer, sizeof(dataBuffer));
                     if (!status) { error = GetLastError(); }
                 }
 

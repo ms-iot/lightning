@@ -142,7 +142,7 @@ void I2cTransactionClass::reset()
     m_cmdsOutstanding = 0;
     m_readsOutstanding = 0;
 
-    m_readWaitCount = 0;
+    m_maxWaitTicks = 0;
 }
 
 // Sets the 7-bit address of the slave for this tranaction.
@@ -175,7 +175,7 @@ BOOL I2cTransactionClass::setAddress(UCHAR slaveAdr)
 }
 
 // Add a write transfer to the transaction.
-BOOL I2cTransactionClass::write(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart)
+BOOL I2cTransactionClass::queueWrite(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart)
 {
     BOOL status = TRUE;
     BOOL error = ERROR_SUCCESS;
@@ -214,9 +214,6 @@ BOOL I2cTransactionClass::write(PUCHAR buffer, ULONG bufferBytes, BOOL preRestar
 
         // Queue the transfer as part of this transaction.
         _queueTransfer(pXfr);
-
-        // Add the write byte count to the transaction outstanding command count.
-        m_cmdsOutstanding = m_cmdsOutstanding + bufferBytes;
     }
 
     if (!status) { SetLastError(error); }
@@ -224,7 +221,7 @@ BOOL I2cTransactionClass::write(PUCHAR buffer, ULONG bufferBytes, BOOL preRestar
 }
 
 // Add a read transfer to the transaction.
-BOOL I2cTransactionClass::read(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart)
+BOOL I2cTransactionClass::queueRead(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart)
 {
     BOOL status = TRUE;
     BOOL error = ERROR_SUCCESS;
@@ -264,10 +261,48 @@ BOOL I2cTransactionClass::read(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart
 
         // Queue the transfer as part of this transaction.
         _queueTransfer(pXfr);
+    }
 
-        // Add the read byte count to the transaction outstanding command and read counts.
-        m_cmdsOutstanding = m_cmdsOutstanding + bufferBytes;
-        m_readsOutstanding = m_readsOutstanding + bufferBytes;
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+// Method to queue a callback routine at the current point in the transaction.
+BOOL I2cTransactionClass::queueCallback(std::function<BOOL()> callBack)
+{
+    BOOL status = TRUE;
+    BOOL error = ERROR_SUCCESS;
+    I2cTransferClass* pXfr = nullptr;
+
+    if (callBack == nullptr)
+    {
+        status = FALSE;
+        error = ERROR_INVALID_PARAMETER;
+    }
+
+    if (status)
+    {
+        // Allocate a transfer object.
+        pXfr = new I2cTransferClass;
+
+        if (pXfr == 0)
+        {
+            status = FALSE;
+            error = ERROR_OUTOFMEMORY;
+        }
+    }
+
+    if (status)
+    {
+        // Associate the callback with the transfer.
+        status = pXfr->setCallback(callBack);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue the transfer as part of this transaction.
+        _queueTransfer(pXfr);
     }
 
     if (!status) { SetLastError(error); }
@@ -294,26 +329,32 @@ BOOL I2cTransactionClass::execute()
         error = ERROR_CREATE_FAILED;
     }
 
-    // Claim the I2C controller.
-    lockResult = WaitForSingleObject(m_hI2cLock, 5000);
-    if ((lockResult == WAIT_OBJECT_0) || (lockResult == WAIT_ABANDONED))
+    if (status)
     {
-        haveLock = TRUE;
-    }
-    else if (lockResult == WAIT_TIMEOUT)
-    {
-        status = FALSE;
-        error = ERROR_TIMEOUT;
-    }
-    else
-    {
-        status = FALSE;
-        error = GetLastError();
+        // Claim the I2C controller.
+        lockResult = WaitForSingleObject(m_hI2cLock, 5000);
+        if ((lockResult == WAIT_OBJECT_0) || (lockResult == WAIT_ABANDONED))
+        {
+            haveLock = TRUE;
+        }
+        else if (lockResult == WAIT_TIMEOUT)
+        {
+            status = FALSE;
+            error = ERROR_TIMEOUT;
+        }
+        else
+        {
+            status = FALSE;
+            error = GetLastError();
+        }
     }
 
-    // Initialize the controller.
-    status = _initializeI2cForTransaction();
-    if (!status) { error = GetLastError(); }
+    if (status)
+    {
+        // Initialize the controller.
+        status = _initializeI2cForTransaction();
+        if (!status) { error = GetLastError(); }
+    }
 
     // Process each transfer on the queue.
     if (status)
@@ -362,19 +403,29 @@ BOOL I2cTransactionClass::_initializeI2cForTransaction()
 {
     BOOL status = TRUE;
     BOOL error = ERROR_SUCCESS;
+    ULONGLONG waitStartTicks = 0;
 
 
     // Get the I2C Controller mapped if it is not mapped yet.
     status = g_i2c.mapIfNeeded();
     if (!status) { error = GetLastError(); }
 
-    if (status)
+    if (status && (g_i2c.getAddress() != m_slaveAddress))
     {
         // Make sure the I2C controller is disabled.
         g_i2c.disableController();
 
+        // Wait for the controller to go inactive, but only for 100 mS.
+        // It can latch in a mode in which it does not go inactive, but appears 
+        // to come out of this state when used again.
+        waitStartTicks = GetTickCount64();
+        while (g_i2c.isActive() && ((GetTickCount64() - waitStartTicks) < 100))
+        {
+            Sleep(0);       // Give the CPU to any thread that is waiting
+        }
+
         // Set the desired I2C Clock speed.
-        g_i2c.setStandardSpeed();
+        g_i2c.setFastSpeed();
 
         // Allow bus restarts.
         g_i2c.enableRestartSupport();
@@ -400,8 +451,50 @@ BOOL I2cTransactionClass::_initializeI2cForTransaction()
     return status;
 }
 
-// Method to process each transfer in this transaction.
+// Method to process the transfers in this transaction.
 BOOL I2cTransactionClass::_processTransfers()
+{
+    BOOL status = TRUE;
+    BOOL error = ERROR_SUCCESS;
+    I2cTransferClass* pXfr = nullptr;
+
+
+    // For each sequence of transfers in the queue:
+    pXfr = m_pFirstXfr;
+    while (status && (pXfr != nullptr))
+    {
+        // Perform the sequence of transfers.
+        status = _performContiguousTransfers(pXfr);
+        if (!status) { error = GetLastError(); }
+
+        // If the next transfer has a callback routine, invoke it.
+        if (status && (pXfr != nullptr) && pXfr->hasCallback())
+        {
+            status = pXfr->invokeCallback();
+            if (!status) { error = GetLastError(); }
+
+            if (status)
+            {
+                // Get the next transfer in the transaction.
+                pXfr = pXfr->getNextTransfer();
+            }
+        }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+//
+// Method to perform a set of transfers that happen together on the I2C bus.
+// The sequence ends when a callback must be called, or at the end of the
+// transaction (whichever comes first).
+// INPUT:
+//      pXfr - Pointer to the next transfer to process.
+// OUTPUT:
+//      pXfr - Pointer to a callback "transfer" or NULL if at end of transaction.
+//
+BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
 {
     BOOL status = TRUE;
     BOOL error = ERROR_SUCCESS;
@@ -410,20 +503,35 @@ BOOL I2cTransactionClass::_processTransfers()
     PUCHAR readPtr = nullptr;
     BOOL restart = FALSE;
     ULONG cmdDat;
-    ULONG readWaitCount;
     UCHAR writeByte;
     UCHAR readByte;
+    ULONGLONG startWaitTicks = 0;
+    ULONGLONG currentTicks = 0;
 
 
-    // For each transfer in the queue:
-    cmdXfr = m_pFirstXfr;
+    if (pXfr == nullptr)
+    {
+        status = FALSE;
+        error = ERROR_INVALID_PARAMETER;
+    }
+
+    if (status)
+    {
+        // Calculate the command and read counts for the current sequence of 
+        // contigous transfers in this transaction.
+        status = _calculateCurrentCounts(pXfr);
+        if (!status) { error = GetLastError(); }
+    }
+
+    // For each transfer in this section of the transaction:
+    cmdXfr = pXfr;
     if ((cmdXfr != nullptr) && (cmdXfr->preResart()))
     {
         restart = TRUE;
     }
     while ((m_cmdsOutstanding > 0) && (cmdXfr != nullptr))
     {
-        // If this is the first read transfer:
+        // If this is the first read transfer in this sequence of transfers:
         if ((readXfr == nullptr) && cmdXfr->transferIsRead())
         {
             // Indicate this is the transfer to read into.
@@ -458,8 +566,9 @@ BOOL I2cTransactionClass::_processTransfers()
                 restart = FALSE;            // Only one RESTART allowed per transfer
             }
 
-            // If this is the last command in the last buffer, signal a STOP.
-            if (cmdXfr->lastCmdFetched() && (cmdXfr->getNextTransfer() == nullptr))
+            // If this is the last command before the end of the transaction or
+            // before a callback, signal a STOP.
+            if (m_cmdsOutstanding == 1)
             {
                 cmdDat = cmdDat | (1 << 9);
             }
@@ -491,10 +600,12 @@ BOOL I2cTransactionClass::_processTransfers()
             }
         }
         cmdXfr = cmdXfr->getNextTransfer();
+        //cmdXfr = nextXfr;
     }
 
     // Complete any outstanding reads.
-    readWaitCount = 0;
+    startWaitTicks = GetTickCount64();
+    currentTicks = startWaitTicks;
     while (status && (m_readsOutstanding > 0))
     {
         // Pull any available bytes out of the receive FIFO.
@@ -519,15 +630,13 @@ BOOL I2cTransactionClass::_processTransfers()
                 }
             }
         }
+        
 
+        // Wait up to to one second for all reads to come in.
         if (m_readsOutstanding > 0)
         {
-            if (readWaitCount < 50)
-            {
-                Sleep(20);
-                readWaitCount++;
-            }
-            else
+            currentTicks = GetTickCount64();
+            if ((currentTicks - startWaitTicks) > 1000)
             {
                 status = FALSE;
                 error = ERROR_RECEIVE_PARTIAL;
@@ -535,10 +644,18 @@ BOOL I2cTransactionClass::_processTransfers()
         }
     }
 
-    m_readWaitCount = readWaitCount;
+    // Pass the next transfer pointer back to the caller.
+    pXfr = cmdXfr;
+
+    // Record the read wait count for debugging purposes.
+    if ((currentTicks - startWaitTicks) > m_maxWaitTicks)
+    {
+        m_maxWaitTicks = (ULONG) (currentTicks - startWaitTicks);
+    }
 
     if (status)
     {
+        // Check for errors.
         if (m_cmdsOutstanding > 0)
         {
             status = FALSE;
@@ -575,14 +692,36 @@ BOOL I2cTransactionClass::_shutDownI2cAfterTransaction()
         Sleep(0);
     }
 
-    // Disable the controller.
-    g_i2c.disableController();
+    if (!status) { SetLastError(error); }
+    return status;
+}
 
-    // Wait for it to go inactive.
-    while (g_i2c.isActive() && (loopCount < 5))
+// Method to calculate the command and read counts for the current section
+// of the transaction (up to callback or end, whichever comes first).
+BOOL I2cTransactionClass::_calculateCurrentCounts(I2cTransferClass* nextXfr)
+{
+    BOOL status = TRUE;
+    BOOL error = ERROR_SUCCESS;
+    I2cTransferClass* pXfr = nextXfr;
+
+    // Clear out any counts currently in place.
+    m_cmdsOutstanding = 0;
+    m_readsOutstanding = 0;
+
+    // For each transfer in the queue or until a callback "transfer" is found:
+    while ((pXfr != nullptr) && !pXfr->hasCallback())
     {
-        Sleep(1);
-        loopCount++;
+        // Include the size of the transfer's buffer in the command count.
+        m_cmdsOutstanding = m_cmdsOutstanding + pXfr->getBufferSize();
+
+        // If this is a read transfer, include buffer size in read count.
+        if (pXfr->transferIsRead())
+        {
+            m_readsOutstanding = m_readsOutstanding + pXfr->getBufferSize();
+        }
+
+        // Get the next transfer.
+        pXfr = pXfr->getNextTransfer();
     }
 
     if (!status) { SetLastError(error); }
