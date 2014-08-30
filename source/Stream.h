@@ -3,9 +3,9 @@
 // See License.txt in the project root for license information.
 
 #pragma once
+#include "Print.h"
 
-
-class Stream
+class Stream : public Print
 {
 public:
     virtual size_t write(const uint8_t *buffer, size_t size) = 0;

@@ -1083,8 +1083,19 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
 // Arduino Sketch Plumbing
 //
 
+
+#include "Stream.h"
+#include "HardwareSerial.h"
+
 void setup();
 void loop();
+
+#ifdef SERIAL_EVENT
+void serialEvent();
+#endif
+#ifdef SERIAL_EVENT1
+void serialEvent1();
+#endif
 
 inline int RunArduinoSketch()
 {
@@ -1097,6 +1108,18 @@ inline int RunArduinoSketch()
         while ( 1 )
         {
             loop();
+            #ifdef SERIAL_EVENT
+            if (Serial && Serial.available() > 0)
+            {
+                serialEvent();
+            }
+            #endif
+            #ifdef SERIAL_EVENT1
+            if (Serial1 && Serial1.available() > 0)
+            {
+                serialEvent1();
+            }
+            #endif
         }
     }
     catch ( const _arduino_fatal_error &ex )
@@ -1161,7 +1184,5 @@ inline uint16_t makeWord(unsigned char h, unsigned char l) { return (h << 8) | l
 #define bit(b) (1UL << (b))
 #define __attribute__(x)
 
-#include "Stream.h"
-#include "HardwareSerial.h"
 #include "Wire.h"
 #endif // _WINDOWS_ARDUINO_H_
