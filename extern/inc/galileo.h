@@ -12,6 +12,7 @@
 
 #define ADC_NUM_CHANNELS 8
 #define ADC_MAX_VALUE 0xfff
+#define ADC_RESOLUTION 12
 
 #define PWM_MAX_DUTYCYCLE 0xffff
 

@@ -935,7 +935,8 @@ class ArduinoStatic
 
 public:
     ArduinoStatic() :
-        adc(nullptr)
+        adc(nullptr),
+        _analog_read_resolution(10)
     { }
 
     ~ArduinoStatic()
@@ -963,9 +964,10 @@ public:
     // Reads the value from the specified analog pin.
     // pin should be the analog pin number (0-5)
     //
-    int analogRead(int pin)
+    uint32_t analogRead(int32_t pin)
     {
-		LONG pinL = pin;
+        int32_t pinL = pin;
+        uint32_t result = 0;
 
 		// Allow for pins to be specified as A0-A5.
 		if ((pinL >= A0) && (pinL <= A5))
@@ -985,7 +987,15 @@ public:
             ThrowError("Arduino not initialized");
         }
 
-        LONG result = AdcSampleChannel(this->adc, (ULONG) pinL);
+        if (ADC_RESOLUTION >= _analog_read_resolution)
+        {
+            result = AdcSampleChannel(this->adc, (uint32_t)pinL) >> (ADC_RESOLUTION - _analog_read_resolution);
+        }
+        else
+        {
+            result = AdcSampleChannel(this->adc, (uint32_t)pinL) << (_analog_read_resolution - ADC_RESOLUTION);
+        }
+        
         if ( result < 0 )
         {
             ThrowError("AdcSampleChannel failed");
@@ -994,8 +1004,22 @@ public:
         return result;
     }
 
+    //
+    // Sets the size(in bits) of the value returned by analogRead().
+    // It defaults to 10 bits(returns values between 0 - 1023) for
+    // backward compatibility with AVR based boards. The Galileo has
+    // 12 - bit ADC capabilities that can be accessed by changing
+    // the resolution to 12. This will return values from analogRead()
+    // between 0 and 4095.
+    //
+    void analogReadResolution (const uint8_t resolution) {
+        if (resolution > (sizeof(uint32_t) * 8)) { ThrowError("Invalid analog read resolution!"); }
+        _analog_read_resolution = resolution;
+    }
+
 private:
     ADC *adc;
+    uint8_t _analog_read_resolution;
 };
 
 __declspec (selectany) ArduinoStatic _ArduinoStatic;
@@ -1009,9 +1033,14 @@ inline void ArduinoInit()
     GpioWrite(QRK_LEGACY_RESUME_SUS2, HIGH);
 }
 
-inline int analogRead(int channel)
+inline uint32_t analogRead(int32_t channel)
 {
     return _ArduinoStatic.analogRead(channel);
+}
+
+inline void analogReadResolution(uint8_t resolution)
+{
+    return _ArduinoStatic.analogReadResolution(resolution);
 }
 
 inline uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_)
