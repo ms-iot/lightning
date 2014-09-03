@@ -16,9 +16,12 @@
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #endif
+
 #include <cstdint>
 
+#ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
+#endif
 #include <math.h>
 
 #include "ArduinoError.h"
@@ -91,22 +94,48 @@
 #define TWO_PI          6.283185307179586476925286766559
 
 #define boolean bool
-typedef unsigned char byte;
+typedef uint8_t byte;
 
 typedef unsigned short word;
 
 //
 // Printf like function to log to stdout and if a debugger is attached to the debugger output.
 //
+inline int Log(const char *format, ...)
+{
+    va_list args;
+    int len = 0;
+    char *buffer = NULL;
+
+    va_start(args, format);
+    len = _vscprintf(format, args) + 1;
+    buffer = new char[len];
+    if (buffer != NULL)
+    {
+        len = vsprintf_s(buffer, len, format, args);
+        printf(buffer);
+        if (IsDebuggerPresent())
+        {
+            OutputDebugStringA(buffer);
+        }
+        delete[](buffer);
+    }
+    else
+    {
+        len = 0;
+    }
+    return len;
+}
+
 inline int Log(const wchar_t *format, ...)
 {
     va_list args;
     int len = 0;
-    wchar_t* buffer;
+    wchar_t *buffer = NULL;
 
     va_start(args, format);
     len = _vscwprintf(format, args) + 1;
-    buffer = (wchar_t*)malloc(len*sizeof(wchar_t));
+    buffer = new wchar_t[len];
     if (buffer != NULL)
     {
         len = vswprintf_s(buffer, len, format, args);
@@ -115,7 +144,7 @@ inline int Log(const wchar_t *format, ...)
         {
             OutputDebugStringW(buffer);
         }
-        free(buffer);
+        delete[](buffer);
     }
     else
     {
@@ -331,7 +360,7 @@ inline void _ValidateArduinoPinNumber(int pin)
 
 // This table specifies the mux function for PWM use on a pin.
 // The table is indexed by Arduino GPIO pin number.
-const UCHAR _PwmMuxFunction[NUM_ARDUINO_PINS]
+const uint8_t _PwmMuxFunction[NUM_ARDUINO_PINS]
 {
     DEFAULT_MUX,				// Pin 0 - No PWM
     DEFAULT_MUX,				// Pin 1 - No PWM
@@ -356,7 +385,7 @@ const UCHAR _PwmMuxFunction[NUM_ARDUINO_PINS]
 };
 
 // This table maps PWM pin numbers to I/O Expander pins.
-const UCHAR _PwmPinMap[NUM_ARDUINO_PINS]
+const uint8_t _PwmPinMap[NUM_ARDUINO_PINS]
 {
     0,							// Pin 0 - No PWM
     0,							// Pin 1 - No PWM
@@ -1125,8 +1154,8 @@ inline int RunArduinoSketch()
     catch ( const _arduino_fatal_error &ex )
     {
         ret = 1;
-        Log(L"\nSketch Aborted! A fatal error has occurred:\n");
-        printf("%s\n", ex.what());
+        Log("\nSketch Aborted! A fatal error has occurred:\n");
+        Log("%s\n", ex.what());
     }
     catch ( const _arduino_quit_exception & )
     {
@@ -1169,7 +1198,7 @@ inline long random(long min, long max)
     return random(diff) + min;
 }
 
-inline uint16_t makeWord(unsigned char h, unsigned char l) { return (h << 8) | l; }
+inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 #define word(x, y) makeWord(x, y)
 
 // Bits and Bytes

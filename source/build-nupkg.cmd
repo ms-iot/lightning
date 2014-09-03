@@ -35,7 +35,7 @@ copy *.cpp nupkg\build\native\source /y || goto err
 copy ..\extern\inc\embprpusr.h nupkg\build\native\include /y || goto err
 copy ..\extern\inc\galileo.h nupkg\build\native\include /y || goto err
 copy ..\extern\lib\x86\embprpusr.lib nupkg\build\native\lib /y || goto err
-copy license.txt nupkg /y || goto err
+copy ..\license.txt nupkg /y || goto err
 
 :: skip packaging step if requested
 if "%NOPACK%"=="1" goto end

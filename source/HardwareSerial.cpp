@@ -7,13 +7,29 @@
 
 void LogLastError()
 {
-    WCHAR *msg;
+    CHAR *msg;
     DWORD errCode = GetLastError();
-    FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&msg, 0, NULL);
+    FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&msg, 0, NULL);
     Log(msg);
 }
 
-DCB HardwareSerial::dcbArray[] = 
+HardwareSerial::HardwareSerial(const std::wstring &comPort)
+    :
+    _comHandle(INVALID_HANDLE_VALUE),
+    _comPortName(comPort),
+    _storageCount(0),
+    _storageIndex(0),
+    _storageUsed(false),
+    _timeout(1000)
+{
+}
+
+HardwareSerial::~HardwareSerial()
+{
+    end();
+}
+
+DCB HardwareSerial::dcbArray[] =
 {
     // sizeof(DCB)
     //   Baudrate at which running 
@@ -128,8 +144,10 @@ void HardwareSerial::setTimeout(unsigned long timeout)
 
     if (!SetCommTimeouts(_comHandle, &CommTimeouts))
     {
-        Log(L"Error %d when setting Com timeouts: ", GetLastError());
+#ifdef _DEBUG
+        Log("Error %d when setting Com timeouts: ", GetLastError());
         LogLastError();
+#endif
     }
 }
 
@@ -137,7 +155,7 @@ void HardwareSerial::begin(unsigned long baud, uint8_t config)
 {
     DCB dcb = dcbArray[config];
 
-    if (_comPortName == L"\\\\.\\COM1")
+    if ( _comPortName == L"\\\\.\\COM1" )
     {
         _PinFunction(0, ALTERNATE_MUX);
         _PinFunction(1, ALTERNATE_MUX);
@@ -145,12 +163,14 @@ void HardwareSerial::begin(unsigned long baud, uint8_t config)
         pinMode(1, OUTPUT);
     }
 
-    _comHandle = CreateFile(_comPortName, GENERIC_WRITE | GENERIC_READ, 0, NULL, OPEN_EXISTING, NULL, NULL);
+    _comHandle = CreateFile(_comPortName.c_str(), GENERIC_WRITE | GENERIC_READ, 0, NULL, OPEN_EXISTING, NULL, NULL);
 
     if (_comHandle == INVALID_HANDLE_VALUE)
     {
-        Log(L"Error %d due to invalid handle value: ", GetLastError());
+#ifdef _DEBUG
+        Log("Error %d due to invalid handle value: ", GetLastError());
         LogLastError();
+#endif
         return;
     }
 
@@ -158,8 +178,10 @@ void HardwareSerial::begin(unsigned long baud, uint8_t config)
 
     if (SetCommState(_comHandle, &dcb) == 0)
     {
-        Log(L"Error %d when setting Com state: ", GetLastError());
+#ifdef _DEBUG
+        Log("Error %d when setting Com state: ", GetLastError());
         LogLastError();
+#endif
         return;
     }
 
@@ -171,8 +193,10 @@ void HardwareSerial::end(void)
     if (_comHandle != INVALID_HANDLE_VALUE && CloseHandle(_comHandle) == 0)
     {
         _comHandle = INVALID_HANDLE_VALUE;
-        Log(L"Error %d when closing Com Handle: ", GetLastError());
+#ifdef _DEBUG
+        Log("Error %d when closing Com Handle: ", GetLastError());
         LogLastError();
+#endif
     }
 }
 
@@ -180,8 +204,10 @@ void HardwareSerial::flush(void)
 {
     if (FlushFileBuffers(_comHandle) == 0)
     {
-        Log(L"Error %d when calling Flush: ", GetLastError());
+#ifdef _DEBUG
+        Log("Error %d when calling Flush: ", GetLastError());
         LogLastError();
+#endif
     }
 }
 
@@ -191,8 +217,10 @@ int HardwareSerial::peek(void)
     {
         if (!ReadFile(_comHandle, &_storage, 64, &_storageCount, NULL))
         {
-            Log(L"Error %d when reading file: ", GetLastError());
+#ifdef _DEBUG
+            Log("Error %d when reading file: ", GetLastError());
             LogLastError();
+#endif
             return -1;
         }
 
@@ -223,8 +251,10 @@ int HardwareSerial::read(void)
     {
         if (!ReadFile(_comHandle, &_storage, 64, &_storageCount, NULL))
         {
-            Log(L"Error %d when reading file: ", GetLastError());
+#ifdef _DEBUG
+            Log("Error %d when reading file: ", GetLastError());
             LogLastError();
+#endif
             return -1;
         }
 
