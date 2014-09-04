@@ -109,6 +109,9 @@ inline long map(long x, long in_min, long in_max, long out_min, long out_max)
 
 // Function prototypes.
 inline void pinMode(unsigned int pin, unsigned int mode);
+inline void tone(int pin, unsigned int frequency);
+inline void tone(int pin, unsigned int frequency, unsigned long duration);
+inline void noTone(int pin);
 
 //
 // Pauses the program for the amount of time (in microseconds) 
@@ -405,7 +408,7 @@ inline uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_
 {
     uint8_t buffer(0);
 
-    for (uint8_t loop_count = 0, bit_index = 0 ; loop_count < 8 ; ++loop_count) {
+    for (uint8_t loop_count = 0, bit_index = 0; loop_count < 8; ++loop_count) {
         if (bit_order_ == LSBFIRST) {
             bit_index = loop_count;
         } else {
@@ -437,10 +440,32 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
     return;
 }
 
+
+inline void tone(int pin, unsigned int frequency)
+{
+    _ArduinoStatic.tone(pin, frequency);
+}
+
+inline void tone(int pin, unsigned int frequency, unsigned long duration)
+{
+    _ArduinoStatic.tone(pin, frequency, duration);
+}
+
+inline void noTone(int pin)
+{
+    _ArduinoStatic.noTone(pin);
+}
+
+//inline VOID CALLBACK ArduinoStatic::TimeProcStopTone_Wrapper(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime)
+//{
+//    _ArduinoStatic.TimeProcStopTone(hwnd, uMsg, idEvent, dwTime); // call non-static function
+//}
+
 //
 // Arduino Sketch Plumbing
 //
 
+#include "Stream.h"
 #include "HardwareSerial.h"
 
 void setup();
@@ -461,7 +486,7 @@ inline int RunArduinoSketch()
     {
         //ArduinoInit();
         setup();
-        while ( 1 )
+        while (1)
         {
             loop();
             #ifdef SERIAL_EVENT
@@ -478,13 +503,13 @@ inline int RunArduinoSketch()
             #endif
         }
     }
-    catch ( const _arduino_fatal_error &ex )
+    catch (const _arduino_fatal_error &ex)
     {
         ret = 1;
         Log("\nSketch Aborted! A fatal error has occurred:\n");
         Log("%s\n", ex.what());
     }
-    catch ( const _arduino_quit_exception & )
+    catch (const _arduino_quit_exception &)
     {
         // exit cleanly
     }
