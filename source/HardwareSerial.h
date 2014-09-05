@@ -10,10 +10,9 @@
 #include "NetworkSerial.h"
 #else
 
-#include "stdint.h"
-#include "stdlib.h"
-#include <functional>
+#include <cstdint>
 #include <string>
+
 #include "Stream.h"
 
 /// <summary>
@@ -32,11 +31,11 @@ class HardwareSerial : public Stream
 private:
     HANDLE _comHandle = INVALID_HANDLE_VALUE;
     BYTE _storage[64];
-    DWORD _storageCount = 0;
-    DWORD _storageIndex = 0;
-    bool _storageUsed = false;
-    WCHAR *_comPortName = L"";
-    unsigned long _timeout = 1000;
+    DWORD _storageCount;
+    DWORD _storageIndex;
+    bool _storageUsed;
+    const std::wstring _comPortName;
+    unsigned long _timeout;
 
 public:
     enum SerialConfigs
@@ -69,21 +68,9 @@ public:
 
     static DCB dcbArray[24];
 
-    HardwareSerial(wchar_t *ComPort = L"\\\\.\\COM1")
-    {
-        _comHandle = INVALID_HANDLE_VALUE;
-        _storage[64] = { 0 };
-        _storageCount = 0;
-        _storageIndex = 0;
-        _storageUsed = false;
-        _comPortName = ComPort;
-        _timeout = 1000;
-    }
+    HardwareSerial(const std::wstring &comPort = L"\\\\.\\COM1");
 
-    virtual ~HardwareSerial()
-    {
-        end();
-    }
+    virtual ~HardwareSerial();
 
     // Implementation of Arduino HardwareSerial::operator bool
     /// <summary>
