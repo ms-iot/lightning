@@ -98,6 +98,13 @@ typedef uint8_t byte;
 
 typedef unsigned short word;
 
+/// \brief Reference voltage constants
+/// \see analogReference()
+enum ReferenceVoltage : uint8_t {
+    DEFAULT = 0, ///< 5V analog reference
+    EXTERNAL = 1, ///< Pinout exists, but not supported by Galileo hardware
+};
+
 //
 // Printf like function to log to stdout and if a debugger is attached to the debugger output.
 //
@@ -1046,6 +1053,24 @@ public:
         _analog_read_resolution = resolution;
     }
 
+    /// \brief Sets the reference voltage for the analog to digital converter
+    /// \details This method sets the reference voltage for the analog to digital
+    /// converter
+    /// \param [in] reference_voltage This value is used to represent the
+    /// maximum voltage expected as input on the analog pins A0 - A5
+    /// \note An equal voltage would be represented as 1023 with 10-bit read
+    /// resolution
+    /// \note The Galileo hardware only supports 5V reference, regardless of
+    /// whether or not the jumper is set to 3V3 or 5V
+    /// \note The AREF pin on the Galileo is only wired to a capacitor and
+    /// nothing else, rendering it effectively useless
+    /// \warning Only the DEFAULT value is supported
+    /// \exception _arduino_fatal_error This error is thrown when any reference
+    /// voltage other than DEFAULT is used.
+    /// \see ReferenceVoltage
+    void analogReference (const uint8_t reference_voltage) {
+        if (DEFAULT != reference_voltage) { ThrowError("Unsupported voltage set as analog reference!"); }
+    }
 private:
     ADC *adc;
     uint8_t _analog_read_resolution;
@@ -1067,9 +1092,14 @@ inline uint32_t analogRead(int32_t channel)
     return _ArduinoStatic.analogRead(channel);
 }
 
-inline void analogReadResolution(uint8_t resolution)
+inline void analogReadResolution(const uint8_t resolution)
 {
     return _ArduinoStatic.analogReadResolution(resolution);
+}
+
+inline void analogReference(const uint8_t reference_voltage)
+{
+    return _ArduinoStatic.analogReference(reference_voltage);
 }
 
 inline uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_)
