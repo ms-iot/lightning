@@ -8,7 +8,7 @@
 #include <Windows.h>
 #include <functional>
 
-#include "PinSupport.h"
+#include "GalileoPins.h"
 #include "DmapSupport.h"
 
 #define CMD_WRITE 0
@@ -522,20 +522,16 @@ private:
     } I2C_CONTROLLER, *PI2C_CONTROLLER;
 
     //
-    // I2cControllerClass data members.
+    // I2cControllerClass private data members.
     //
 
-    // Handle to the device that can be used to map I2C controller registers
+    // Handle to the device that can be used to map I2C Controller registers
     // into user-mode address space.
     HANDLE m_hController;
 
     // Pointer to the object used to address the I2C Controller registers after
     // they are mapped into this process' address space.
     PI2C_CONTROLLER m_controller;
-
-    //
-    // I2cControllerClass private member functions.
-    //
 
     // Method to map the I2C controller into this process' virtual address space.
     BOOL _mapController();

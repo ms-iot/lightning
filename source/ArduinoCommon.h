@@ -6,16 +6,55 @@
 #define _ARDUINO_COMMON_H_
 
 
-#define LOW             0x00
-#define HIGH            0x01
+const UCHAR LOW = 0x00;
+const UCHAR HIGH = 0x01;
 
-#define INPUT           0x00
-#define OUTPUT          0x01
-#define INPUT_PULLUP    0x02
+const UCHAR DIRECTION_IN = 0x00;
+const UCHAR DIRECTION_OUT = 0x01;
+const UCHAR INPUT_PULLUP = 0x02;
 
-#define LSBFIRST        0x00
-#define MSBFIRST        0x01
+const UCHAR LSBFIRST = 0x00;
+const UCHAR MSBFIRST = 0x01;
 
-#define NUM_ARDUINO_PINS 20
+const UCHAR NUM_ARDUINO_PINS = 20;
+
+// Pin name to number mapping.
+const UCHAR D0 = 0;
+const UCHAR D1 = 1;
+const UCHAR D2 = 2;
+const UCHAR D3 = 3;
+const UCHAR D4 = 4;
+const UCHAR D5 = 5;
+const UCHAR D6 = 6;
+const UCHAR D7 = 7;
+const UCHAR D8 = 8;
+const UCHAR D9 = 9;
+const UCHAR D10 = 10;
+const UCHAR D11 = 11;
+const UCHAR D12 = 12;
+const UCHAR D13 = 13;
+const UCHAR A0 = 14;
+const UCHAR A1 = 15;
+const UCHAR A2 = 16;
+const UCHAR A3 = 17;
+const UCHAR A4 = 18;
+const UCHAR A5 = 19;
+
+// Pin function type values.
+const UCHAR FUNC_DIO = 0x01;    // Digital I/O
+const UCHAR FUNC_PWM = 0x02;    // Pulse Width Modulation (PWM)
+const UCHAR FUNC_AIN = 0x04;    // Analog In
+const UCHAR FUNC_I2C = 0x08;    // I2C Bus
+const UCHAR FUNC_SPI = 0x10;    // SPI Bus
+const UCHAR FUNC_SER = 0x20;    // Hardware Serial
+
+// SPI signal to pin mapping.
+const UCHAR PIN_MOSI = D11;
+const UCHAR PIN_MISO = D12;
+const UCHAR PIN_SCK = D13;
+
+// I2C signal to pin mapping.
+const UCHAR PIN_I2C_DAT = A4;
+const UCHAR PIN_I2C_CLK = A5;
 
 #endif  // _ARDUINO_COMMON_H_

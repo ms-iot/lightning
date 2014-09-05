@@ -31,6 +31,19 @@ public:
         return status;
     }
 
+    static BOOL SetBitDirection(UCHAR i2cAdr, UCHAR portBit, UCHAR direction)
+    {
+        BOOL status = TRUE;
+        DWORD error = ERROR_SUCCESS;
+
+
+        if (!status)
+        {
+            SetLastError(error);
+        }
+        return status;
+    }
+
 private:
 };
 

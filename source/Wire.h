@@ -118,7 +118,7 @@ public:
 
     int requestFrom(int address, int quantity, int sendStop)
     {
-        DWORD bytesReturned;
+        //DWORD bytesReturned;
 
         UNREFERENCED_PARAMETER(sendStop);
 
@@ -168,10 +168,11 @@ public:
             //}
         }
 
-        this->readBuf.resize(bytesReturned);
+        //this->readBuf.resize(bytesReturned);
         this->readIndex = this->readBuf.begin();
 
-        return bytesReturned;
+        //return bytesReturned;
+        return 0;
     }
 
     bool getI2cHasBeenEnabled()

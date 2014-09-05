@@ -28,11 +28,11 @@ BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAd
 //
 // INPUT:
 //  deviceName - The name of the PCI device used to map the controller in question.
+//  shareMode - Sharing specifier as specified to Createfile().
 //
 // OUTPUT:
 //  handle - Handle opened to the device specified by deviceName.
-//  baseAddress - Base address of the controller in questions.
-//  shareMode - Sharing specifier as specified to Createfile().
+//  baseAddress - Base address of the controller in question.
 //
 // RETURN:
 //  TRUE - Success

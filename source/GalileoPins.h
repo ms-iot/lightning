@@ -93,7 +93,6 @@ private:
     BOOL _setExpBitToState(UCHAR expNo, UCHAR bitNo, UCHAR state);
 
     inline BOOL _pinNumberIsValid(UCHAR pin);
-
 };
 
 __declspec (selectany) GalileoPinsClass g_pins;

@@ -10,7 +10,7 @@
 #include "ArduinoCommon.h"
 #include "ArduinoError.h"
 #include "SpiController.h"
-#include "PinSupport.h"
+#include "GalileoPins.h"
 
 // SPI clock values in KHz.
 #define SPI_CLOCK_DIV2 8000
@@ -54,28 +54,28 @@ public:
         }
 
         // Set SCK and MOSI as outputs dedicated to SPI, and pulled LOW.
-        if (!_setPinFunction(PIN_SCK, FUNC_SPI))
+        if (!g_pins._setPinFunction(PIN_SCK, FUNC_SPI))
         {
             ThrowError("An error occurred configuring pinSCK for SPI use: %08x", GetLastError());
         }
 
-        if (!_setPinState(PIN_SCK, LOW))
+        if (!g_pins._setPinState(PIN_SCK, LOW))
         {
             ThrowError("An error occurred setting pinSCK LOW: %08x", GetLastError());
         }
 
-        if (!_setPinFunction(PIN_MOSI, FUNC_SPI))
+        if (!g_pins._setPinFunction(PIN_MOSI, FUNC_SPI))
         {
             ThrowError("An error occurred configuring pinMOSI for SPI use: %08x", GetLastError());
         }
 
-        if (!_setPinState(PIN_MOSI, LOW))
+        if (!g_pins._setPinState(PIN_MOSI, LOW))
         {
             ThrowError("An error occurred setting pinMOSI LOW: %08x", GetLastError());
         }
 
         // Set MISO as an input dedicated to SPI.
-        if (!_setPinFunction(PIN_MISO, FUNC_SPI))
+        if (!g_pins._setPinFunction(PIN_MISO, FUNC_SPI))
         {
             ThrowError("An error occurred configuring pinMISO for SPI use: %08x", GetLastError());
         }

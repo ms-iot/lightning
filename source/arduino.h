@@ -29,7 +29,7 @@
 #include "WindowsRandom.h"
 #include "WindowsTime.h"
 #include "WString.h"
-#include "PinSupport.h"
+#include "GalileoPins.h"
 //#include "embprpusr.h"
 #include "galileo.h"
 #include "binary.h"
@@ -452,13 +452,13 @@ __declspec (noinline) inline void _ReadPinConfiguration(int pin, PPIN_DATA pinDa
     // The I/O Expander uses 0 for output, 1 for input.
     if ((portConfig[PIN_DIRECTION] & (1 << _ArduinoToPortBitMap[pin].BitNumber)) == 0)
     {
-        pinData->currentMode = OUTPUT;
-        pinData->modeSet = OUTPUT;
+        pinData->currentMode = DIRECTION_OUT;
+        pinData->modeSet = DIRECTION_OUT;
     }
     else
     {
-        pinData->currentMode = INPUT;
-        pinData->modeSet = INPUT;
+        pinData->currentMode = DIRECTION_IN;
+        pinData->modeSet = DIRECTION_IN;
     }
 
     // If the port pin is configured as a PMW:
@@ -594,8 +594,8 @@ __declspec (noinline) inline void _InitializePin(int pin)
     {
         // We can't query the pin configuration, so we just initialize it.
         _pinData[pin].pinInitialized = TRUE;		// Avoid recursive loop calling pinMode()!
-        _pinData[pin].currentMode = OUTPUT;			// Force update of pin direction
-        pinMode(pin, INPUT);
+        _pinData[pin].currentMode = DIRECTION_OUT;			// Force update of pin direction
+        pinMode(pin, DIRECTION_IN);
 
 		// If this is a PWM pin:
 		if (_PwmPinMap[pin] != 0)
@@ -672,9 +672,6 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
 {
     _ValidateArduinoPinNumber(pin);
 
-    // Revert the pin if it is in PWM mode.
-    _RevertPinToDigital(pin);
-
     if (state != LOW)
     {
         // Emulate Arduino behavior here. Code like firmata uses bitmasks to set
@@ -682,15 +679,9 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
         state = HIGH;
     }
 
-    if (!_pinData[pin].stateIsKnown || (_pinData[pin].state != state))
+    if (!g_pins._setPinState(pin, state))
     {
-        //HRESULT hr = GpioWrite(_ArduinoToGalileoPinMap[pin], (ULONG)state);
-        //if (FAILED(hr))
-        //{
-        //    ThrowError("GpioWrite() failed. pin=%d, state=%d", pin, state);
-        //}
-        _pinData[pin].state = state;
-        _pinData[pin].stateIsKnown = TRUE;
+        ThrowError("Error occurred setting pin: %d to state: %d, Error: %08x", pin, state, GetLastError());
     }
 }
 
@@ -735,26 +726,29 @@ inline int digitalRead(int pin)
 //
 inline void pinMode(unsigned int pin, unsigned int mode)
 {
-    _ValidateArduinoPinNumber(pin);
-    _ValidatePinOkToChange(pin);
-    _InitializePinIfNeeded(pin);
-
-	if (_pinData[pin].pwmIsEnabled)
-	{
-		//PwmStop(_PwmPinMap[pin]);
-		_pinData[pin].pwmIsEnabled = FALSE;
-	}
-
-    if (_pinData[pin].currentMode != mode)
+    if (!g_pins._setPinMode(pin, mode, false))
     {
-        //HRESULT hr = GpioSetDir(_ArduinoToGalileoPinMap[pin], mode);
-        //if (FAILED(hr))
-        //{
-        //    ThrowError("GpioSetDir() failed. pin = %d, mode = %d", pin, mode);
-        //}
-        _pinData[pin].modeSet = mode;
-        _pinData[pin].currentMode = mode;
+        ThrowError("Error setting mode: %d for pin: %d, Error: %08x", mode, pin, GetLastError());
     }
+ //   _ValidatePinOkToChange(pin);
+ //   _InitializePinIfNeeded(pin);
+
+	//if (_pinData[pin].pwmIsEnabled)
+	//{
+	//	//PwmStop(_PwmPinMap[pin]);
+	//	_pinData[pin].pwmIsEnabled = FALSE;
+	//}
+
+ //   if (_pinData[pin].currentMode != mode)
+ //   {
+ //       //HRESULT hr = GpioSetDir(_ArduinoToGalileoPinMap[pin], mode);
+ //       //if (FAILED(hr))
+ //       //{
+ //       //    ThrowError("GpioSetDir() failed. pin = %d, mode = %d", pin, mode);
+ //       //}
+ //       _pinData[pin].modeSet = mode;
+ //       _pinData[pin].currentMode = mode;
+ //   }
 }
 
 //
@@ -932,7 +926,7 @@ inline void analogWrite(int pin, int value)
     {
         // Prepare the pin for PWM use.
         _PinFunction(pin, _PwmMuxFunction[pin]);
-        _SetImplicitPinMode(pin, OUTPUT);
+        _SetImplicitPinMode(pin, DIRECTION_OUT);
         _pinData[pin].stateIsKnown = FALSE;
 
         // Start PWM on the pin.
@@ -1077,7 +1071,7 @@ inline void ArduinoInit()
     _ArduinoStatic.begin();
 
     // ensure level shifter enabled
-    //GpioSetDir(QRK_LEGACY_RESUME_SUS2, OUTPUT);
+    //GpioSetDir(QRK_LEGACY_RESUME_SUS2, DIRECTION_OUT);
     //GpioWrite(QRK_LEGACY_RESUME_SUS2, HIGH);
 }
 

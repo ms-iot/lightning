@@ -159,8 +159,8 @@ void HardwareSerial::begin(unsigned long baud, uint8_t config)
     {
         _PinFunction(0, ALTERNATE_MUX);
         _PinFunction(1, ALTERNATE_MUX);
-        pinMode(0, INPUT);
-        pinMode(1, OUTPUT);
+        pinMode(0, DIRECTION_IN);
+        pinMode(1, DIRECTION_OUT);
     }
 
     _comHandle = CreateFile(_comPortName.c_str(), GENERIC_WRITE | GENERIC_READ, 0, NULL, OPEN_EXISTING, NULL, NULL);
