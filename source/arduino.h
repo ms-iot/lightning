@@ -105,7 +105,7 @@ inline int Log(const wchar_t *format, ...)
 
 // Arduino math definitions
 #define abs(x) ((x)>0?(x):-(x))
-#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+#define constrain(amt,low,high) do {amt=((amt)<(low)?(low):((amt)>(high)?(high):(amt)));} while (0)
 #define sq(x) ((x)*(x))
 inline long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
