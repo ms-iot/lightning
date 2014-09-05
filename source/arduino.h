@@ -167,7 +167,7 @@ inline int Log(const wchar_t *format, ...)
 
 // Arduino math definitions
 #define abs(x) ((x)>0?(x):-(x))
-#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+#define constrain(amt,low,high) do {amt=((amt)<(low)?(low):((amt)>(high)?(high):(amt)));} while (0)
 #define sq(x) ((x)*(x))
 inline long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
@@ -191,7 +191,7 @@ inline void _InitializePin(int pin);
 // pin configurations to be restored when needed after changes have been 
 // made for an alternate pin function (PWM vs GPIO use, for example).
 typedef struct {   // Comment format: Initialized value - Description
-    UINT pwmDutyCycle : 8;      // 0 - Pulse width (0 = 0%, 255 = 100%)
+    UINT pwmDutyCycle : 16;      // 0 - Pulse width (0 = 0%, 255 = 100%)
     UINT currentMode : 1;       // INPUT - INPUT or OUTPUT
     UINT modeSet : 1;           // INPUT - INPUT or OUTPUT set explicitely
     UINT currentMux : 1;        // DEFAULT_MUX - DEFAULT_MUX or ALTERNATE_MUX
@@ -910,68 +910,6 @@ inline void _RevertPinToDigital(int pin)
     _RevertImplicitPinMode(pin);
 }
 
-//
-// Perform an analog write (PWM) operation.
-//
-// INPUTS:
-//	pin - The Arduino GPIO pin on which to generate the pulse train.
-//        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
-//
-//  value - The analong value, which translates to the duty cycle of 
-//        the pulse train.  Range: 0-255
-//        0 - 0% duty cycle (no pulses are generated, output is LOW)
-//		  128 - 50% duty cycle (pulse train is HIGH 50% of the time)
-//        255 - 100% duty cycle (pulse train is HIGH continuously)
-//
-// NOTES:
-//  A pulse frequency of 100hz is requested, which will actually get 
-//  us about 92 hz (with clock granularity), or 92 pulses per second.
-//
-inline void analogWrite(int pin, int value)
-{
-    _ValidatePwmPin(pin);
-    _ValidatePinOkToChange(pin);
-    _InitializePinIfNeeded(pin);
-
-    HRESULT hr = ERROR_SUCCESS;
-    ULONG dutyCycleIn = value & 255UL;	// Limit duty cycle to 100%
-
-    // Scale the duty cycle to the range used by the driver.
-    // From 0-255 to 0-PWM_MAX_DUTYCYCLE, rounding to nearest value.
-    ULONG dutyCycle = ((dutyCycleIn * PWM_MAX_DUTYCYCLE) + 127UL) / 255UL;
-
-    // If PWM operation is not currently enabled on this pin:
-    if (!_pinData[pin].pwmIsEnabled)
-    {
-        // Prepare the pin for PWM use.
-        _PinFunction(pin, _PwmMuxFunction[pin]);
-        _SetImplicitPinMode(pin, OUTPUT);
-        _pinData[pin].stateIsKnown = FALSE;
-
-        // Start PWM on the pin.
-        hr = PwmStart(_PwmPinMap[pin], PWM_HZ, dutyCycle);
-        if (FAILED(hr))
-        {
-            ThrowError("PwmStart() failed. pin=%d, freq=100hz, dutyCycle=%d",
-                pin, dutyCycleIn);
-        }
-        _pinData[pin].pwmIsEnabled = TRUE;
-        _pinData[pin].pwmDutyCycle = dutyCycleIn;
-    }
-
-    // If PWM operation is enabled on this pin, and duty cycle is being changed:
-    else if (_pinData[pin].pwmDutyCycle != dutyCycleIn)
-    {
-        hr = PwmSetDutyCycle(_PwmPinMap[pin], dutyCycle);
-        if (FAILED(hr))
-        {
-            ThrowError("PwmSetDutyCycle() failed. pin=%d, dutyCycle=%d",
-                pin, dutyCycleIn);
-        }
-        _pinData[pin].pwmDutyCycle = dutyCycleIn;
-    }
-}
-
 class ArduinoStatic
 {
 
@@ -988,9 +926,9 @@ public:
 
     ArduinoStatic() :
         adc(nullptr),
-        _analog_read_resolution(10)
-    {
-    }
+        _analog_read_resolution(10),
+        _analog_write_resolution(8)
+    { }
 
     ~ArduinoStatic()
     {
@@ -1013,86 +951,22 @@ public:
         }
     }
 
-    //
-    // Reads the value from the specified analog pin.
-    // pin should be the analog pin number (0-5)
-    //
-    uint32_t analogRead(int32_t pin)
-    {
-        int32_t pinL = pin;
-        uint32_t result = 0;
-
-        // Allow for pins to be specified as A0-A5.
-        if ((pinL >= A0) && (pinL <= A5))
-        {
-            pinL = pinL - A0;
-        }
-
-        // special value -1 means temp sense conversion
-        if ((pinL < -1) || (pinL >= NUM_ANALOG_PINS))
-        {
-            ThrowError("Invalid pin number (%d). Pin must be in the range [-1, %d] or [A0, A5].\n",
-                pinL, NUM_ANALOG_PINS);
-        }
-
-        if (this->adc == nullptr)
-        {
-            ThrowError("Arduino not initialized");
-        }
-
-        if (ADC_RESOLUTION >= _analog_read_resolution)
-        {
-            result = AdcSampleChannel(this->adc, (uint32_t) pinL) >> (ADC_RESOLUTION - _analog_read_resolution);
-        }
-        else
-        {
-            result = AdcSampleChannel(this->adc, (uint32_t) pinL) << (_analog_read_resolution - ADC_RESOLUTION);
-        }
-
-        if (result < 0)
-        {
-            ThrowError("AdcSampleChannel failed");
-        }
-
-        return result;
-    }
-
-    //
-    // Sets the size(in bits) of the value returned by analogRead().
-    // It defaults to 10 bits(returns values between 0 - 1023) for
-    // backward compatibility with AVR based boards. The Galileo has
-    // 12 - bit ADC capabilities that can be accessed by changing
-    // the resolution to 12. This will return values from analogRead()
-    // between 0 and 4095.
-    //
-    void analogReadResolution(const uint8_t resolution)
-    {
-        if (resolution > (sizeof(uint32_t) * 8)) { ThrowError("Invalid analog read resolution!"); }
-        _analog_read_resolution = resolution;
-    }
-
-    /// \brief Sets the reference voltage for the analog to digital converter
-    /// \details This method sets the reference voltage for the analog to digital
-    /// converter
-    /// \param [in] reference_voltage This value is used to represent the
-    /// maximum voltage expected as input on the analog pins A0 - A5
-    /// \note An equal voltage would be represented as 1023 with 10-bit read
-    /// resolution
-    /// \note The Galileo hardware only supports 5V reference, regardless of
-    /// whether or not the jumper is set to 3V3 or 5V
-    /// \note The AREF pin on the Galileo is only wired to a capacitor and
-    /// nothing else, rendering it effectively useless
-    /// \warning Only the DEFAULT value is supported
-    /// \exception _arduino_fatal_error This error is thrown when any reference
-    /// voltage other than DEFAULT is used.
-    /// \see ReferenceVoltage
-    void analogReference(const uint8_t reference_voltage) {
-        if (DEFAULT != reference_voltage) { ThrowError("Unsupported voltage set as analog reference!"); }
-    }
-
     // These defines and struct are used for tone functions
 
 #define _MILLISECOND 10000
+
+    ///
+    /// \brief The callback for timers set up during a tone with duration
+    /// \details This will stop a PWM wave on the designated pin
+    /// \param [in] lpArg a (VOID *) that is the data being passed into it
+    /// \param [in] dwTimerLowValue
+    /// \param [in] dwTimerHighValue
+    ///
+    static VOID CALLBACK TimeProcStopTone(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
+    {
+        int pin = reinterpret_cast<int>(lpArg);
+        noTone(pin);
+    }
 
     void tone(int pin, unsigned int frequency)
     {
@@ -1143,19 +1017,6 @@ public:
         }
     }
 
-    ///
-    /// \brief The callback for timers set up during a tone with duration
-    /// \details This will stop a PWM wave on the designated pin
-    /// \param [in] lpArg a (VOID *) that is the data being passed into it
-    /// \param [in] dwTimerLowValue
-    /// \param [in] dwTimerHighValue
-    ///
-    static VOID CALLBACK TimeProcStopTone(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
-    {
-        int pin = reinterpret_cast<int>(lpArg);
-        noTone(pin);
-    }
-
     void tone(int pin, unsigned int frequency, unsigned long duration)
     {
         // Generates and starts the square wave
@@ -1172,13 +1033,13 @@ public:
         LARGE_INTEGER timerDueTime;
 
         // Timing is done in 100 nanosecond units
-        int64_t qwDueTime = -1 * (int64_t) duration * _MILLISECOND; // typecast is allowed since unsigned long is smaller than int64
+        int64_t qwDueTime = -1 * (int64_t)duration * _MILLISECOND; // typecast is allowed since unsigned long is smaller than int64
 
         // Copy the relative time into a LARGE_INTEGER.
-        timerDueTime.LowPart = (DWORD) (qwDueTime & 0xFFFFFFFF);
-        timerDueTime.HighPart = (LONG) (qwDueTime >> 32);
+        timerDueTime.LowPart = (DWORD)(qwDueTime & 0xFFFFFFFF);
+        timerDueTime.HighPart = (LONG)(qwDueTime >> 32);
 
-        if (SetWaitableTimer(timerHandle, &timerDueTime, 0, TimeProcStopTone, (VOID *) pin, FALSE) == 0)
+        if (SetWaitableTimer(timerHandle, &timerDueTime, 0, TimeProcStopTone, (VOID *)pin, FALSE) == 0)
         {
             DWORD err = GetLastError();
             ThrowError("Error setting waitable timer for tone: %d", err);
@@ -1196,9 +1057,112 @@ public:
 
     }
 
+    uint32_t analogRead(int32_t pin)
+    {
+        int32_t pinL = pin;
+        uint32_t result = 0;
+
+        // Allow for pins to be specified as A0-A5.
+        if ((pinL >= A0) && (pinL <= A5))
+        {
+            pinL = pinL - A0;
+        }
+
+        // special value -1 means temp sense conversion
+        if ((pinL < -1) || (pinL >= NUM_ANALOG_PINS))
+        {
+            ThrowError("Invalid pin number (%d). Pin must be in the range [-1, %d] or [A0, A5].\n",
+                pinL, NUM_ANALOG_PINS);
+        }
+
+        if (this->adc == nullptr)
+        {
+            ThrowError("Arduino not initialized");
+        }
+
+        if (ADC_RESOLUTION >= _analog_read_resolution)
+        {
+            result = AdcSampleChannel(this->adc, (uint32_t) pinL) >> (ADC_RESOLUTION - _analog_read_resolution);
+        }
+        else
+        {
+            result = AdcSampleChannel(this->adc, (uint32_t) pinL) << (_analog_read_resolution - ADC_RESOLUTION);
+        }
+
+        if (result < 0)
+        {
+            ThrowError("AdcSampleChannel failed");
+        }
+
+        return result;
+    }
+
+    void analogWrite(const uint8_t pin, const uint32_t value)
+    {
+        _ValidatePwmPin(pin);
+        _ValidatePinOkToChange(pin);
+        _InitializePinIfNeeded(pin);
+
+        HRESULT hr = ERROR_SUCCESS;
+        const uint32_t pwm_max_value = ((static_cast<uint64_t>(1) << _analog_write_resolution) - 1);
+
+        // Test the required resolution for the value parameter
+        if (value > pwm_max_value) { ThrowError("Analog value too large for current resolution -%u-", _analog_write_resolution); }
+
+        // Scale the duty cycle to the range used by the driver.
+        // From 0-pwm_max_value to 0-PWM_MAX_DUTYCYCLE (rounded).
+        uint32_t dutyCycle = static_cast<uint32_t>(((static_cast<uint64_t>(value) * PWM_MAX_DUTYCYCLE) + (PWM_MAX_DUTYCYCLE >> 1)) / pwm_max_value);
+
+        constrain(dutyCycle, 0, 65535);
+
+        // If PWM operation is not currently enabled on this pin:
+        if (!_pinData[pin].pwmIsEnabled)
+        {
+            // Prepare the pin for PWM use.
+            _PinFunction(pin, _PwmMuxFunction[pin]);
+            _SetImplicitPinMode(pin, OUTPUT);
+            _pinData[pin].stateIsKnown = FALSE;
+
+            // Start PWM on the pin.
+            hr = PwmStart(_PwmPinMap[pin], PWM_HZ, dutyCycle);
+            if (FAILED(hr))
+            {
+                ThrowError("PwmStart() failed. pin=%d, freq=100hz, dutyCycle=%d", pin, value);
+            }
+            _pinData[pin].pwmIsEnabled = TRUE;
+            _pinData[pin].pwmDutyCycle = dutyCycle;
+        }
+
+        // If PWM operation is enabled on this pin, and duty cycle is being changed:
+        else if (_pinData[pin].pwmDutyCycle != dutyCycle)
+        {
+            hr = PwmSetDutyCycle(_PwmPinMap[pin], dutyCycle);
+            if (FAILED(hr))
+            {
+                ThrowError("PwmSetDutyCycle() failed. pin=%d, dutyCycle=%d", pin, value);
+            }
+            _pinData[pin].pwmDutyCycle = dutyCycle;
+        }
+    }
+
+    void analogReference(const uint8_t reference_voltage) {
+        if (DEFAULT != reference_voltage) { ThrowError("Unsupported voltage set as analog reference!"); }
+    }
+
+    void analogReadResolution(const uint8_t resolution) {
+        if (resolution > (sizeof(uint32_t) * 8)) { ThrowError("Invalid analog read resolution!"); }
+        _analog_read_resolution = resolution;
+    }
+
+    void analogWriteResolution(const uint8_t resolution) {
+        if (resolution > (sizeof(uint32_t) * 8)) { ThrowError("Invalid analog read resolution!"); }
+        _analog_write_resolution = resolution;
+    }
+
 private:
     ADC *adc;
     uint8_t _analog_read_resolution;
+    uint8_t _analog_write_resolution;
 };
 
 __declspec (selectany) ArduinoStatic _ArduinoStatic;
@@ -1212,16 +1176,82 @@ inline void ArduinoInit()
     GpioWrite(QRK_LEGACY_RESUME_SUS2, HIGH);
 }
 
-inline uint32_t analogRead(int32_t channel)
+/// \brief Reads the value from the specified analog pin.
+/// \param [in] pin should be the analog pin number (A0-A5)
+/// \returns The numerator of a ratio of input voltage over
+/// reference voltage, which is represented as 2^analogReadResolution(x).
+inline uint32_t analogRead(int32_t pin)
 {
-    return _ArduinoStatic.analogRead(channel);
+    return _ArduinoStatic.analogRead(pin);
 }
 
+/// \brief Perform an analog write (PWM) operation.
+/// \param [in] pin The Arduino GPIO pin on which to generate
+/// the pulse train. Pins 3, 5, 6, 7, 8, 9, 10, or 11 are valid.
+/// \param [in] value The analong value, which translates to the
+/// duty cycle of the pulse train. Range: 0-2^analogWriteResolution(x)
+/// - 0 - 0% duty cycle (no pulses are generated, output is LOW)
+/// - 2^analogWriteResolution(x) - 100% duty cycle (pulse train is HIGH
+/// continuously)
+/// \note A pulse frequency of 100hz is requested, which will actually get 
+/// us about 92 hz (with clock granularity), or 92 pulses per second.
+inline void analogWrite(const uint8_t pin, const uint32_t value)
+{
+    return _ArduinoStatic.analogWrite(pin, value);
+}
+
+/// \brief Sets the size(in bits) of the value returned by analogRead().
+/// \param [in] resolution The number of bits used to represent a voltage
+/// equal to the reference volatage (5V0).
+/// \note It defaults to 10 bits(returns values between 0 - 1023) for
+/// backward compatibility with AVR based boards.
+/// \note The Galileo has 12 - bit ADC capabilities that can be accessed
+/// by changing the resolution to 12. This will return values from analogRead()
+/// between 0 and 4095.
+/// \warning Unlike Arduino, if you set the analogReadResolution() value to a
+/// value lower or higher than your board's capabilities, your input will be
+/// scaled as accurately as possible.
 inline void analogReadResolution(const uint8_t resolution)
 {
     return _ArduinoStatic.analogReadResolution(resolution);
 }
 
+/// \brief Sets the resolution (in bits) of the values accepted by analogWrite().
+/// \details Sets the resolution (in bits) of the values accepted by analogWrite().
+/// The underlying driver has 16-bit PWM resolution. You will lose accuracy if
+/// you choose an alternative resolution.
+/// a value less than 16, the value passed to analogWrite() will be padded
+/// with zeros. On the other hand, any value greater than 16 the other bits
+/// will be truncated.
+/// \param [in] resolution The number of bits used to represent
+/// a 100% duty cycle - valid range: 1-32 (i.e. 10 [bits] -> 1023 [max value]).
+/// \note The default write resolution is 8-bit (values between 0 - 255)
+/// for backward compatibility with AVR based boards.
+/// \note There is not a dedicated DAC chip, instead the on-board
+/// GPIO expander provides PWM support with 8-bit resolution.
+/// \warning Unlike Arduino, if you set the analogWriteResolution() value to a
+/// value lower or higher than your board's capabilities, your input will be
+/// scaled as accurately as possible.
+inline void analogWriteResolution(const uint8_t resolution)
+{
+    return _ArduinoStatic.analogWriteResolution(resolution);
+}
+
+/// \brief Sets the reference voltage for the analog to digital converter
+/// \details This method sets the reference voltage for the analog to digital
+/// converter
+/// \param [in] reference_voltage This value is used to represent the
+/// maximum voltage expected as input on the analog pins A0 - A5
+/// \note An equal voltage would be represented as 1023 with 10-bit read
+/// resolution
+/// \note The Galileo hardware only supports 5V reference, regardless of
+/// whether or not the jumper is set to 3V3 or 5V
+/// \note The AREF pin on the Galileo is only wired to a capacitor and
+/// nothing else, rendering it effectively useless
+/// \warning Only the DEFAULT value is supported
+/// \exception _arduino_fatal_error This error is thrown when any reference
+/// voltage other than DEFAULT is used.
+/// \see ReferenceVoltage
 inline void analogReference(const uint8_t reference_voltage)
 {
     return _ArduinoStatic.analogReference(reference_voltage);
