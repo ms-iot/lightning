@@ -95,7 +95,6 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\Microsoft.IoT.Galileo.Arduino.1.0.0.0\build\native\Microsoft.IoT.Galileo.Arduino.targets" Condition="Exists('..\packages\Microsoft.IoT.Galileo.Arduino.1.0.0.0\build\native\Microsoft.IoT.Galileo.Arduino.targets')" />
-    <Import Project="..\packages\Microsoft.IoT.Galileo.Arduino.1.0.2-alpha\build\native\Microsoft.IoT.Galileo.Arduino.targets" Condition="Exists('..\packages\Microsoft.IoT.Galileo.Arduino.1.0.2-alpha\build\native\Microsoft.IoT.Galileo.Arduino.targets')" />
+    <Import Project="..\packages\Microsoft.IoT.Galileo.Arduino.1.0.4-alpha\build\native\Microsoft.IoT.Galileo.Arduino.targets" Condition="Exists('..\packages\Microsoft.IoT.Galileo.Arduino.1.0.4-alpha\build\native\Microsoft.IoT.Galileo.Arduino.targets')" />
   </ImportGroup>
 </Project>
