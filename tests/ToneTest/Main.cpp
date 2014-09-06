@@ -10,7 +10,7 @@ int _tmain(int argc, _TCHAR* argv [])
 }
 
 int tonePin = 3;
-int frequency = 50;
+int frequency = 300;
 
 void setup()
 {
@@ -20,10 +20,10 @@ void setup()
 
 void loop()
 {
-    Log(L"Tone On: %d\n", frequency);
-    tone(tonePin, frequency);
-    Sleep(500);
-    Log(L"Tone Off\n");
-    noTone(tonePin);
-    frequency = frequency + 50;
+    //Log(L"Tone On: %d\n", frequency);
+    //tone(tonePin, frequency);
+    //Sleep(500);
+    //Log(L"Tone Off\n");
+    //noTone(tonePin);
+    //frequency = frequency + 50;
 }

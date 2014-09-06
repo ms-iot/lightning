@@ -361,7 +361,7 @@ typedef enum _PWM_CONFIG_REGS {
 // Arduino GPIO pin number.
 inline void _ValidateArduinoPinNumber(int pin)
 {
-    if ( (pin < 0) || (pin >= NUM_ARDUINO_PINS) )
+    if ((pin < 0) || (pin >= NUM_ARDUINO_PINS))
     {
         ThrowError("Invalid pin number (%d). Pin must be in the range [0, %d)",
             pin, NUM_ARDUINO_PINS);
@@ -373,50 +373,50 @@ inline void _ValidateArduinoPinNumber(int pin)
 const uint8_t _PwmMuxFunction[NUM_ARDUINO_PINS]
 {
     DEFAULT_MUX,				// Pin 0 - No PWM
-    DEFAULT_MUX,				// Pin 1 - No PWM
-    DEFAULT_MUX,				// Pin 2 - No PWM
-    ALTERNATE_MUX,				// Pin 3 - PWM uses alternate MUX
-    DEFAULT_MUX,				// Pin 4 - No PWM, no MUX
-    DEFAULT_MUX,				// Pin 5 - PWM, no MUX
-    DEFAULT_MUX,				// Pin 6 - PWM, no MUX
-    DEFAULT_MUX,				// Pin 7 - PWM, no MUX
-    DEFAULT_MUX,				// Pin 8 - PWM, no MUX
-    DEFAULT_MUX,				// Pin 9 - PWM, no MUX
-    ALTERNATE_MUX,				// Pin 10 - PWM uses alternate MUX
-    DEFAULT_MUX,			    // Pin 11 - PWM uses default MUX
-    DEFAULT_MUX,			    // Pin 12 - PWM uses default MUX
-    DEFAULT_MUX,			    // Pin 13 - PWM uses default MUX
-    DEFAULT_MUX,			    // Pin 14 - No PWM
-    DEFAULT_MUX,			    // Pin 15 - No PWM
-    DEFAULT_MUX,			    // Pin 16 - No PWM
-    DEFAULT_MUX,			    // Pin 17 - No PWM
-    DEFAULT_MUX,			    // Pin 18 - No PWM
-    DEFAULT_MUX				    // Pin 19 - No PWM
+        DEFAULT_MUX,				// Pin 1 - No PWM
+        DEFAULT_MUX,				// Pin 2 - No PWM
+        ALTERNATE_MUX,				// Pin 3 - PWM uses alternate MUX
+        DEFAULT_MUX,				// Pin 4 - No PWM, no MUX
+        DEFAULT_MUX,				// Pin 5 - PWM, no MUX
+        DEFAULT_MUX,				// Pin 6 - PWM, no MUX
+        DEFAULT_MUX,				// Pin 7 - PWM, no MUX
+        DEFAULT_MUX,				// Pin 8 - PWM, no MUX
+        DEFAULT_MUX,				// Pin 9 - PWM, no MUX
+        ALTERNATE_MUX,				// Pin 10 - PWM uses alternate MUX
+        DEFAULT_MUX,			    // Pin 11 - PWM uses default MUX
+        DEFAULT_MUX,			    // Pin 12 - PWM uses default MUX
+        DEFAULT_MUX,			    // Pin 13 - PWM uses default MUX
+        DEFAULT_MUX,			    // Pin 14 - No PWM
+        DEFAULT_MUX,			    // Pin 15 - No PWM
+        DEFAULT_MUX,			    // Pin 16 - No PWM
+        DEFAULT_MUX,			    // Pin 17 - No PWM
+        DEFAULT_MUX,			    // Pin 18 - No PWM
+        DEFAULT_MUX				    // Pin 19 - No PWM
 };
 
 // This table maps PWM pin numbers to I/O Expander pins.
 const uint8_t _PwmPinMap[NUM_ARDUINO_PINS]
 {
     0,							// Pin 0 - No PWM
-    0,							// Pin 1 - No PWM
-    0,							// Pin 2 - No PWM
-    GPORT0_BIT2_PWM3,			// Pin 3 - PWM 3
-    0,							// Pin 4 - No PWM
-    GPORT0_BIT1_PWM5,			// Pin 5 - PWM 5
-    GPORT1_BIT0_PWM6,			// Pin 6 - PWM 6
-    GPORT1_BIT3_PWM0,			// Pin 7 - PWM 0
-    GPORT1_BIT2_PWM2,			// Pin 8 - PWM 2
-    GPORT0_BIT3_PWM1,			// Pin 9 - PWM 1
-    GPORT0_BIT0_PWM7,			// Pin 10 - PWM 7
-    GPORT1_BIT1_PWM4,			// Pin 11 - PWM 4
-    0,							// Pin 12 - No PWM
-    0,							// Pin 13 - No PWM
-    0,							// Pin 14 - No PWM
-    0,							// Pin 15 - No PWM
-    0,							// Pin 16 - No PWM
-    0,							// Pin 17 - No PWM
-    0,							// Pin 18 - No PWM
-    0							// Pin 19 - No PWM
+        0,							// Pin 1 - No PWM
+        0,							// Pin 2 - No PWM
+        GPORT0_BIT2_PWM3,			// Pin 3 - PWM 3
+        0,							// Pin 4 - No PWM
+        GPORT0_BIT1_PWM5,			// Pin 5 - PWM 5
+        GPORT1_BIT0_PWM6,			// Pin 6 - PWM 6
+        GPORT1_BIT3_PWM0,			// Pin 7 - PWM 0
+        GPORT1_BIT2_PWM2,			// Pin 8 - PWM 2
+        GPORT0_BIT3_PWM1,			// Pin 9 - PWM 1
+        GPORT0_BIT0_PWM7,			// Pin 10 - PWM 7
+        GPORT1_BIT1_PWM4,			// Pin 11 - PWM 4
+        0,							// Pin 12 - No PWM
+        0,							// Pin 13 - No PWM
+        0,							// Pin 14 - No PWM
+        0,							// Pin 15 - No PWM
+        0,							// Pin 16 - No PWM
+        0,							// Pin 17 - No PWM
+        0,							// Pin 18 - No PWM
+        0							// Pin 19 - No PWM
 };
 
 // This array stores state and configuration information for each GPIO pin.
@@ -973,6 +973,7 @@ class ArduinoStatic
 {
 
 public:
+    static int toneRunningOnPin;
 
     ArduinoStatic() :
         adc(nullptr),
@@ -1029,11 +1030,11 @@ public:
 
         if (ADC_RESOLUTION >= _analog_read_resolution)
         {
-            result = AdcSampleChannel(this->adc, (uint32_t)pinL) >> (ADC_RESOLUTION - _analog_read_resolution);
+            result = AdcSampleChannel(this->adc, (uint32_t) pinL) >> (ADC_RESOLUTION - _analog_read_resolution);
         }
         else
         {
-            result = AdcSampleChannel(this->adc, (uint32_t)pinL) << (_analog_read_resolution - ADC_RESOLUTION);
+            result = AdcSampleChannel(this->adc, (uint32_t) pinL) << (_analog_read_resolution - ADC_RESOLUTION);
         }
 
         if (result < 0)
@@ -1052,7 +1053,7 @@ public:
     // the resolution to 12. This will return values from analogRead()
     // between 0 and 4095.
     //
-    void analogReadResolution (const uint8_t resolution)
+    void analogReadResolution(const uint8_t resolution)
     {
         if (resolution > (sizeof(uint32_t) * 8)) { ThrowError("Invalid analog read resolution!"); }
         _analog_read_resolution = resolution;
@@ -1077,6 +1078,13 @@ public:
         if (DEFAULT != reference_voltage) { ThrowError("Unsupported voltage set as analog reference!"); }
     }
     
+    // These defines and struct are used for tone functions
+    typedef struct _timerData {
+        int pin;
+    } timerData;
+
+#define _MILLISECOND 10000
+
     //
     // Perform a tone operation.
     //
@@ -1086,7 +1094,6 @@ public:
     //
     //  frequency - in Hertz
     //
-
     void tone(int pin, unsigned int frequency)
     {
         // Generates and starts the square wave of designated frequency at 50% duty cycle
@@ -1127,7 +1134,7 @@ public:
             else
             {
                 // Since we have no driver function to change a PWM Frequency, we will have to stop it and restart it with the new frequency.
-                PwmStop(pin);
+                PwmStop(_PwmPinMap[pin]);
                 hr = PwmStart(_PwmPinMap[pin], frequency, dutyCycle);
                 if (FAILED(hr))
                 {
@@ -1139,17 +1146,19 @@ public:
         }
     }
 
-    //static VOID CALLBACK TimeProcStopTone_Wrapper(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime);
+    static VOID CALLBACK TimeProcStopTone(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
+    {
+        timerData *myTimerData = (timerData *) lpArg;
 
-    //VOID CALLBACK TimeProcStopTone(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime)
-    //{
-    //    // This will be called when a timer event happens
-    //    // Stops the square wave
-    //    if (toneRunningOnPin != -1)
-    //    {
-    //        noTone(toneRunningOnPin);
-    //    }
-    //}
+        // This will stop the square wave when a timer triggers
+        if (myTimerData->pin != -1 && myTimerData->pin == toneRunningOnPin)
+        {
+            toneRunningOnPin = -1;
+            PwmStop(_PwmPinMap[myTimerData->pin]);
+        }
+        PwmStop(_PwmPinMap[3]);
+        Log(L"Timer Hit\n");
+    }
 
     //
     // Perform a tone operation.
@@ -1164,27 +1173,45 @@ public:
     //
     void tone(int pin, unsigned int frequency, unsigned long duration)
     {
-        // Generates and starts the square wave
-        tone(pin, frequency);
+        if (toneRunningOnPin == -1 || toneRunningOnPin == pin)
+        {
+            // Generates and starts the square wave
+            tone(pin, frequency);
 
-        // Preliminary implementation since SetTimer is not included in the Galileo Image
-        Sleep(duration);
-        noTone(pin);
+            HANDLE timerHandle = CreateWaitableTimerEx(NULL, NULL, 0, TIMER_ALL_ACCESS);
 
-        //if (settimer(null, 0, duration * 1000, (timerproc) timeprocstoptone_wrapper) == 0)
-        //{
-        //    dword err = getlasterror();
-        //    throwerror("error creating timer for tone: %d", err);
-        //}
+            if (timerHandle == NULL)
+            {
+                DWORD err = GetLastError();
+                ThrowError("Error creating timer for tone: %d", err);
+            }
+
+            LARGE_INTEGER timerDueTime;
+
+            // Timing is done in 100 nanosecond units
+            __int64 qwDueTime = -1 * (__int64) duration * _MILLISECOND; // typecast is allowed since unsigned long is smaller than int64
+
+            // Copy the relative time into a LARGE_INTEGER.
+            timerDueTime.LowPart = (DWORD) (qwDueTime & 0xFFFFFFFF);
+            timerDueTime.HighPart = (LONG) (qwDueTime >> 32);
+
+            static timerData myTimerData; // needs to be static in order to be accessible after tone() ends
+            myTimerData.pin = pin;
+
+            if (SetWaitableTimer(timerHandle, &timerDueTime, 0, TimeProcStopTone, &myTimerData, FALSE) == 0)
+            {
+                DWORD err = GetLastError();
+                ThrowError("Error setting waitable timer for tone: %d", err);
+            }
+        }
     }
-
 
     void noTone(int pin)
     {
         // Stops the tone wave on the pin
         if (toneRunningOnPin == pin)
         {
-            PwmStop(pin);
+            PwmStop(_PwmPinMap[pin]);
             toneRunningOnPin = -1;
         }
     }
@@ -1211,7 +1238,6 @@ public:
 private:
     ADC *adc;
     uint8_t _analog_read_resolution;
-    int toneRunningOnPin = -1;
 };
 
 __declspec (selectany) ArduinoStatic _ArduinoStatic;
@@ -1247,7 +1273,8 @@ inline uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_
     for (uint8_t loop_count = 0, bit_index = 0; loop_count < 8; ++loop_count) {
         if (bit_order_ == LSBFIRST) {
             bit_index = loop_count;
-        } else {
+        }
+        else {
             bit_index = (7 - loop_count);
         }
 
@@ -1264,7 +1291,8 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
     for (uint8_t loop_count = 0, bit_mask = 0; loop_count < 8; ++loop_count) {
         if (bit_order_ == LSBFIRST) {
             bit_mask = (1 << loop_count);
-        } else {
+        }
+        else {
             bit_mask = (1 << (7 - loop_count));
         }
 
@@ -1276,6 +1304,8 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
     return;
 }
 
+// Tone function calls
+__declspec(selectany) int ArduinoStatic::toneRunningOnPin = -1;
 
 inline void tone(int pin, unsigned int frequency)
 {
@@ -1291,11 +1321,6 @@ inline void noTone(int pin)
 {
     _ArduinoStatic.noTone(pin);
 }
-
-//inline VOID CALLBACK ArduinoStatic::TimeProcStopTone_Wrapper(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime)
-//{
-//    _ArduinoStatic.TimeProcStopTone(hwnd, uMsg, idEvent, dwTime); // call non-static function
-//}
 
 //
 // Arduino Sketch Plumbing
@@ -1324,6 +1349,7 @@ inline int RunArduinoSketch()
         setup();
         while (1)
         {
+            SleepEx(0, TRUE);
             loop();
             #ifdef SERIAL_EVENT
             if (Serial && Serial.available() > 0)
