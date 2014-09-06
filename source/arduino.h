@@ -159,13 +159,12 @@ inline bool _IsAnalogPin(int num)
 // Arduino GPIO pin number.
 inline void _ValidateArduinoPinNumber(int pin)
 {
-    if ( (pin < 0) || (pin >= NUM_ARDUINO_PINS) )
+    if ((pin < 0) || (pin >= NUM_ARDUINO_PINS))
     {
         ThrowError("Invalid pin number (%d). Pin must be in the range [0, %d)",
             pin, NUM_ARDUINO_PINS);
     }
 }
-
 
 //
 // Set the digital pin (IO0 - IO13) to the specified state.
@@ -411,7 +410,8 @@ inline uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_
     for (uint8_t loop_count = 0, bit_index = 0; loop_count < 8; ++loop_count) {
         if (bit_order_ == LSBFIRST) {
             bit_index = loop_count;
-        } else {
+        }
+        else {
             bit_index = (7 - loop_count);
         }
 
@@ -428,7 +428,8 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
     for (uint8_t loop_count = 0, bit_mask = 0; loop_count < 8; ++loop_count) {
         if (bit_order_ == LSBFIRST) {
             bit_mask = (1 << loop_count);
-        } else {
+        }
+        else {
             bit_mask = (1 << (7 - loop_count));
         }
 
@@ -440,6 +441,8 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
     return;
 }
 
+// Tone function calls
+__declspec(selectany) int ArduinoStatic::toneRunningOnPin = -1;
 
 inline void tone(int pin, unsigned int frequency)
 {
@@ -455,11 +458,6 @@ inline void noTone(int pin)
 {
     _ArduinoStatic.noTone(pin);
 }
-
-//inline VOID CALLBACK ArduinoStatic::TimeProcStopTone_Wrapper(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime)
-//{
-//    _ArduinoStatic.TimeProcStopTone(hwnd, uMsg, idEvent, dwTime); // call non-static function
-//}
 
 //
 // Arduino Sketch Plumbing
@@ -488,6 +486,7 @@ inline int RunArduinoSketch()
         setup();
         while (1)
         {
+            SleepEx(0, TRUE);
             loop();
             #ifdef SERIAL_EVENT
             if (Serial && Serial.available() > 0)
