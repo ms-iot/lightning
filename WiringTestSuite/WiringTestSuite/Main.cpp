@@ -21,6 +21,18 @@ int _tmain(int argc, _TCHAR* argv[])
 	return RunArduinoSketch();
 }
 
+void PostTestResult(bool succeeded, const wchar_t* function)
+{
+    if (succeeded)
+    {
+        //Log(L"passed | %s\n", function);
+    }
+    else
+    {
+        Log(L"**** FAILED **** - %s", function);
+    }
+}
+
 bool IsSoCPinDataEqual(PIN_DATA &a, PIN_DATA &b) {
     bool equal(true);
     equal &= (a.currentMux == b.currentMux);
@@ -49,7 +61,7 @@ void IO0_CypressInitializationCheck(void) {
     PIN_DATA data = {0};
     _ReadPinConfiguration(0, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO0_MuxInitializationCheck(void) {
@@ -58,7 +70,7 @@ void IO0_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(0, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO0_SetPinModeToInput(void) {
@@ -68,7 +80,7 @@ void IO0_SetPinModeToInput(void) {
     pinMode(0, INPUT);
     _ReadPinConfiguration(0, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO0_SetPinModeToOutput(void) {
@@ -78,7 +90,7 @@ void IO0_SetPinModeToOutput(void) {
     pinMode(0, OUTPUT);
     _ReadPinConfiguration(0, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO0_AnalogWriteFail(void) {
@@ -94,7 +106,7 @@ void IO0_AnalogWriteFail(void) {
     _ReadPinConfiguration(0, &after);
     _ReadPinMuxConfig(0, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO0_AnalogRead(void) {
@@ -104,7 +116,7 @@ void IO0_AnalogRead(void) {
     analogRead(0);
     _ReadPinMuxConfig(14, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO0_DigitalRead(void) {
@@ -114,7 +126,7 @@ void IO0_DigitalRead(void) {
     digitalRead(0);
     _ReadPinMuxConfig(0, &data);
     ::success_count += (success = (data.currentMux == ALTERNATE_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO1_CypressInitializationCheck(void) {
@@ -123,7 +135,7 @@ void IO1_CypressInitializationCheck(void) {
     PIN_DATA data = {0};
     _ReadPinConfiguration(1, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO1_MuxInitializationCheck(void) {
@@ -132,7 +144,7 @@ void IO1_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(1, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO1_SetPinModeToInput(void) {
@@ -142,7 +154,7 @@ void IO1_SetPinModeToInput(void) {
     pinMode(1, INPUT);
     _ReadPinConfiguration(1, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO1_SetPinModeToOutput(void) {
@@ -152,7 +164,7 @@ void IO1_SetPinModeToOutput(void) {
     pinMode(1, OUTPUT);
     _ReadPinConfiguration(1, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO1_AnalogWriteFail(void) {
@@ -168,7 +180,7 @@ void IO1_AnalogWriteFail(void) {
     _ReadPinConfiguration(1, &after);
     _ReadPinMuxConfig(1, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO1_AnalogRead(void) {
@@ -178,7 +190,7 @@ void IO1_AnalogRead(void) {
     analogRead(1);
     _ReadPinMuxConfig(15, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 /*
 void IO2_CypressInitializationCheck(void) {
@@ -187,7 +199,7 @@ void IO2_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(2, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 */
 void IO2_MuxInitializationCheck(void) {
@@ -196,7 +208,7 @@ void IO2_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(2, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO2_SetPinModeToInput(void) {
@@ -206,7 +218,7 @@ void IO2_SetPinModeToInput(void) {
     pinMode(2, INPUT);
     //_ReadPinConfiguration(2, &data);
     //::success_count += (success = (data.currentMode == INPUT));
-    //Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    //PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO2_SetPinModeToOutput(void) {
@@ -216,7 +228,7 @@ void IO2_SetPinModeToOutput(void) {
     pinMode(2, OUTPUT);
     //_ReadPinConfiguration(2, &data);
     //::success_count += (success = (data.currentMode == OUTPUT));
-    //Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    //PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO2_AnalogWriteFail(void) {
@@ -232,7 +244,7 @@ void IO2_AnalogWriteFail(void) {
     _ReadPinConfiguration(2, &after);
     _ReadPinMuxConfig(2, &after);
     ::success_count += (success = IsSoCPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO2_AnalogRead(void) {
@@ -242,7 +254,7 @@ void IO2_AnalogRead(void) {
     analogRead(2);
     _ReadPinMuxConfig(16, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 /*
 void IO3_CypressInitializationCheck(void) {
@@ -251,7 +263,7 @@ void IO3_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(3, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 */
 void IO3_MuxInitializationCheck(void) {
@@ -260,7 +272,7 @@ void IO3_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(3, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO3_SetPinModeToInput(void) {
@@ -270,7 +282,7 @@ void IO3_SetPinModeToInput(void) {
     pinMode(3, INPUT);
     //_ReadPinConfiguration(3, &data);
     //::success_count += (success = (data.currentMode == INPUT));
-    //Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    //PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO3_SetPinModeToOutput(void) {
@@ -280,7 +292,7 @@ void IO3_SetPinModeToOutput(void) {
     pinMode(3, OUTPUT);
     //_ReadPinConfiguration(3, &data);
     //::success_count += (success = (data.currentMode == OUTPUT));
-    //Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    //PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO3_AnalogWriteHalf(void) {
@@ -290,7 +302,7 @@ void IO3_AnalogWriteHalf(void) {
     analogWrite(3, 128);
     _ReadPinConfiguration(3, &data);
     ::success_count += (success = (data.pwmDutyCycle == 128));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 128, data.pwmDutyCycle); }
 }
 
@@ -301,7 +313,7 @@ void IO3_AnalogWriteFull(void) {
     analogWrite(3, 255);
     _ReadPinConfiguration(3, &data);
     ::success_count += (success = (data.pwmDutyCycle == 255));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 255, data.pwmDutyCycle); }
 }
 
@@ -312,7 +324,7 @@ void IO3_AnalogRead(void) {
     analogRead(3);
     _ReadPinMuxConfig(17, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO4_CypressInitializationCheck(void) {
@@ -321,7 +333,7 @@ void IO4_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(4, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO4_MuxInitializationCheck(void) {
@@ -330,7 +342,7 @@ void IO4_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(4, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO4_SetPinModeToInput(void) {
@@ -340,7 +352,7 @@ void IO4_SetPinModeToInput(void) {
     pinMode(4, INPUT);
     _ReadPinConfiguration(4, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO4_SetPinModeToOutput(void) {
@@ -350,7 +362,7 @@ void IO4_SetPinModeToOutput(void) {
     pinMode(4, OUTPUT);
     _ReadPinConfiguration(4, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO4_AnalogWriteFail(void) {
@@ -366,7 +378,7 @@ void IO4_AnalogWriteFail(void) {
     _ReadPinConfiguration(4, &after);
     _ReadPinMuxConfig(4, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO4_AnalogRead(void) {
@@ -376,7 +388,7 @@ void IO4_AnalogRead(void) {
     analogRead(4);
     _ReadPinMuxConfig(18, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO5_CypressInitializationCheck(void) {
@@ -385,7 +397,7 @@ void IO5_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(5, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO5_MuxInitializationCheck(void) {
@@ -394,7 +406,7 @@ void IO5_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(5, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO5_SetPinModeToInput(void) {
@@ -404,7 +416,7 @@ void IO5_SetPinModeToInput(void) {
     pinMode(5, INPUT);
     _ReadPinConfiguration(5, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO5_SetPinModeToOutput(void) {
@@ -414,7 +426,7 @@ void IO5_SetPinModeToOutput(void) {
     pinMode(5, OUTPUT);
     _ReadPinConfiguration(5, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO5_AnalogWriteHalf(void) {
@@ -424,7 +436,7 @@ void IO5_AnalogWriteHalf(void) {
     analogWrite(5, 128);
     _ReadPinConfiguration(5, &data);
     ::success_count += (success = (data.pwmDutyCycle == 128));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 128, data.pwmDutyCycle); }
 }
 
@@ -435,7 +447,7 @@ void IO5_AnalogWriteFull(void) {
     analogWrite(5, 255);
     _ReadPinConfiguration(5, &data);
     ::success_count += (success = (data.pwmDutyCycle == 255));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 255, data.pwmDutyCycle); }
 }
 
@@ -446,7 +458,7 @@ void IO5_AnalogRead(void) {
     analogRead(5);
     _ReadPinMuxConfig(19, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO6_CypressInitializationCheck(void) {
@@ -455,7 +467,7 @@ void IO6_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(6, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO6_MuxInitializationCheck(void) {
@@ -464,7 +476,7 @@ void IO6_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(6, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO6_SetPinModeToInput(void) {
@@ -474,7 +486,7 @@ void IO6_SetPinModeToInput(void) {
     pinMode(6, INPUT);
     _ReadPinConfiguration(6, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO6_SetPinModeToOutput(void) {
@@ -484,7 +496,7 @@ void IO6_SetPinModeToOutput(void) {
     pinMode(6, OUTPUT);
     _ReadPinConfiguration(6, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO6_AnalogWriteHalf(void) {
@@ -494,7 +506,7 @@ void IO6_AnalogWriteHalf(void) {
     analogWrite(6, 128);
     _ReadPinConfiguration(6, &data);
     ::success_count += (success = (data.pwmDutyCycle == 128));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 128, data.pwmDutyCycle); }
 }
 
@@ -505,7 +517,7 @@ void IO6_AnalogWriteFull(void) {
     analogWrite(6, 255);
     _ReadPinConfiguration(6, &data);
     ::success_count += (success = (data.pwmDutyCycle == 255));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 255, data.pwmDutyCycle); }
 }
 
@@ -522,7 +534,7 @@ void IO6_AnalogRead(void) {
     _ReadPinConfiguration(6, &after);
     _ReadPinMuxConfig(6, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO7_CypressInitializationCheck(void) {
@@ -531,7 +543,7 @@ void IO7_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(7, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO7_MuxInitializationCheck(void) {
@@ -540,7 +552,7 @@ void IO7_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(7, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO7_SetPinModeToInput(void) {
@@ -550,7 +562,7 @@ void IO7_SetPinModeToInput(void) {
     pinMode(7, INPUT);
     _ReadPinConfiguration(7, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO7_SetPinModeToOutput(void) {
@@ -560,7 +572,7 @@ void IO7_SetPinModeToOutput(void) {
     pinMode(7, OUTPUT);
     _ReadPinConfiguration(7, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO7_AnalogWriteHalf(void) {
@@ -570,7 +582,7 @@ void IO7_AnalogWriteHalf(void) {
     analogWrite(7, 128);
     _ReadPinConfiguration(7, &data);
     ::success_count += (success = (data.pwmDutyCycle == 128));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 128, data.pwmDutyCycle); }
 }
 
@@ -581,7 +593,7 @@ void IO7_AnalogWriteFull(void) {
     analogWrite(7, 255);
     _ReadPinConfiguration(7, &data);
     ::success_count += (success = (data.pwmDutyCycle == 255));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 255, data.pwmDutyCycle); }
 }
 
@@ -598,7 +610,7 @@ void IO7_AnalogRead(void) {
     _ReadPinConfiguration(7, &after);
     _ReadPinMuxConfig(7, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO8_CypressInitializationCheck(void) {
@@ -607,7 +619,7 @@ void IO8_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(8, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO8_MuxInitializationCheck(void) {
@@ -616,7 +628,7 @@ void IO8_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(8, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO8_SetPinModeToInput(void) {
@@ -626,7 +638,7 @@ void IO8_SetPinModeToInput(void) {
     pinMode(8, INPUT);
     _ReadPinConfiguration(8, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO8_SetPinModeToOutput(void) {
@@ -636,7 +648,7 @@ void IO8_SetPinModeToOutput(void) {
     pinMode(8, OUTPUT);
     _ReadPinConfiguration(8, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO8_AnalogWriteHalf(void) {
@@ -646,7 +658,7 @@ void IO8_AnalogWriteHalf(void) {
     analogWrite(8, 128);
     _ReadPinConfiguration(8, &data);
     ::success_count += (success = (data.pwmDutyCycle == 128));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 128, data.pwmDutyCycle); }
 }
 
@@ -657,7 +669,7 @@ void IO8_AnalogWriteFull(void) {
     analogWrite(8, 255);
     _ReadPinConfiguration(8, &data);
     ::success_count += (success = (data.pwmDutyCycle == 255));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 255, data.pwmDutyCycle); }
 }
 
@@ -674,7 +686,7 @@ void IO8_AnalogRead(void) {
     _ReadPinConfiguration(8, &after);
     _ReadPinMuxConfig(8, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO9_CypressInitializationCheck(void) {
@@ -683,7 +695,7 @@ void IO9_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(9, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO9_MuxInitializationCheck(void) {
@@ -692,7 +704,7 @@ void IO9_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(9, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO9_SetPinModeToInput(void) {
@@ -702,7 +714,7 @@ void IO9_SetPinModeToInput(void) {
     pinMode(9, INPUT);
     _ReadPinConfiguration(9, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO9_SetPinModeToOutput(void) {
@@ -712,7 +724,7 @@ void IO9_SetPinModeToOutput(void) {
     pinMode(9, OUTPUT);
     _ReadPinConfiguration(9, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO9_AnalogWriteHalf(void) {
@@ -722,7 +734,7 @@ void IO9_AnalogWriteHalf(void) {
     analogWrite(9, 128);
     _ReadPinConfiguration(9, &data);
     ::success_count += (success = (data.pwmDutyCycle == 128));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 128, data.pwmDutyCycle); }
 }
 
@@ -733,7 +745,7 @@ void IO9_AnalogWriteFull(void) {
     analogWrite(9, 255);
     _ReadPinConfiguration(9, &data);
     ::success_count += (success = (data.pwmDutyCycle == 255));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 255, data.pwmDutyCycle); }
 }
 
@@ -750,7 +762,7 @@ void IO9_AnalogRead(void) {
     _ReadPinConfiguration(9, &after);
     _ReadPinMuxConfig(9, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 /*
 void IO10_CypressInitializationCheck(void) {
@@ -759,7 +771,7 @@ void IO10_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(10, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 */
 void IO10_MuxInitializationCheck(void) {
@@ -768,7 +780,7 @@ void IO10_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(10, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO10_SetPinModeToInput(void) {
@@ -778,7 +790,7 @@ void IO10_SetPinModeToInput(void) {
     pinMode(10, INPUT);
     //_ReadPinConfiguration(10, &data);
     //::success_count += (success = (data.currentMode == INPUT));
-    //Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    //PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO10_SetPinModeToOutput(void) {
@@ -788,7 +800,7 @@ void IO10_SetPinModeToOutput(void) {
     pinMode(10, OUTPUT);
     //_ReadPinConfiguration(10, &data);
     //::success_count += (success = (data.currentMode == OUTPUT));
-    //Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    //PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO10_AnalogWriteHalf(void) {
@@ -798,7 +810,7 @@ void IO10_AnalogWriteHalf(void) {
     analogWrite(10, 128);
     _ReadPinConfiguration(10, &data);
     ::success_count += (success = (data.pwmDutyCycle == 128));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 128, data.pwmDutyCycle); }
 }
 
@@ -809,7 +821,7 @@ void IO10_AnalogWriteFull(void) {
     analogWrite(10, 255);
     _ReadPinConfiguration(10, &data);
     ::success_count += (success = (data.pwmDutyCycle == 255));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 255, data.pwmDutyCycle); }
 }
 
@@ -826,7 +838,7 @@ void IO10_AnalogRead(void) {
     _ReadPinConfiguration(10, &after);
     _ReadPinMuxConfig(10, &after);
     ::success_count += (success = IsSoCPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO11_CypressInitializationCheck(void) {
@@ -835,7 +847,7 @@ void IO11_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(11, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO11_MuxInitializationCheck(void) {
@@ -844,7 +856,7 @@ void IO11_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(11, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO11_SetPinModeToInput(void) {
@@ -854,7 +866,7 @@ void IO11_SetPinModeToInput(void) {
     pinMode(11, INPUT);
     _ReadPinConfiguration(11, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO11_SetPinModeToOutput(void) {
@@ -864,7 +876,7 @@ void IO11_SetPinModeToOutput(void) {
     pinMode(11, OUTPUT);
     _ReadPinConfiguration(11, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO11_AnalogWriteHalf(void) {
@@ -874,7 +886,7 @@ void IO11_AnalogWriteHalf(void) {
     analogWrite(11, 128);
     _ReadPinConfiguration(11, &data);
     ::success_count += (success = (data.pwmDutyCycle == 128));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 128, data.pwmDutyCycle); }
 }
 
@@ -885,7 +897,7 @@ void IO11_AnalogWriteFull(void) {
     analogWrite(11, 255);
     _ReadPinConfiguration(11, &data);
     ::success_count += (success = (data.pwmDutyCycle == 255));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
     if (!success) { Log(L"\tExpected:\t%u\n\tActual:\t%u\n", 255, data.pwmDutyCycle); }
 }
 
@@ -902,7 +914,7 @@ void IO11_AnalogRead(void) {
     _ReadPinConfiguration(11, &after);
     _ReadPinMuxConfig(11, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO12_CypressInitializationCheck(void) {
@@ -911,7 +923,7 @@ void IO12_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(12, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO12_MuxInitializationCheck(void) {
@@ -920,7 +932,7 @@ void IO12_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(12, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO12_SetPinModeToInput(void) {
@@ -930,7 +942,7 @@ void IO12_SetPinModeToInput(void) {
     pinMode(12, INPUT);
     _ReadPinConfiguration(12, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO12_SetPinModeToOutput(void) {
@@ -940,7 +952,7 @@ void IO12_SetPinModeToOutput(void) {
     pinMode(12, OUTPUT);
     _ReadPinConfiguration(12, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO12_AnalogWriteFail(void) {
@@ -956,7 +968,7 @@ void IO12_AnalogWriteFail(void) {
     _ReadPinConfiguration(12, &after);
     _ReadPinMuxConfig(12, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO12_AnalogRead(void) {
@@ -972,7 +984,7 @@ void IO12_AnalogRead(void) {
     _ReadPinConfiguration(12, &after);
     _ReadPinMuxConfig(12, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO13_CypressInitializationCheck(void) {
@@ -981,7 +993,7 @@ void IO13_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(13, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO13_MuxInitializationCheck(void) {
@@ -990,7 +1002,7 @@ void IO13_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(13, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO13_SetPinModeToInput(void) {
@@ -1000,7 +1012,7 @@ void IO13_SetPinModeToInput(void) {
     pinMode(13, INPUT);
     _ReadPinConfiguration(13, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO13_SetPinModeToOutput(void) {
@@ -1010,7 +1022,7 @@ void IO13_SetPinModeToOutput(void) {
     pinMode(13, OUTPUT);
     _ReadPinConfiguration(13, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO13_AnalogWriteFail(void) {
@@ -1026,7 +1038,7 @@ void IO13_AnalogWriteFail(void) {
     _ReadPinConfiguration(13, &after);
     _ReadPinMuxConfig(13, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO13_AnalogRead(void) {
@@ -1042,7 +1054,7 @@ void IO13_AnalogRead(void) {
     _ReadPinConfiguration(13, &after);
     _ReadPinMuxConfig(13, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO14_CypressInitializationCheck(void) {
@@ -1051,7 +1063,7 @@ void IO14_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(14, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO14_MuxInitializationCheck(void) {
@@ -1060,7 +1072,7 @@ void IO14_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(14, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO14_SetPinModeToInput(void) {
@@ -1070,7 +1082,7 @@ void IO14_SetPinModeToInput(void) {
     pinMode(14, INPUT);
     _ReadPinConfiguration(14, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO14_SetPinModeToOutput(void) {
@@ -1080,7 +1092,7 @@ void IO14_SetPinModeToOutput(void) {
     pinMode(14, OUTPUT);
     _ReadPinConfiguration(14, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO14_AnalogWriteFail(void) {
@@ -1096,7 +1108,7 @@ void IO14_AnalogWriteFail(void) {
     _ReadPinConfiguration(14, &after);
     _ReadPinMuxConfig(14, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO14_AnalogRead(void) {
@@ -1112,7 +1124,7 @@ void IO14_AnalogRead(void) {
     _ReadPinConfiguration(14, &after);
     _ReadPinMuxConfig(14, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO15_CypressInitializationCheck(void) {
@@ -1121,7 +1133,7 @@ void IO15_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(15, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO15_MuxInitializationCheck(void) {
@@ -1130,7 +1142,7 @@ void IO15_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(15, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO15_SetPinModeToInput(void) {
@@ -1140,7 +1152,7 @@ void IO15_SetPinModeToInput(void) {
     pinMode(15, INPUT);
     _ReadPinConfiguration(15, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO15_SetPinModeToOutput(void) {
@@ -1150,7 +1162,7 @@ void IO15_SetPinModeToOutput(void) {
     pinMode(15, OUTPUT);
     _ReadPinConfiguration(15, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO15_AnalogWriteFail(void) {
@@ -1166,7 +1178,7 @@ void IO15_AnalogWriteFail(void) {
     _ReadPinConfiguration(15, &after);
     _ReadPinMuxConfig(15, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO15_AnalogRead(void) {
@@ -1182,7 +1194,7 @@ void IO15_AnalogRead(void) {
     _ReadPinConfiguration(15, &after);
     _ReadPinMuxConfig(15, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO16_CypressInitializationCheck(void) {
@@ -1191,7 +1203,7 @@ void IO16_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(16, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO16_MuxInitializationCheck(void) {
@@ -1200,7 +1212,7 @@ void IO16_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(16, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO16_SetPinModeToInput(void) {
@@ -1210,7 +1222,7 @@ void IO16_SetPinModeToInput(void) {
     pinMode(16, INPUT);
     _ReadPinConfiguration(16, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO16_SetPinModeToOutput(void) {
@@ -1220,7 +1232,7 @@ void IO16_SetPinModeToOutput(void) {
     pinMode(16, OUTPUT);
     _ReadPinConfiguration(16, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO16_AnalogWriteFail(void) {
@@ -1236,7 +1248,7 @@ void IO16_AnalogWriteFail(void) {
     _ReadPinConfiguration(16, &after);
     _ReadPinMuxConfig(16, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO16_AnalogRead(void) {
@@ -1252,7 +1264,7 @@ void IO16_AnalogRead(void) {
     _ReadPinConfiguration(16, &after);
     _ReadPinMuxConfig(16, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO17_CypressInitializationCheck(void) {
@@ -1261,7 +1273,7 @@ void IO17_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(17, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO17_MuxInitializationCheck(void) {
@@ -1270,7 +1282,7 @@ void IO17_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(17, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO17_SetPinModeToInput(void) {
@@ -1280,7 +1292,7 @@ void IO17_SetPinModeToInput(void) {
     pinMode(17, INPUT);
     _ReadPinConfiguration(17, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO17_SetPinModeToOutput(void) {
@@ -1290,7 +1302,7 @@ void IO17_SetPinModeToOutput(void) {
     pinMode(17, OUTPUT);
     _ReadPinConfiguration(17, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO17_AnalogWriteFail(void) {
@@ -1306,7 +1318,7 @@ void IO17_AnalogWriteFail(void) {
     _ReadPinConfiguration(17, &after);
     _ReadPinMuxConfig(17, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO17_AnalogRead(void) {
@@ -1322,7 +1334,7 @@ void IO17_AnalogRead(void) {
     _ReadPinConfiguration(17, &after);
     _ReadPinMuxConfig(17, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO18_CypressInitializationCheck(void) {
@@ -1331,7 +1343,7 @@ void IO18_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(18, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO18_MuxInitializationCheck(void) {
@@ -1340,7 +1352,7 @@ void IO18_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(18, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO18_SetPinModeToInput(void) {
@@ -1350,7 +1362,7 @@ void IO18_SetPinModeToInput(void) {
     pinMode(18, INPUT);
     _ReadPinConfiguration(18, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO18_SetPinModeToOutput(void) {
@@ -1360,7 +1372,7 @@ void IO18_SetPinModeToOutput(void) {
     pinMode(18, OUTPUT);
     _ReadPinConfiguration(18, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO18_AnalogWriteFail(void) {
@@ -1376,7 +1388,7 @@ void IO18_AnalogWriteFail(void) {
     _ReadPinConfiguration(18, &after);
     _ReadPinMuxConfig(18, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO18_AnalogRead(void) {
@@ -1392,7 +1404,7 @@ void IO18_AnalogRead(void) {
     _ReadPinConfiguration(18, &after);
     _ReadPinMuxConfig(18, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO19_CypressInitializationCheck(void) {
@@ -1401,7 +1413,7 @@ void IO19_CypressInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinConfiguration(19, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO19_MuxInitializationCheck(void) {
@@ -1410,7 +1422,7 @@ void IO19_MuxInitializationCheck(void) {
     PIN_DATA data = { 0 };
     _ReadPinMuxConfig(19, &data);
     ::success_count += (success = (data.currentMux == DEFAULT_MUX));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO19_SetPinModeToInput(void) {
@@ -1420,7 +1432,7 @@ void IO19_SetPinModeToInput(void) {
     pinMode(19, INPUT);
     _ReadPinConfiguration(19, &data);
     ::success_count += (success = (data.currentMode == INPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO19_SetPinModeToOutput(void) {
@@ -1430,7 +1442,7 @@ void IO19_SetPinModeToOutput(void) {
     pinMode(19, OUTPUT);
     _ReadPinConfiguration(19, &data);
     ::success_count += (success = (data.currentMode == OUTPUT));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO19_AnalogWriteFail(void) {
@@ -1446,7 +1458,7 @@ void IO19_AnalogWriteFail(void) {
     _ReadPinConfiguration(19, &after);
     _ReadPinMuxConfig(19, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void IO19_AnalogRead(void) {
@@ -1462,7 +1474,7 @@ void IO19_AnalogRead(void) {
     _ReadPinConfiguration(19, &after);
     _ReadPinMuxConfig(19, &after);
     ::success_count += (success = IsCypressPinDataEqual(before, after));
-    Log(L"%s | %s\n", (success ? L"passed" : L"FAILED"), __FUNCTIONW__);
+    PostTestResult(success, __FUNCTIONW__);
 }
 
 void SPI_BeginToEnd(void) {
