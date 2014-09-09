@@ -539,5 +539,12 @@ inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 #define bit(b) (1UL << (b))
 #define __attribute__(x)
 
+
+// Other utility Macros
+// Turn passed in value into a string
+#define STRINGIFY(x) #x
+// Turn passed in macro into a string
+#define STRINGIFY_MACRO(x) STRINGIFY(x)
+
 #include "Wire.h"
 #endif // _WINDOWS_ARDUINO_H_
