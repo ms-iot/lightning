@@ -426,7 +426,7 @@ __declspec (selectany) PIN_DATA _pinData[NUM_ARDUINO_PINS] = { 0 };
 // The "inline" marks the function as "selectany", while "__declspec (noinline)"
 // keeps it from actually being expanded inline.  Without the "inline" the linker
 // will complain about multiple definitions of the same routine name.
-__declspec (noinline) inline void _ReadPinConfiguration(int pin, PPIN_DATA pinData)
+__declspec (noinline) inline void _InitPinConfiguration(int pin, PPIN_DATA pinData)
 {
     int i;
     BYTE portConfig[PORT_CONFIG_REG_COUNT] = { 0 };
@@ -460,13 +460,13 @@ __declspec (noinline) inline void _ReadPinConfiguration(int pin, PPIN_DATA pinDa
     if ((portConfig[PIN_DIRECTION] & (1 << _ArduinoToPortBitMap[pin].BitNumber)) == 0)
     {
         pinData->currentMode = OUTPUT;
-        pinData->modeSet = OUTPUT;
     }
     else
     {
         pinData->currentMode = INPUT;
-        pinData->modeSet = INPUT;
     }
+
+    pinData->modeSet = INPUT;  // This variable is used to track last explicitly set mode state, during initialization it is expected to be the default value - INPUT.
 
     // If the port pin is configured as a PMW:
     if ((portConfig[SELECT_PWM] & (1 << _ArduinoToPortBitMap[pin].BitNumber)) != 0)
@@ -504,7 +504,7 @@ __declspec (noinline) inline void _ReadPinConfiguration(int pin, PPIN_DATA pinDa
     }
 }
 
-__declspec (noinline) inline void _ReadPinMuxConfig(int pin, PPIN_DATA pinData)
+__declspec (noinline) inline void _InitPinMuxConfig(int pin, PPIN_DATA pinData)
 {
     unsigned int gpioMux;
     BYTE muxConfig;
@@ -533,19 +533,17 @@ __declspec (noinline) inline void _ReadPinMuxConfig(int pin, PPIN_DATA pinData)
         if (muxConfig == gpioMux)
         {
             pinData->currentMux = DEFAULT_MUX;
-            pinData->muxSet = DEFAULT_MUX;
         }
         else
         {
             pinData->currentMux = ALTERNATE_MUX;
-            pinData->muxSet = ALTERNATE_MUX;
         }
     }
     else
     {
         pinData->currentMux = DEFAULT_MUX;
-        pinData->muxSet = DEFAULT_MUX;
     }
+    pinData->muxSet = DEFAULT_MUX;  // This variable is used to track last explicitly set mux state, during initialization it is expected to be the default value - DEFAULT_MUX.
 }
 
 inline void _InitializePinIfNeeded(int pin)
@@ -579,7 +577,7 @@ __declspec (noinline) inline void _InitializePin(int pin)
         if (_ArduinoToGalileoPinMap[pin] >= GPORT0_BIT0_PWM7)
         {
             // Read the pin configuration from the CY8C9540A I/O Expander.
-            _ReadPinConfiguration(pin, &(_pinData[pin]));
+            _InitPinConfiguration(pin, &(_pinData[pin]));
 
             // Indicate the data for this pin is now initialized.
             _pinData[pin].pinInitialized = TRUE;
@@ -588,7 +586,7 @@ __declspec (noinline) inline void _InitializePin(int pin)
 		}
 
         // Read the MUX configuration for this pin.
-        _ReadPinMuxConfig(pin, &(_pinData[pin]));
+        _InitPinMuxConfig(pin, &(_pinData[pin]));
     }
     catch (const _arduino_fatal_error &)
     {
@@ -759,9 +757,9 @@ inline void pinMode(unsigned int pin, unsigned int mode)
         {
             ThrowError("GpioSetDir() failed. pin = %d, mode = %d", pin, mode);
         }
-        _pinData[pin].modeSet = mode;
         _pinData[pin].currentMode = mode;
     }
+    _pinData[pin].modeSet = mode;
 }
 
 //
