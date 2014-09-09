@@ -23,6 +23,7 @@ md nupkg
 md nupkg\build
 md nupkg\build\native
 md nupkg\build\native\include
+md nupkg\build\native\include\avr
 md nupkg\build\native\source
 md nupkg\build\native\lib
 
@@ -32,6 +33,7 @@ copy Microsoft.IoT.NativeWiring.nuspec nupkg /y || goto err
 copy Microsoft.IoT.NativeWiring.targets nupkg\build\native /y || goto err
 copy *.h nupkg\build\native\include /y || goto err
 copy *.cpp nupkg\build\native\source /y || goto err
+copy avr\pgmspace.h nupkg\build\native\include\avr /y || goto err
 copy ..\license.txt nupkg /y || goto err
 
 :: skip packaging step if requested
