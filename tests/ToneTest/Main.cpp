@@ -61,4 +61,9 @@ void loop()
     Log(L"Calling tone with a duration and noTone before it's timer\n");
     tone(tonePin, 100, 2000);
     noTone(tonePin);
+
+    // Calling tone with a duration and letting the callback hit
+    Log(L"Calling tone with a duration and letting the callback hit\n");
+    tone(tonePin, 100, 2000);
+    Sleep(3000);
 }

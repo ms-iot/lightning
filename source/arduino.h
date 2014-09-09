@@ -64,7 +64,7 @@ inline int Log(const char *format, ...)
         {
             OutputDebugStringA(buffer);
         }
-        delete[](buffer);
+        delete [](buffer);
     }
     else
     {
@@ -90,7 +90,7 @@ inline int Log(const wchar_t *format, ...)
         {
             OutputDebugStringW(buffer);
         }
-        delete[](buffer);
+        delete [](buffer);
     }
     else
     {
