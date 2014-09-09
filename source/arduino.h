@@ -13,6 +13,7 @@
 #define _USE_MATH_DEFINES
 #endif
 #include <math.h>
+#include <map>
 
 #include "ArduinoCommon.h"
 #include "ArduinoError.h"
@@ -442,7 +443,7 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
 }
 
 // Tone function calls
-__declspec(selectany) int ArduinoStatic::toneRunningOnPin = -1;
+__declspec (selectany) ArduinoStatic::TonePinMap ArduinoStatic::tpMap;
 
 inline void tone(int pin, unsigned int frequency)
 {
