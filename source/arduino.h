@@ -23,6 +23,7 @@
 #define _USE_MATH_DEFINES
 #endif
 #include <math.h>
+#include <map>
 
 #include "ArduinoError.h"
 #include "WindowsRandom.h"
@@ -973,12 +974,21 @@ class ArduinoStatic
 {
 
 public:
-    static int toneRunningOnPin;
+    // These defines and struct are used for tone functions
+#define _MILLISECOND 10000
+
+    // what the map means:
+    // pin, nullptr = tone on, but no timer
+    // pin, valid handle = tone on, timer on
+    // pin not found = no tone running on pin
+    typedef std::map<int, HANDLE> TonePinMap;
+    static TonePinMap tpMap;
 
     ArduinoStatic() :
         adc(nullptr),
         _analog_read_resolution(10)
-    { }
+    {
+    }
 
     ~ArduinoStatic()
     {
@@ -1098,66 +1108,89 @@ public:
     {
         // Generates and starts the square wave of designated frequency at 50% duty cycle
         // Cannot generate tones lower than 31Hz
-        // if you want to play different pitches on multiple pins, you need to call noTone on one pin before calling tone on the next pin.
+        _ValidatePwmPin(pin);
+        _ValidatePinOkToChange(pin);
+        _InitializePinIfNeeded(pin);
 
-        if (toneRunningOnPin == -1 || toneRunningOnPin == pin)
+        HRESULT hr = ERROR_SUCCESS;
+
+        // Scale the duty cycle to the range used by the driver.
+        // From 0-255 to 0-PWM_MAX_DUTYCYCLE, rounding to nearest value.
+        ULONG dutyCycle = ((255UL / 2 * PWM_MAX_DUTYCYCLE) + 127UL) / 255UL; // gives us a 50% duty cycle
+
+        auto result = tpMap.find(pin);
+        if (result != tpMap.end())
         {
-            _ValidatePwmPin(pin);
-            _ValidatePinOkToChange(pin);
-            _InitializePinIfNeeded(pin);
-
-            HRESULT hr = ERROR_SUCCESS;
-
-            // Scale the duty cycle to the range used by the driver.
-            // From 0-255 to 0-PWM_MAX_DUTYCYCLE, rounding to nearest value.
-            ULONG dutyCycle = ((255UL / 2 * PWM_MAX_DUTYCYCLE) + 127UL) / 255UL; // gives us a 50% duty cycle
-
-            // If PWM operation is not currently enabled on this pin:
-            if (!_pinData[pin].pwmIsEnabled)
+            if (result->second == NULL)
             {
-                // Prepare the pin for PWM use.
-                _PinFunction(pin, _PwmMuxFunction[pin]);
-                _SetImplicitPinMode(pin, OUTPUT);
-                _pinData[pin].stateIsKnown = FALSE;
-
-                // Start PWM on the pin.
-                hr = PwmStart(_PwmPinMap[pin], frequency, dutyCycle);
-                if (FAILED(hr))
-                {
-                    ThrowError("PwmStart() failed. pin=%d, freq=100hz", pin);
-                }
-                _pinData[pin].pwmIsEnabled = TRUE;
-                _pinData[pin].pwmDutyCycle = 255UL / 2;
-                toneRunningOnPin = pin;
+                // tone is running on pin without a timer, so stop it and remove it from map
+                PwmStop(_PwmPinMap[pin]);
+                tpMap.erase(pin);
             }
-            // If PWM operation is enabled on this pin:
             else
             {
-                // Since we have no driver function to change a PWM Frequency, we will have to stop it and restart it with the new frequency.
-                PwmStop(_PwmPinMap[pin]);
-                hr = PwmStart(_PwmPinMap[pin], frequency, dutyCycle);
-                if (FAILED(hr))
+                // tone is running on a pin with a timer, so stop the timer, stop the tone, and remove it from map
+                if (!CancelWaitableTimer(result->second))
                 {
-                    ThrowError("PwmStart() failed. pin=%d, freq=100hz", pin);
+                    DWORD err = GetLastError();
+                    ThrowError("Error canceling waitable timer in tone: %d", err);
                 }
-                _pinData[pin].pwmDutyCycle = 255UL / 2;
-                toneRunningOnPin = pin;
+                PwmStop(_PwmPinMap[pin]);
+                tpMap.erase(pin);
             }
+        }
+        // no tone running on pin
+        // If PWM operation is not currently enabled on this pin:
+        if (!_pinData[pin].pwmIsEnabled)
+        {
+            // Prepare the pin for PWM use.
+            _PinFunction(pin, _PwmMuxFunction[pin]);
+            _SetImplicitPinMode(pin, OUTPUT);
+            _pinData[pin].stateIsKnown = FALSE;
+
+            // Start PWM on the pin.
+            hr = PwmStart(_PwmPinMap[pin], frequency, dutyCycle);
+            if (FAILED(hr))
+            {
+                ThrowError("PwmStart() failed. pin=%d, freq=100hz", pin);
+            }
+            _pinData[pin].pwmIsEnabled = TRUE;
+            _pinData[pin].pwmDutyCycle = 255UL / 2;
+            tpMap.insert({ pin, NULL });
+        }
+        // If PWM operation is enabled on this pin:
+        else
+        {
+            // Since we have no driver function to change a PWM Frequency, we will have to stop it and restart it with the new frequency.
+            PwmStop(_PwmPinMap[pin]);
+            hr = PwmStart(_PwmPinMap[pin], frequency, dutyCycle);
+            if (FAILED(hr))
+            {
+                ThrowError("PwmStart() failed. pin=%d, freq=100hz", pin);
+            }
+            _pinData[pin].pwmDutyCycle = 255UL / 2;
+            tpMap.insert({ pin, NULL });
         }
     }
 
     static VOID CALLBACK TimeProcStopTone(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
     {
-        timerData *myTimerData = (timerData *) lpArg;
+        int pin = reinterpret_cast<int>(lpArg);
 
         // This will stop the square wave when a timer triggers
-        if (myTimerData->pin != -1 && myTimerData->pin == toneRunningOnPin)
+        auto result = tpMap.find(pin);
+        if (result != tpMap.end() && result->second != NULL) // is it in map and has a timer
         {
-            toneRunningOnPin = -1;
-            PwmStop(_PwmPinMap[myTimerData->pin]);
+            // tone is running on pin with a timer
+            if (!CancelWaitableTimer(result->second))
+            {
+                DWORD err = GetLastError();
+                ThrowError("Error canceling waitable timer in tone: %d", err);
+            }
+            // remove from map
+            PwmStop(_PwmPinMap[pin]);
+            tpMap.erase(pin);
         }
-        PwmStop(_PwmPinMap[3]);
-        Log(L"Timer Hit\n");
     }
 
     //
@@ -1173,46 +1206,68 @@ public:
     //
     void tone(int pin, unsigned int frequency, unsigned long duration)
     {
-        if (toneRunningOnPin == -1 || toneRunningOnPin == pin)
+        // Generates and starts the square wave
+        tone(pin, frequency);
+
+        HANDLE timerHandle = CreateWaitableTimerEx(NULL, NULL, 0, TIMER_ALL_ACCESS);
+
+        if (timerHandle == NULL)
         {
-            // Generates and starts the square wave
-            tone(pin, frequency);
+            DWORD err = GetLastError();
+            ThrowError("Error creating timer for tone: %d", err);
+        }
 
-            HANDLE timerHandle = CreateWaitableTimerEx(NULL, NULL, 0, TIMER_ALL_ACCESS);
+        LARGE_INTEGER timerDueTime;
 
-            if (timerHandle == NULL)
+        // Timing is done in 100 nanosecond units
+        int64_t qwDueTime = -1 * (int64_t) duration * _MILLISECOND; // typecast is allowed since unsigned long is smaller than int64
+
+        // Copy the relative time into a LARGE_INTEGER.
+        timerDueTime.LowPart = (DWORD) (qwDueTime & 0xFFFFFFFF);
+        timerDueTime.HighPart = (LONG) (qwDueTime >> 32);
+
+        int data = pin;
+
+        if (SetWaitableTimer(timerHandle, &timerDueTime, 0, TimeProcStopTone, (VOID *) pin, FALSE) == 0)
+        {
+            DWORD err = GetLastError();
+            ThrowError("Error setting waitable timer for tone: %d", err);
+        }
+        else
+        {
+            // change the TonePinMap value to show that there is in fact a waitable timer
+            auto result = tpMap.find(pin);
+            if (result != tpMap.end()) // is it in map and has a timer
             {
-                DWORD err = GetLastError();
-                ThrowError("Error creating timer for tone: %d", err);
-            }
-
-            LARGE_INTEGER timerDueTime;
-
-            // Timing is done in 100 nanosecond units
-            __int64 qwDueTime = -1 * (__int64) duration * _MILLISECOND; // typecast is allowed since unsigned long is smaller than int64
-
-            // Copy the relative time into a LARGE_INTEGER.
-            timerDueTime.LowPart = (DWORD) (qwDueTime & 0xFFFFFFFF);
-            timerDueTime.HighPart = (LONG) (qwDueTime >> 32);
-
-            static timerData myTimerData; // needs to be static in order to be accessible after tone() ends
-            myTimerData.pin = pin;
-
-            if (SetWaitableTimer(timerHandle, &timerDueTime, 0, TimeProcStopTone, &myTimerData, FALSE) == 0)
-            {
-                DWORD err = GetLastError();
-                ThrowError("Error setting waitable timer for tone: %d", err);
+                tpMap.erase(pin);
+                tpMap.insert({ pin, timerHandle });
             }
         }
+
     }
 
     void noTone(int pin)
     {
-        // Stops the tone wave on the pin
-        if (toneRunningOnPin == pin)
+        auto result = tpMap.find(pin);
+        if (result != tpMap.end()) // the pin has a tone running on it
         {
-            PwmStop(_PwmPinMap[pin]);
-            toneRunningOnPin = -1;
+            if (result->second == NULL)
+            {
+                // tone is running on pin without a timer, so stop it and remove it from map
+                PwmStop(_PwmPinMap[pin]);
+                tpMap.erase(pin);
+            }
+            else
+            {
+                // tone is running on a pin with a timer, so stop the timer, stop the tone, and remove it from map
+                if (!CancelWaitableTimer(result->second))
+                {
+                    DWORD err = GetLastError();
+                    ThrowError("Error canceling waitable timer in tone: %d", err);
+                }
+                PwmStop(_PwmPinMap[pin]);
+                tpMap.erase(pin);
+            }
         }
     }
 
@@ -1305,7 +1360,7 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
 }
 
 // Tone function calls
-__declspec(selectany) int ArduinoStatic::toneRunningOnPin = -1;
+__declspec (selectany) ArduinoStatic::TonePinMap ArduinoStatic::tpMap;
 
 inline void tone(int pin, unsigned int frequency)
 {
