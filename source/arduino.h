@@ -126,7 +126,7 @@ inline int Log(const char *format, ...)
         {
             OutputDebugStringA(buffer);
         }
-        delete[](buffer);
+        delete [](buffer);
     }
     else
     {
@@ -152,7 +152,7 @@ inline int Log(const wchar_t *format, ...)
         {
             OutputDebugStringW(buffer);
         }
-        delete[](buffer);
+        delete [](buffer);
     }
     else
     {
@@ -1084,26 +1084,22 @@ public:
     /// \exception _arduino_fatal_error This error is thrown when any reference
     /// voltage other than DEFAULT is used.
     /// \see ReferenceVoltage
-    void analogReference (const uint8_t reference_voltage) {
+    void analogReference(const uint8_t reference_voltage) {
         if (DEFAULT != reference_voltage) { ThrowError("Unsupported voltage set as analog reference!"); }
     }
-    
+
     // These defines and struct are used for tone functions
-    typedef struct _timerData {
-        int pin;
-    } timerData;
 
 #define _MILLISECOND 10000
 
-    //
-    // Perform a tone operation.
-    //
-    // INPUTS:
-    //	pin - The Arduino GPIO pin on which to generate the pulse train.
-    //        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
-    //
-    //  frequency - in Hertz
-    //
+    ///
+    /// \brief Performs a tone operation.
+    /// \details This will start a PWM wave on the designated pin of the
+    /// inputted frequency with 50% duty cycle
+    /// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+    ///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+    /// \param [in] frequency - in Hertz
+    ///
     void tone(int pin, unsigned int frequency)
     {
         // Generates and starts the square wave of designated frequency at 50% duty cycle
@@ -1134,6 +1130,11 @@ public:
                 {
                     DWORD err = GetLastError();
                     ThrowError("Error canceling waitable timer in tone: %d", err);
+                }
+                if (!CloseHandle(result->second))
+                {
+                    DWORD err = GetLastError();
+                    ThrowError("Error closing waitable timer Handle in tone: %d", err);
                 }
                 PwmStop(_PwmPinMap[pin]);
                 tpMap.erase(pin);
@@ -1173,6 +1174,13 @@ public:
         }
     }
 
+    ///
+    /// \brief The callback for timers set up during a tone with duration
+    /// \details This will stop a PWM wave on the designated pin
+    /// \param [in] lpArg a (VOID *) that is the data being passed into it
+    /// \param [in] dwTimerLowValue
+    /// \param [in] dwTimerHighValue
+    ///
     static VOID CALLBACK TimeProcStopTone(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
     {
         int pin = reinterpret_cast<int>(lpArg);
@@ -1187,23 +1195,28 @@ public:
                 DWORD err = GetLastError();
                 ThrowError("Error canceling waitable timer in tone: %d", err);
             }
+            if (!CloseHandle(result->second))
+            {
+                DWORD err = GetLastError();
+                ThrowError("Error closing waitable timer Handle in tone: %d", err);
+            }
             // remove from map
             PwmStop(_PwmPinMap[pin]);
             tpMap.erase(pin);
         }
+        Log("Timer Hit\n");
     }
 
-    //
-    // Perform a tone operation.
-    //
-    // INPUTS:
-    //	pin - The Arduino GPIO pin on which to generate the pulse train.
-    //        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
-    //
-    //  frequency - in Hertz
-    //
-    //  duration - in milliseconds
-    //
+    ///
+    /// \brief Performs a tone operation.
+    /// \details This will start a PWM wave on the designated pin of the
+    /// inputted frequency with 50% duty cycle and set up a timer to trigger
+    /// a callback after the inputted duration
+    /// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+    ///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+    /// \param [in] frequency - in Hertz
+    /// \param [in] duration - in milliseconds
+    ///
     void tone(int pin, unsigned int frequency, unsigned long duration)
     {
         // Generates and starts the square wave
@@ -1226,8 +1239,6 @@ public:
         timerDueTime.LowPart = (DWORD) (qwDueTime & 0xFFFFFFFF);
         timerDueTime.HighPart = (LONG) (qwDueTime >> 32);
 
-        int data = pin;
-
         if (SetWaitableTimer(timerHandle, &timerDueTime, 0, TimeProcStopTone, (VOID *) pin, FALSE) == 0)
         {
             DWORD err = GetLastError();
@@ -1246,6 +1257,13 @@ public:
 
     }
 
+    ///
+    /// \brief Performs a noTone operation.
+    /// \details This will stop a PWM wave on the designated pin if there is
+    /// a tone running on it
+    /// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+    ///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+    ///
     void noTone(int pin)
     {
         auto result = tpMap.find(pin);
@@ -1265,31 +1283,17 @@ public:
                     DWORD err = GetLastError();
                     ThrowError("Error canceling waitable timer in tone: %d", err);
                 }
+                if (!CloseHandle(result->second))
+                {
+                    DWORD err = GetLastError();
+                    ThrowError("Error closing waitable timer Handle in tone: %d", err);
+                }
                 PwmStop(_PwmPinMap[pin]);
                 tpMap.erase(pin);
             }
         }
     }
 
-
-    /// \brief Sets the reference voltage for the analog to digital converter
-    /// \details This method sets the reference voltage for the analog to digital
-    /// converter
-    /// \param [in] reference_voltage This value is used to represent the
-    /// maximum voltage expected as input on the analog pins A0 - A5
-    /// \note An equal voltage would be represented as 1023 with 10-bit read
-    /// resolution
-    /// \note The Galileo hardware only supports 5V reference, regardless of
-    /// whether or not the jumper is set to 3V3 or 5V
-    /// \note The AREF pin on the Galileo is only wired to a capacitor and
-    /// nothing else, rendering it effectively useless
-    /// \warning Only the DEFAULT value is supported
-    /// \exception _arduino_fatal_error This error is thrown when any reference
-    /// voltage other than DEFAULT is used.
-    /// \see ReferenceVoltage
-    void analogReference (const uint8_t reference_voltage) {
-        if (DEFAULT != reference_voltage) { ThrowError("Unsupported voltage set as analog reference!"); }
-    }
 private:
     ADC *adc;
     uint8_t _analog_read_resolution;
