@@ -10,6 +10,7 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+
 #include <windows.h>
 
 #ifdef USE_NETWORKSERIAL
@@ -1472,6 +1473,10 @@ inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 #define bitSet(value, bit) ((value) |= (1UL << (bit)))
 #define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
 #define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
+
+// Interrupt enable/disable stubs
+#define cli()
+#define sei()
 
 #define bit(b) (1UL << (b))
 #define __attribute__(x)

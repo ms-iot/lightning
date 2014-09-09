@@ -23,6 +23,7 @@ md nupkg
 md nupkg\build
 md nupkg\build\native
 md nupkg\build\native\include
+md nupkg\build\native\include\avr
 md nupkg\build\native\source
 md nupkg\build\native\lib
 
@@ -34,6 +35,7 @@ copy *.h nupkg\build\native\include /y || goto err
 copy *.cpp nupkg\build\native\source /y || goto err
 copy ..\extern\inc\embprpusr.h nupkg\build\native\include /y || goto err
 copy ..\extern\inc\galileo.h nupkg\build\native\include /y || goto err
+copy avr\pgmspace.h nupkg\build\native\include\avr /y || goto err
 copy ..\extern\lib\x86\embprpusr.lib nupkg\build\native\lib /y || goto err
 copy ..\license.txt nupkg /y || goto err
 
