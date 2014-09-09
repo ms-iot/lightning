@@ -13,7 +13,15 @@
 #pragma comment (lib, "Ws2_32.lib")
 
 #define DEFAULT_BUFLEN sizeof(uint8_t)
-#define DEFAULT_PORT "27015"
+
+// Network serial listens for connections on a specified port
+// By default, we chose 27015, but it can be any open port. 
+// To specify a port, define NETWORK_SERIAL_PORT=<port> in your project
+#ifndef NETWORKSERIAL_PORT
+#define NETWORKSERIAL_PORT 27015
+#endif
+
+#define NETWORKSERIAL_PORT_S STRINGIFY_MACRO(NETWORKSERIAL_PORT) 
 
 NetworkSerial::NetworkSerial()
     : _listenSocket(INVALID_SOCKET)
@@ -41,7 +49,7 @@ void NetworkSerial::begin(unsigned long)
     hints.ai_flags = AI_PASSIVE;
 
     // Resolve the server address and port
-    iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+    iResult = getaddrinfo(NULL, NETWORKSERIAL_PORT_S, &hints, &result);
     if (iResult != 0)
     {
         printf("getaddrinfo failed with error: %d\n", iResult);
