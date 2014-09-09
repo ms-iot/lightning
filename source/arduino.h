@@ -163,6 +163,7 @@ inline void _ValidateArduinoPinNumber(int pin)
     }
 }
 
+
 //
 // Set the digital pin (IO0 - IO13) to the specified state.
 // If the analog pins (A0-A5) are configured as digital IOs,
