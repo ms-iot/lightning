@@ -24,5 +24,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Stream.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\WString.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PulseIn.cpp" />    
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\WInterrupt.cpp" />    
   </ItemGroup>
 </Project>

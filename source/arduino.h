@@ -34,6 +34,11 @@
 #include "binary.h"
 #include "wire.h"
 
+#include <memory>
+#include <map>
+#include <vector>
+#include <algorithm>
+
 #define NUM_ARDUINO_PINS 20
 #define NUM_ANALOG_PINS 6
 
@@ -1442,4 +1447,5 @@ inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 #define STRINGIFY_MACRO(x) STRINGIFY(x)
 
 #include "Wire.h"
+#include "WInterrupt.h"
 #endif // _WINDOWS_ARDUINO_H_
