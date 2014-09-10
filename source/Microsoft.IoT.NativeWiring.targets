@@ -25,5 +25,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PCAL9535ASuppport.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Spi.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\SpiController.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\WInterrupt.cpp" />    
   </ItemGroup>
 </Project>
