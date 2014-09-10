@@ -37,6 +37,8 @@ private:
     const std::wstring _comPortName;
     unsigned long _timeout;
 
+    HardwareSerial & operator= (HardwareSerial &);
+
 public:
     enum SerialConfigs
     {
