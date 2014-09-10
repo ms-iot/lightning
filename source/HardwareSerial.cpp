@@ -29,6 +29,8 @@ HardwareSerial::~HardwareSerial()
     end();
 }
 
+HardwareSerial & HardwareSerial::operator= (HardwareSerial &) { return *this; }
+
 DCB HardwareSerial::dcbArray[] =
 {
     // sizeof(DCB)
