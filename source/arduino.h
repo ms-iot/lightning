@@ -112,7 +112,7 @@ inline long map(long x, long in_min, long in_max, long out_min, long out_max)
 inline void pinMode(unsigned int pin, unsigned int mode);
 inline void tone(int pin, unsigned int frequency);
 inline void tone(int pin, unsigned int frequency, unsigned long duration);
-inline void noTone(int pin);
+static void noTone(int pin);
 
 //
 // Pauses the program for the amount of time (in microseconds) 
@@ -445,19 +445,69 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
 // Tone function calls
 __declspec (selectany) ArduinoStatic::TonePinMap ArduinoStatic::tpMap;
 
+///
+/// \brief Performs a tone operation.
+/// \details This will start a PWM wave on the designated pin of the
+/// inputted frequency with 50% duty cycle
+/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+/// \param [in] frequency - in Hertz
+///
 inline void tone(int pin, unsigned int frequency)
 {
     _ArduinoStatic.tone(pin, frequency);
 }
 
+///
+/// \brief Performs a tone operation.
+/// \details This will start a PWM wave on the designated pin of the
+/// inputted frequency with 50% duty cycle and set up a timer to trigger
+/// a callback after the inputted duration
+/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+/// \param [in] frequency - in Hertz
+/// \param [in] duration - in milliseconds
+///
 inline void tone(int pin, unsigned int frequency, unsigned long duration)
 {
     _ArduinoStatic.tone(pin, frequency, duration);
 }
 
-inline void noTone(int pin)
+///
+/// \brief Performs a noTone operation.
+/// \details This will stop a PWM wave on the designated pin if there is
+/// a tone running on it
+/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+///
+static void noTone(int pin)
 {
-    _ArduinoStatic.noTone(pin);
+    auto result = _ArduinoStatic.tpMap.find(pin);
+    if (result != _ArduinoStatic.tpMap.end()) // the pin has a tone running on it
+    {
+        if (result->second == NULL)
+        {
+            // tone is running on pin without a timer, so stop it and remove it from map
+            PwmStop(_PwmPinMap[pin]);
+            _ArduinoStatic.tpMap.erase(pin);
+        }
+        else
+        {
+            // tone is running on a pin with a timer, so stop the timer, stop the tone, and remove it from map
+            if (!CancelWaitableTimer(result->second))
+            {
+                DWORD err = GetLastError();
+                ThrowError("Error canceling waitable timer in tone: %d", err);
+            }
+            if (!CloseHandle(result->second))
+            {
+                DWORD err = GetLastError();
+                ThrowError("Error closing waitable timer Handle in tone: %d", err);
+            }
+            PwmStop(_PwmPinMap[pin]);
+            _ArduinoStatic.tpMap.erase(pin);
+        }
+    }
 }
 
 //
