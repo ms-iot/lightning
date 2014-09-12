@@ -542,7 +542,7 @@ inline int RunArduinoSketch()
         setup();
         while (1)
         {
-            // This call is used async procedure calls (APCs); usually by timers
+            // This call is used to handle async procedure calls (APCs); usually by timers
             // This call will relinquish the remainder of its time slice to another 
             // ready to run thread of equal priority. However, in practice it is 
             // a no-op unless there's a pending APC. 
