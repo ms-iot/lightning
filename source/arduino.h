@@ -13,7 +13,6 @@
 #define _USE_MATH_DEFINES
 #endif
 #include <math.h>
-#include <map>
 
 #include "ArduinoCommon.h"
 #include "ArduinoError.h"
@@ -521,6 +520,7 @@ static void noTone(int pin)
 
 #include "Stream.h"
 #include "HardwareSerial.h"
+#include "WInterrupt.h"
 
 void setup();
 void loop();
@@ -542,7 +542,12 @@ inline int RunArduinoSketch()
         setup();
         while (1)
         {
+            // This call is used async procedure calls (APCs); usually by timers
+            // This call will relinquish the remainder of its time slice to another 
+            // ready to run thread of equal priority. However, in practice it is 
+            // a no-op unless there's a pending APC. 
             SleepEx(0, TRUE);
+
             loop();
             #ifdef SERIAL_EVENT
             if (Serial && Serial.available() > 0)
@@ -628,5 +633,4 @@ inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 #define STRINGIFY_MACRO(x) STRINGIFY(x)
 
 #include "Wire.h"
-#include "WInterrupt.h"
 #endif // _WINDOWS_ARDUINO_H_
