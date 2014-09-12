@@ -6,6 +6,8 @@
 
 using namespace std;
 
+//! Tracks interrupts assigned to a specific pin
+// Used to track pin number, mode, state and callback function.
 struct InterruptTracker
 {
     int pin;
@@ -17,9 +19,9 @@ struct InterruptTracker
     : pin(p)
     , fxn(f)
     , mode(m)
-    , lastState(LOW)
     {
-
+        // snap the state of the pin at create time.
+        lastState = digitalRead(pin);
     }
 
     ~InterruptTracker()
@@ -30,8 +32,9 @@ struct InterruptTracker
     {
         int currentState = digitalRead(pin);
 
-        switch (currentState)
+        switch (mode)
         {
+            // Callback is executed as long as the condition is low
             case LOW:
             if (currentState == LOW)
             {
@@ -39,6 +42,7 @@ struct InterruptTracker
             }
             break;
 
+            // Callback is executed when the pin changes state
             case CHANGE:
             if (currentState != lastState)
             {
@@ -46,6 +50,7 @@ struct InterruptTracker
             }
             break;
             
+            // Callback is executed when the pin changes from LOW to HIGH
             case RISING:
             if (lastState == LOW && currentState == HIGH)
             {
@@ -53,6 +58,7 @@ struct InterruptTracker
             }
             break;
 
+            // Callback is executed when the pin changes from HIGH to LOW
             case FALLING:
             if (lastState == HIGH && currentState == LOW)
             {
@@ -69,8 +75,12 @@ typedef std::map<int, shared_ptr<InterruptTracker> > InterruptPinMap;
 static InterruptPinMap s_interruptMap;
 static HANDLE s_sharedInterruptTimer = INVALID_HANDLE_VALUE;
 
+//! At a fixed frequency (INTERRUPT_FREQUENCY), this callback will iterate through outstanding fake 'interrupts'
+//! test the condition and call the callback.
 static void CALLBACK InterruptTimerHandler(void* arg, DWORD, DWORD)
 {
+    // During an interrupt handler, the caller can call detachInterrupt which modifies the list.
+    // To handle this, we'll copy the list.
     std::vector<shared_ptr<InterruptTracker>> list;
 
     for (auto p : s_interruptMap)
@@ -78,7 +88,7 @@ static void CALLBACK InterruptTimerHandler(void* arg, DWORD, DWORD)
         list.push_back(p.second);
     }
 
-    for (auto &tracker : list)
+    for (auto tracker : list)
     {
         tracker->handle();
     }
@@ -91,7 +101,7 @@ void attachInterrupt(uint8_t pin, InterruptFunction fxn, int mode)
         s_sharedInterruptTimer = CreateWaitableTimerEx(NULL, NULL, 0, TIMER_ALL_ACCESS);
 
         LARGE_INTEGER li = { 0 };
-        if (SetWaitableTimer(s_sharedInterruptTimer, &li, INTERUPT_FREQUENCY, InterruptTimerHandler, nullptr, FALSE) == 0)
+        if (SetWaitableTimer(s_sharedInterruptTimer, &li, INTERRUPT_FREQUENCY, InterruptTimerHandler, nullptr, FALSE) == 0)
         {
             DWORD err = GetLastError();
             ThrowError("Error setting timer for interrupts: %d", err);		
@@ -107,7 +117,7 @@ void attachInterrupt(uint8_t pin, InterruptFunction fxn, int mode)
     }
     else
     {
-        s_interruptMap[pin] = make_shared<InterruptTracker>(pin, fxn, mode);;
+        s_interruptMap[pin] = make_shared<InterruptTracker>(pin, fxn, mode);
     }
 }
 
@@ -125,3 +135,4 @@ void detachInterrupt(uint8_t pin)
         }
     }
 }
+
