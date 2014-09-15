@@ -14,7 +14,9 @@
 #define ADC_MAX_VALUE 0xfff
 #define ADC_RESOLUTION 12
 
-#define PWM_MAX_DUTYCYCLE 0xffff
+#ifndef PWM_RESOLUTION
+#define PWM_RESOLUTION 8
+#endif
 
 typedef enum _GALILEO_GPIO_PIN {
 	
