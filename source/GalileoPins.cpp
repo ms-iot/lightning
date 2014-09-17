@@ -4,66 +4,72 @@
 
 #include <Windows.h>
 #include "GalileoPins.h"
+
 // GPIO type values.
-const UCHAR GPIO_FABRIC = 1;
-const UCHAR GPIO_LEGRES = 2;
-const UCHAR GPIO_LEGCOR = 3;
-const UCHAR GPIO_EXP1 = 4;
-const UCHAR GPIO_EXP2 = 5;
+const UCHAR GPIO_FABRIC = 1;    ///< GPIO is from the SOC Fabric sub-system (memory mapped)
+const UCHAR GPIO_LEGRES = 2;    ///< GPIO is from the SOC Legacy sub-system that can resume from sleep
+const UCHAR GPIO_LEGCOR = 3;    ///< GPIO is from the SOC Legacy sub-system that can not resume from sleep
+const UCHAR GPIO_EXP1 = 4;      ///< GPIO is from a port bit on I/O Expander 1
+const UCHAR GPIO_EXP2 = 5;      ///< GPIO is from a port bit on  I/O Expander 2
 
 // GPIO pin driver selection values.
-const UCHAR GPIO_INPUT_DRIVER_SELECT = 1;
-const UCHAR GPIO_OUTPUT_DRIVER_SELECT = 0;
+const UCHAR GPIO_INPUT_DRIVER_SELECT = 1;   ///< Specify input circuitry should be enabled
+const UCHAR GPIO_OUTPUT_DRIVER_SELECT = 0;  ///< Specify output driver should be enabled
 
 // I/O Expander name values.
-const UCHAR EXP0       =  0;    // I/O Expander 0
-const UCHAR EXP1       =  1;    // I/O Expander 1
-const UCHAR EXP2       =  2;    // I/O Expander 2
-const UCHAR PWM        =  3;    // PWM used as I/O Expander
-const UCHAR NUM_IO_EXP =  4;    // Number of I/O Expanders present
-const UCHAR NO_X       = 15;    // No I/O Expander
+const UCHAR EXP0       =  0;    ///< Value specifies I/O Expander 0
+const UCHAR EXP1       =  1;    ///< Value specifies I/O Expander 1
+const UCHAR EXP2       =  2;    ///< Value specifies I/O Expander 2
+const UCHAR PWM        =  3;    ///< Value specifies PWM used as I/O Expander
+const UCHAR NUM_IO_EXP =  4;    ///< The number of I/O Expanders present
+const UCHAR NO_X       = 15;    ///< Value specifies that no I/O Expander is used
 
 // I/O Expander types.
-const UCHAR PCAL9535A = 0;      // I/O Expander chip
-const UCHAR PCA9685 = 1;        // PWM chip
-const UCHAR NUM_EXP_TYPSES = 2; // Number of I/O Expanders types
+const UCHAR PCAL9535A = 0;      ///< I/O Expander chip
+const UCHAR PCA9685 = 1;        ///< PWM chip
+const UCHAR NUM_EXP_TYPSES = 2; ///< The number of I/O Expanders types present
 
 // PWM chip bit values.
-const UCHAR LED0  =  0;
-const UCHAR LED1  =  1;
-const UCHAR LED2  =  2;
-const UCHAR LED3  =  3;
-const UCHAR LED4  =  4;
-const UCHAR LED5  =  5;
-const UCHAR LED6  =  6;
-const UCHAR LED7  =  7;
-const UCHAR LED8  =  8;
-const UCHAR LED9  =  9;
-const UCHAR LED10 = 10;
-const UCHAR LED11 = 11;
-const UCHAR LED12 = 12;
-const UCHAR LED13 = 13;
-const UCHAR LED14 = 14;
-const UCHAR LED15 = 15;
+const UCHAR LED0  =  0;         ///< PWM chip LED0 output
+const UCHAR LED1  =  1;         ///< PWM chip LED1 output
+const UCHAR LED2  =  2;         ///< PWM chip LED2 output
+const UCHAR LED3  =  3;         ///< PWM chip LED3 output
+const UCHAR LED4  =  4;         ///< PWM chip LED4 output
+const UCHAR LED5  =  5;         ///< PWM chip LED5 output
+const UCHAR LED6  =  6;         ///< PWM chip LED6 output
+const UCHAR LED7  =  7;         ///< PWM chip LED7 output
+const UCHAR LED8  =  8;         ///< PWM chip LED8 output
+const UCHAR LED9  =  9;         ///< PWM chip LED9 output
+const UCHAR LED10 = 10;         ///< PWM chip LED10 output
+const UCHAR LED11 = 11;         ///< PWM chip LED11 output
+const UCHAR LED12 = 12;         ///< PWM chip LED12 output
+const UCHAR LED13 = 13;         ///< PWM chip LED13 output
+const UCHAR LED14 = 14;         ///< PWM chip LED14 output
+const UCHAR LED15 = 15;         ///< PWM chip LED15 output
 
 // MUX name values.
-const UCHAR MUX0      =  0;
-const UCHAR MUX1      =  1;
-const UCHAR MUX2      =  2;
-const UCHAR MUX3      =  3;
-const UCHAR MUX4      =  4;
-const UCHAR MUX5      =  5;
-const UCHAR MUX6      =  6;
-const UCHAR MUX7      =  7;
-const UCHAR MUX8      =  8;
-const UCHAR MUX9      =  9;
-const UCHAR MUX10     = 10;
-const UCHAR AMUX1     = 11;
-const UCHAR AMUX2_1   = 12;
-const UCHAR AMUX2_2   = 13;
-const UCHAR NUM_MUXES = 14;
-const UCHAR NO_MUX    = 15;
+const UCHAR MUX0      =  0;     ///< Mux number 0
+const UCHAR MUX1      =  1;     ///< Mux number 1
+const UCHAR MUX2      =  2;     ///< Mux number 2
+const UCHAR MUX3      =  3;     ///< Mux number 3
+const UCHAR MUX4      =  4;     ///< Mux number 4
+const UCHAR MUX5      =  5;     ///< Mux number 5
+const UCHAR MUX6      =  6;     ///< Mux number 6
+const UCHAR MUX7      =  7;     ///< Mux number 7
+const UCHAR MUX8      =  8;     ///< Mux number 8
+const UCHAR MUX9      =  9;     ///< Mux number 9
+const UCHAR MUX10     = 10;     ///< Mux number 10
+const UCHAR AMUX1     = 11;     ///< Dual analog mux number 1
+const UCHAR AMUX2_1   = 12;     ///< Mux number 1 in dual mux package number 2
+const UCHAR AMUX2_2   = 13;     ///< Mux number 2 in dual mux package number 2
+const UCHAR NUM_MUXES = 14;     ///< Number of muxes present
+const UCHAR NO_MUX    = 15;     ///< Value indicates no mux is present
 
+/// The global table of pin attributes for the Galileo Gen2 board.
+/**
+This table contains all the pin-specific attributes needed to configure and use an I/O pin.
+It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
+*/
 const GalileoPinsClass::PORT_ATTRIBUTES g_Gen2PinAttributes[] =
 {
     //gpioType           pullupExp   triStExp    muxA             Muxes (A,B) by function:      triStIn   Function_mask
@@ -90,58 +96,153 @@ const GalileoPinsClass::PORT_ATTRIBUTES g_Gen2PinAttributes[] =
     { GPIO_EXP2,   P1_2, EXP2, P1_3, NO_X, 0,    AMUX1,  AMUX2_2, 1,1, 0,0, 1,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_AIN | FUNC_I2C }  // A5
 };
 
-// The array of MUX Attributes by MUX number.
+/// The global table of mux attributes for the Galileo Gen2 board.
+/**
+This table contains the information needed to set each mux to a desired state.  It is indexed by
+mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
+*/
 const GalileoPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[NUM_MUXES] =
 {
-    { PWM,  LED1 },     // MUX0
-    { PWM,  LED2 },     // MUX1
-    { PWM,  LED5 },     // MUX2
-    { PWM,  LED7 },     // MUX3
-    { PWM,  LED9 },     // MUX4
-    { EXP1, P1_4 },     // MUX5
-    { PWM,  LED11 },    // MUX6
-    { EXP1, P1_5 },     // MUX7
-    { EXP1, P1_6 },     // MUX8
-    { PWM,  LED12 },    // MUX9
-    { PWM,  LED13 },    // MUX10
-    { EXP2, P1_4 },     // AMUX1
-    { PWM,  LED14 },    // AMUX2_1
-    { PWM,  LED15 }     // AMUX2_2
+    { PWM,  LED1 },     ///< MUX0
+    { PWM,  LED2 },     ///< MUX1
+    { PWM,  LED5 },     ///< MUX2
+    { PWM,  LED7 },     ///< MUX3
+    { PWM,  LED9 },     ///< MUX4
+    { EXP1, P1_4 },     ///< MUX5
+    { PWM,  LED11 },    ///< MUX6
+    { EXP1, P1_5 },     ///< MUX7
+    { EXP1, P1_6 },     ///< MUX8
+    { PWM,  LED12 },    ///< MUX9
+    { PWM,  LED13 },    ///< MUX10
+    { EXP2, P1_4 },     ///< AMUX1
+    { PWM,  LED14 },    ///< AMUX2_1
+    { PWM,  LED15 }     ///< AMUX2_2
 };
 
-const GalileoPinsClass::EXP_ATTRIBUTES g_Gen2ExpAttributes[] = 
+/// The global table of I/O Expander attributes for the Galileo Gen2 board.
+/**
+This table contains the information needed to communicate with each I/O Expander chip.
+It is indexed by Expander number and contains the type of chip used for that I/O Expander
+and the address on the I2C bus the chip responds to.
+*/
+const GalileoPinsClass::EXP_ATTRIBUTES g_Gen2ExpAttributes[] =
 {
-    { PCAL9535A, 0x25 },    // EXP0
-    { PCAL9535A, 0x26 },    // EXP1
-    { PCAL9535A, 0x27 },    // EXP2
-    { PCA9685,   0x47 }     // PWM
+    { PCAL9535A, 0x25 },    ///< EXP0
+    { PCAL9535A, 0x26 },    ///< EXP1
+    { PCAL9535A, 0x27 },    ///< EXP2
+    { PCA9685,   0x47 }     ///< PWM
 };
 
+/// The global table of Pin Function tracking structures.
+/**
+This table tracks the currently configured function for each pin of the Galileo board.
+*/
+GalileoPinsClass::PIN_FUNCTION g_GenxPinFunctions[] = 
+{
+    { FUNC_NUL, false },    ///< D0
+    { FUNC_NUL, false },    ///< D1
+    { FUNC_NUL, false },    ///< D2
+    { FUNC_NUL, false },    ///< D3
+    { FUNC_NUL, false },    ///< D4
+    { FUNC_NUL, false },    ///< D5
+    { FUNC_NUL, false },    ///< D6
+    { FUNC_NUL, false },    ///< D7
+    { FUNC_NUL, false },    ///< D8
+    { FUNC_NUL, false },    ///< D9
+    { FUNC_NUL, false },    ///< D10
+    { FUNC_NUL, false },    ///< D11
+    { FUNC_NUL, false },    ///< D12
+    { FUNC_NUL, false },    ///< D13
+    { FUNC_NUL, false },    ///< A0
+    { FUNC_NUL, false },    ///< A1
+    { FUNC_NUL, false },    ///< A2
+    { FUNC_NUL, false },    ///< A3
+    { FUNC_NUL, false },    ///< A4
+    { FUNC_NUL, false }     ///< A5
+};
+
+/// Constructor.
+/**
+Initialize the data members that point to the global attributes tables.
+*/
 GalileoPinsClass::GalileoPinsClass()
     :
     m_PinAttributes(g_Gen2PinAttributes),
     m_MuxAttributes(g_Gen2MuxAttributes),
-    m_ExpAttributes(g_Gen2ExpAttributes)
+    m_ExpAttributes(g_Gen2ExpAttributes),
+    m_PinFunctions(g_GenxPinFunctions)
 {
 }
 
-// Function to make sure a pin number is in range.
-BOOL GalileoPinsClass::_pinNumberIsValid(UCHAR pin)
+/**
+Method to determine if a pin number is in the legal range or not.
+\param[in] pin the pin number to check for range
+\return TRUE if pin number is in range, FALSE otherwise
+*/
+BOOL GalileoPinsClass::_pinNumberIsValid(ULONG pin)
 {
     return (pin < NUM_ARDUINO_PINS);
 }
 
+/**
+Method to determine whether a pin is set to a desired function or not, 
+and to set it to that function if possible.
+\param[in] pin The number of the pin in question
+\param[in] function The desired function
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+\sa FUNC_DIO \sa FUNC_PWM \sa FUNC_AIN \sa FUNC_I2C \sa FUNC_SPI \sa FUNC_SER
+*/
+BOOL GalileoPinsClass::_verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
 
-//
-// Routine to set the current function of a multi-function pin.
-// INPUT:
-//      pin - The number of the pin in question.
-//      function - The function to be used on the pin.
-// RETURN:
-//      TRUE - Success.
-//      FALSE - Failure.  GetLastError() provides error code.
-//
-BOOL GalileoPinsClass::_setPinFunction(UCHAR pin, UCHAR function)
+    if (lockAction == UNLOCK_FUNCTION)
+    {
+        m_PinFunctions[pin].locked = false;
+    }
+
+    if (m_PinFunctions[pin].currentFunction != function)
+    {
+        if (m_PinFunctions[pin].locked)
+        {
+            status = FALSE;
+            error = ERROR_LOCKED;
+        }
+        else
+        {
+            status = _setPinFunction(pin, function);
+            if (!status) { error = GetLastError(); }
+
+            if (status)
+            {
+                m_PinFunctions[pin].currentFunction = (UCHAR) function;
+                if ((function == FUNC_SPI) || (function == FUNC_I2C))
+                {
+                    m_PinFunctions[pin].locked = true;
+                }
+            }
+        }
+    }
+
+    if (status && (lockAction == LOCK_FUNCTION))
+    {
+        m_PinFunctions[pin].locked = true;
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+This method prepares an external pin to be used for a specific function.
+Functions are Digital I/O, Analog In, PWM, etc.
+\param[in] pin the number of the pin in question.
+\param[in] function the function to be used on the pin.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+\sa FUNC_DIO \sa FUNC_PWM \sa FUNC_AIN \sa FUNC_I2C \sa FUNC_SPI \sa FUNC_SER
+*/
+BOOL GalileoPinsClass::_setPinFunction(ULONG pin, ULONG function)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -196,24 +297,18 @@ BOOL GalileoPinsClass::_setPinFunction(UCHAR pin, UCHAR function)
         }
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
+    if (!status) { SetLastError(error); }
     return status;
 }
 
-//
-// Routine to set the current function of a pin to Digital I/O.
-// This routine assumes the caller has verified pin number range
-// and that Digital I/O is supported on the specified pin.
-// INPUT:
-//      pin - The number of the pin in question.
-// RETURN:
-//      TRUE - Success.
-//      FALSE - Failure.  GetLastError() provides error code.
-//
-BOOL GalileoPinsClass::_setPinDigitalIo(UCHAR pin)
+/**
+This method sets the current function of a pin to Digial I/O.  This code
+assumes the caller has verified the pin number is in range and that Digital
+I/O is supported on the specified pin.
+\param[in] pin The number of the pin in question.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_setPinDigitalIo(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -242,17 +337,14 @@ BOOL GalileoPinsClass::_setPinDigitalIo(UCHAR pin)
     return status;
 }
 
-//
-// Routine to set the current function of a pin to PWM.
-// This routine assumes the caller has verified pin number range
-// and that PWM is supported on the specified pin.
-// INPUT:
-//      pin - The number of the pin in question.
-// RETURN:
-//      TRUE - Success.
-//      FALSE - Failure.  GetLastError() provides error code.
-//
-BOOL GalileoPinsClass::_setPinPwm(UCHAR pin)
+/**
+This method sets the current function of a pin to PWM.  This code
+assumes the caller has verified the pin number is in range and that PWM
+is supported on the specified pin.
+\param[in] pin The number of the pin in question.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_setPinPwm(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -281,17 +373,14 @@ BOOL GalileoPinsClass::_setPinPwm(UCHAR pin)
     return status;
 }
 
-//
-// Routine to set the current function of a pin to Analog Input.
-// This routine assumes the caller has verified pin number range
-// and that Analog Input is supported on the specified pin.
-// INPUT:
-//      pin - The number of the pin in question.
-// RETURN:
-//      TRUE - Success.
-//      FALSE - Failure.  GetLastError() provides error code.
-//
-BOOL GalileoPinsClass::_setPinAnalogInput(UCHAR pin)
+/**
+This method sets the current function of a pin to Analog Input.  This code
+assumes the caller has verified the pin number is in range and that Analog
+Input is supported on the specified pin.
+\param[in] pin The number of the pin in question.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_setPinAnalogInput(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -320,17 +409,14 @@ BOOL GalileoPinsClass::_setPinAnalogInput(UCHAR pin)
     return status;
 }
 
-//
-// Routine to set the current function of a pin to I2C.
-// This routine assumes the caller has verified pin number range
-// and that I2C bus use is supported on the specified pin.
-// INPUT:
-//      pin - The number of the pin in question.
-// RETURN:
-//      TRUE - Success.
-//      FALSE - Failure.  GetLastError() provides error code.
-//
-BOOL GalileoPinsClass::_setPinI2c(UCHAR pin)
+/**
+This method sets the current function of a pin to I2C Bus.  This code
+assumes the caller has verified the pin number is in range and that I2C
+bus use is supported on the specified pin.
+\param[in] pin The number of the pin in question.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_setPinI2c(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -359,17 +445,14 @@ BOOL GalileoPinsClass::_setPinI2c(UCHAR pin)
     return status;
 }
 
-//
-// Routine to set the current function of a pin to SPI.
-// This routine assumes the caller has verified pin number range
-// and that SPI bus use is supported on the specified pin.
-// INPUT:
-//      pin - The number of the pin in question.
-// RETURN:
-//      TRUE - Success.
-//      FALSE - Failure.  GetLastError() provides error code.
-//
-BOOL GalileoPinsClass::_setPinSpi(UCHAR pin)
+/**
+This method sets the current function of a pin to SPI Bus.  This code
+assumes the caller has verified the pin number is in range and that SPI
+bus use is supported on the specified pin.
+\param[in] pin The number of the pin in question.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_setPinSpi(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -398,17 +481,14 @@ BOOL GalileoPinsClass::_setPinSpi(UCHAR pin)
     return status;
 }
 
-//
-// Routine to set the current function of a pin to Hardware Serial.
-// This routine assumes the caller has verified pin number range
-// and that Hardware Serial is supported on the specified pin.
-// INPUT:
-//      pin - The number of the pin in question.
-// RETURN:
-//      TRUE - Success.
-//      FALSE - Failure.  GetLastError() provides error code.
-//
-BOOL GalileoPinsClass::_setPinHwSerial(UCHAR pin)
+/**
+This method sets the current function of a pin to Hardware Serial.  This code
+assumes the caller has verified the pin number is in range and that Hardware 
+Serial is supported on the specified pin.
+\param[in] pin The number of the pin in question.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_setPinHwSerial(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -437,17 +517,14 @@ BOOL GalileoPinsClass::_setPinHwSerial(UCHAR pin)
     return status;
 }
 
-//
-// Routine to set the mode and drive type of a pin (Input, Output, etc.)
-// INPUT:
-//      pin - The number of the pin in question.
-//      mode - The desired mode: INPUT or OUTPUT
-//      pullup: true - enable pin pullup resistor, false - disable pullup
-// RETURN:
-//      TRUE - Success.
-//      FALSE - Failure.  GetLastError() provides error code.
-//
-BOOL GalileoPinsClass::_setPinMode(UCHAR pin, UCHAR mode, bool pullup)
+/**
+This method sets the mode and drive type of a pin (Input, Output, etc.)
+\param[in] pin The number of the pin in question.
+\param[in] mode The desired mode: DIRECTION_IN or DIRECTION_OUT.
+\param[in] pullup True to enable pin pullup resistor, false to disable pullup
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_setPinMode(ULONG pin, ULONG mode, BOOL pullup)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -471,16 +548,23 @@ BOOL GalileoPinsClass::_setPinMode(UCHAR pin, UCHAR mode, bool pullup)
         {
         case GPIO_FABRIC:
             status = g_fabricGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
+            if (!status) { error = GetLastError(); }
             break;
         case GPIO_LEGRES:
-            // TODO: Code here...
+            status = g_legacyGpio.setResumePinDirection(m_PinAttributes[pin].portBit, mode);
+            if (!status) { error = GetLastError(); }
             break;
         case GPIO_LEGCOR:
-            // TODO: Code here...
+            status = g_legacyGpio.setCorePinDirection(m_PinAttributes[pin].portBit, mode);
+            if (!status) { error = GetLastError(); }
             break;
         case GPIO_EXP1:
+            status = _setExpBitDirection(EXP1, m_PinAttributes[pin].portBit, mode);
+            if (!status) { error = GetLastError(); }
+            break;
         case GPIO_EXP2:
-            // TODO: Code here...
+            status = _setExpBitDirection(EXP2, m_PinAttributes[pin].portBit, mode);
+            if (!status) { error = GetLastError(); }
             break;
         default:
             status = FALSE;
@@ -506,8 +590,14 @@ BOOL GalileoPinsClass::_setPinMode(UCHAR pin, UCHAR mode, bool pullup)
     return status;
 }
 
-// Method to set an I/O Expander bit to the specified direction.
-BOOL GalileoPinsClass::_setExpBitDirection(UCHAR expNo, UCHAR bitNo, UCHAR direction)
+/**
+This method sets the direction of an I/O Expander port pin.
+\param[in] expNo The number of the I/O Expander in question.
+\param[in] bitNo Specifies the port and bit number to set (such as: P1_4 for port 1, bit 4)
+\param[in] direction The desired direction: DIRECTION_IN or DIRECTION_OUT.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direction)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -529,9 +619,7 @@ BOOL GalileoPinsClass::_setExpBitDirection(UCHAR expNo, UCHAR bitNo, UCHAR direc
     }
     else if (m_ExpAttributes[expNo].Exp_Type == PCA9685)
     {
-        // Set the bit of the PWM chip to the desired direction.
-        status = PCA9685Device::SetBitDirection(i2cAdr, bitNo, direction);
-        if (!status) { error = GetLastError(); }
+        // Nothing to do here, PCA9685 chip ports are always outputs.
     }
     else
     {
@@ -543,8 +631,15 @@ BOOL GalileoPinsClass::_setExpBitDirection(UCHAR expNo, UCHAR bitNo, UCHAR direc
     return status;
 }
 
+/**
+This method sets the state of an I/O Expander port pin.
+\param[in] expNo The number of the I/O Expander in question.
+\param[in] bitNo Specifies the port and bit number to set (such as: P1_4 for port 1, bit 4)
+\param[in] state The desired state: HIGH or LOW.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
 // Method to set an I/O Expander bit to the specified state.
-BOOL GalileoPinsClass::_setExpBitToState(UCHAR expNo, UCHAR bitNo, UCHAR state)
+BOOL GalileoPinsClass::_setExpBitToState(ULONG expNo, ULONG bitNo, ULONG state)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -587,9 +682,14 @@ BOOL GalileoPinsClass::_setExpBitToState(UCHAR expNo, UCHAR bitNo, UCHAR state)
     return status;
 }
 
-// Method to configure the pin drivers to reflect the direction of this pin.
-// This method assumes pin and mode have been verified to be in range.
-BOOL GalileoPinsClass::_configurePinDrivers(UCHAR pin, UCHAR mode)
+/**
+Method to configure the pin input and output drivers to reflect the desired direction of a pin.
+This code assumes the caller has verified the pin number and mode to be in range.
+\param[in] pin The number of the pin in question.
+\param[in] mode The desired direction for the pin.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_configurePinDrivers(ULONG pin, ULONG mode)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -606,35 +706,45 @@ BOOL GalileoPinsClass::_configurePinDrivers(UCHAR pin, UCHAR mode)
 
     if (status)
     {
-        // Determine which I/O Expander pin controls the GPIO-pin drivers.
+        // Determine which I/O Expander controls the GPIO-pin drivers.
         expNo = m_PinAttributes[pin].triStExp;
-        bitNo = m_PinAttributes[pin].triStBit;
-
-        // Determine the Exp pin state to select the needed driver.
-        state = m_PinAttributes[pin].triStIn;
-        if (mode == DIRECTION_OUT)
+        // If there is an I/O Expander that controls the this pin drivers.
+        if (expNo != NO_X)
         {
-            state = state ^ 0x01;
-        }
+            // Determine which bit on the expander controls the drivers.
+            bitNo = m_PinAttributes[pin].triStBit;
 
-        // Set the I/O Expander bit to the correct state.
-        status = _setExpBitToState(expNo, bitNo, state);
-        if (!status) { error = GetLastError(); }
+            // Determine the Exp pin state to select the needed driver.
+            state = m_PinAttributes[pin].triStIn;
+            if (mode == DIRECTION_OUT)
+            {
+                state = state ^ 0x01;
+            }
+
+            // Set the I/O Expander bit to the correct state.
+            status = _setExpBitToState(expNo, bitNo, state);
+            if (!status) { error = GetLastError(); }
+        }
     }
 
     if (!status) { SetLastError(error); }
     return status;
 }
 
-// Method to configure the pin pullup as specified.
-// This method assumes pin has been verified to be in the valid range.
-BOOL GalileoPinsClass::_configurePinPullup(UCHAR pin, bool pullup)
+/**
+Method to configure the pin pullup as specified.  This code assumes the caller has
+verified the pin number to be in the valid range.
+\param[in] pin The number of the pin in question.
+\param[in] pullup True to turn pullup on, false to turn pullup off.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
-    UCHAR expNo = 0;                // I/O Expander number
-    UCHAR bitNo = 0;                // Bit number on I/O Expander
-    UCHAR state = 0;                // Desired pin state
+    ULONG expNo = 0;                // I/O Expander number
+    ULONG bitNo = 0;                // Bit number on I/O Expander
+    ULONG state = 0;                // Desired pin state
 
     // Determine which I/O Expander pin controls the GPIO-pin drivers.
     expNo = m_PinAttributes[pin].pullupExp;
@@ -664,21 +774,18 @@ BOOL GalileoPinsClass::_configurePinPullup(UCHAR pin, bool pullup)
     return status;
 }
 
-//
-// Routine to set a MUX to select a deired signal.
-// INPUT:
-//      mux - The number of the MUX in question.
-//      selection - The desired state of the MUX "select" input.
-// RETURN:
-//      TRUE - Success.
-//      FALSE - Failure.  GetLastError() provides error code.
-//
-BOOL GalileoPinsClass::_setMux(UCHAR mux, UCHAR selection)
+/**
+Method to set a MUX to select the desired signal.
+\param[in] mux The number of the MUX in question.
+\param[in] selection The desired state of the MUX "select" input (LOW or HIGH).
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_setMux(ULONG mux, ULONG selection)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
-    UCHAR expNo = 0;                // I/O Expander number
-    UCHAR bitNo = 0;                // Bit number on I/O Expander
+    ULONG expNo = 0;                // I/O Expander number
+    ULONG bitNo = 0;                // Bit number on I/O Expander
 
 
     // If the MUX number is outside the valid range, fail.
@@ -706,7 +813,13 @@ BOOL GalileoPinsClass::_setMux(UCHAR mux, UCHAR selection)
     return status;
 }
 
-BOOL GalileoPinsClass::_setPinState(UCHAR pin, UCHAR state)
+/**
+Method to set a GPIO pin to a specified state.
+\param[in] pin The number of the pin in question.
+\param[in] state The desired state (HIGH or LOW).
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_setPinState(ULONG pin, ULONG state)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -731,19 +844,64 @@ BOOL GalileoPinsClass::_setPinState(UCHAR pin, UCHAR state)
         case GPIO_FABRIC:
             return g_fabricGpio.setPinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGRES:
-            // TODO: Code here and remove the break if appropriate.
-            break;
+            return g_legacyGpio.setResumePinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGCOR:
-            // TODO: Code here and remove the break if appropriate.
-            break;
+            return g_legacyGpio.setCorePinState(m_PinAttributes[pin].portBit, state);
         case GPIO_EXP1:
             return PCAL9535ADevice::SetBitState(
-                m_ExpAttributes[GPIO_EXP1].I2c_Address,
+                m_ExpAttributes[EXP1].I2c_Address,
                 m_PinAttributes[pin].portBit,
                 state);
         case GPIO_EXP2:
             return PCAL9535ADevice::SetBitState(
-                m_ExpAttributes[GPIO_EXP2].I2c_Address,
+                m_ExpAttributes[EXP2].I2c_Address,
+                m_PinAttributes[pin].portBit,
+                state);
+        default:
+            status = FALSE;
+            error = DNS_ERROR_INVALID_TYPE;
+        }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+/**
+Method to read a GPIO input pin.
+\param[in] pin The number of the pin in question.
+\param[out] state The variable to pass back the pin state (HIGH or LOW).
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_getPinState(ULONG pin, ULONG & state)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+
+    if (!_pinNumberIsValid(pin))
+    {
+        status = FALSE;
+        error = ERROR_INVALID_ADDRESS;
+    }
+
+    if (status)
+    {
+        // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
+        switch (m_PinAttributes[pin].gpioType)
+        {
+        case GPIO_FABRIC:
+            return g_fabricGpio.getPinState(m_PinAttributes[pin].portBit, state);
+        case GPIO_LEGRES:
+            return g_legacyGpio.getResumePinState(m_PinAttributes[pin].portBit, state);
+        case GPIO_LEGCOR:
+            return g_legacyGpio.getCorePinState(m_PinAttributes[pin].portBit, state);
+        case GPIO_EXP1:
+            return PCAL9535ADevice::GetBitState(
+                m_ExpAttributes[EXP1].I2c_Address,
+                m_PinAttributes[pin].portBit,
+                state);
+        case GPIO_EXP2:
+            return PCAL9535ADevice::GetBitState(
+                m_ExpAttributes[EXP2].I2c_Address,
                 m_PinAttributes[pin].portBit,
                 state);
         default:

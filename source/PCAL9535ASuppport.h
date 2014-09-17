@@ -7,9 +7,6 @@
 
 #include <Windows.h>
 
-#include "ExpanderDefs.h"
-#include "I2cController.h"
-
 class PCAL9535ADevice
 {
 public:
@@ -21,9 +18,11 @@ public:
     {
     }
 
-    static BOOL SetBitState(UCHAR i2cAdr, UCHAR portBit, UCHAR state);
+    static BOOL SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state);
 
-    static BOOL SetBitDirection(UCHAR i2cAdr, UCHAR portBit, UCHAR direction);
+    static BOOL GetBitState(ULONG i2cAdr, ULONG portbit, ULONG & state);
+
+    static BOOL SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG direction);
 
 private:
 };

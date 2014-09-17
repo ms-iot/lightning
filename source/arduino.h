@@ -7,9 +7,9 @@
 
 // Arduino compatibility header for inclusion by user programs
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
+//#ifndef WIN32_LEAN_AND_MEAN
+//#define WIN32_LEAN_AND_MEAN
+//#endif
 #include <windows.h>
 
 #ifdef USE_NETWORKSERIAL
@@ -672,6 +672,11 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
 {
     _ValidateArduinoPinNumber(pin);
 
+    if (!g_pins._verifyPinFunction(pin, FUNC_DIO, GalileoPinsClass::NO_LOCK_CHANGE))
+    {
+        ThrowError("Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, GetLastError());
+    }
+
     if (state != LOW)
     {
         // Emulate Arduino behavior here. Code like firmata uses bitmasks to set
@@ -700,19 +705,21 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
 //
 inline int digitalRead(int pin)
 {
+    ULONG readData = 0;
+
     _ValidateArduinoPinNumber(pin);
 
-    // Revert the pin if it is in PWM mode.
-    _RevertPinToDigital(pin);
-    
-    LONG ret;
-    //HRESULT hr = GpioRead(_ArduinoToGalileoPinMap[pin], &ret);
-    //if ( FAILED(hr) )
-    //{
-    //    ThrowError("GpioRead() failed to read pin %d: 0x%x", pin, hr);
-    //}
+    if (!g_pins._verifyPinFunction(pin, FUNC_DIO, GalileoPinsClass::NO_LOCK_CHANGE))
+    {
+        ThrowError("Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, GetLastError());
+    }
 
-    return (int)ret;
+    if (!g_pins._getPinState(pin, readData))
+    {
+        ThrowError("Error occurred reading pin: %d Error: %08x", pin, GetLastError());
+    }
+
+    return readData;
 }
 
 //

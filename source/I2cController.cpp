@@ -141,12 +141,12 @@ void I2cTransactionClass::reset()
     m_pXfrQueueTail = nullptr;
     m_cmdsOutstanding = 0;
     m_readsOutstanding = 0;
-
     m_maxWaitTicks = 0;
+    m_abort = FALSE;
 }
 
 // Sets the 7-bit address of the slave for this tranaction.
-BOOL I2cTransactionClass::setAddress(UCHAR slaveAdr)
+BOOL I2cTransactionClass::setAddress(ULONG slaveAdr)
 {
     BOOL status = TRUE;
     BOOL error = ERROR_SUCCESS;
@@ -320,8 +320,6 @@ BOOL I2cTransactionClass::execute()
     BOOL haveLock = FALSE;
 
 
-    // TODO: Verify transaction parameters are set up properly (?)
-
     // Verify we successfully created the I2C Controller Lock.
     if (m_hI2cLock == INVALID_HANDLE_VALUE)
     {
@@ -458,9 +456,9 @@ BOOL I2cTransactionClass::_processTransfers()
     I2cTransferClass* pXfr = nullptr;
 
 
-    // For each sequence of transfers in the queue:
+    // For each sequence of transfers in the queue, or until transaction is aborted:
     pXfr = m_pFirstXfr;
-    while (status && (pXfr != nullptr))
+    while (status && (pXfr != nullptr) && !m_abort)
     {
         // Perform the sequence of transfers.
         status = _performContiguousTransfers(pXfr);
@@ -524,10 +522,6 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
 
     // For each transfer in this section of the transaction:
     cmdXfr = pXfr;
-    if ((cmdXfr != nullptr) && (cmdXfr->preResart()))
-    {
-        restart = TRUE;
-    }
     while ((m_cmdsOutstanding > 0) && (cmdXfr != nullptr))
     {
         // If this is the first read transfer in this sequence of transfers:
@@ -541,6 +535,12 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
 
         // Prepare to access the cmd buffer.
         cmdXfr->resetCmd();
+
+        // Signal a pre-restart if this transfer is marked for one.
+        if (cmdXfr->preResart())
+        {
+            restart = TRUE;
+        }
 
         // For each byte in the transfer:
         while (cmdXfr->getNextCmd(writeByte))
@@ -562,7 +562,7 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
             if (restart)
             {
                 cmdDat = cmdDat | (1 << 10);
-                restart = FALSE;            // Only one RESTART allowed per transfer
+                restart = FALSE;            // Only want to RESTART on first command of transfer
             }
 
             // If this is the last command before the end of the transaction or

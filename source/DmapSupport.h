@@ -14,38 +14,18 @@
 #define dmapI2cDeviceName L"\\\\.\\PCI#VEN_8086&DEV_0934&SUBSYS_09348086&REV_10#3&b1bfb68&0&AA#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
 #define dmapGpioDeviceName L"\\\\.\\PCI#VEN_8086&DEV_0934&SUBSYS_09348086&REV_10#3&b1bfb68&0&AA#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\1"
 
-//
-// Routine to get the base address of a controller in the SOC.
-// Exclusive, non-shared, access to the controller is requested.
-//
-// INPUT:
-//  deviceName - The name of the PCI device used to map the controller in question.
-//
-// OUTPUT:
-//  handle - Handle opened to the device specified by deviceName.
-//  baseAddress - Base address of the controller in questions.
-//
-// RETURN:
-//  TRUE - Success
-//  FALSE - An error occurred, use GetLastError() to get more information.
-//
+
+#define legacyGpioDeviceName L"\\\\.\\ACPI#INT3498#4&431f7f5&0#{091a7d51-bb55-42e4-ae25-1d0b563fa177}"
+//#define legacyGpioDeviceName L"\\\\.\\ACPI#INT3499#4&431f7f5&0#{091a7d51-bb55-42e4-ae25-1d0b563fa177}"
+//#define legacyGpioDeviceName L"\\\\.\\ACPI#INT3488#4&431f7f5&0#{091a7d51-bb55-42e4-ae25-1d0b563fa177}"
+
+/// Routine to get the base address of a memory mapped controller with no sharing allowed.
 BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress);
 
-//
-// Routine to get the base address of a controller in the SOC with a sharing specification.
-//
-// INPUT:
-//  deviceName - The name of the PCI device used to map the controller in question.
-//
-// OUTPUT:
-//  handle - Handle opened to the device specified by deviceName.
-//  baseAddress - Base address of the controller in questions.
-//  shareMode - Sharing specifier as specified to Createfile().
-//
-// RETURN:
-//  TRUE - Success
-//  FALSE - An error occurred, use GetLastError() to get more information.
-//
+/// Routine to get the base address of a memory mapped controller with a sharing specification.
 BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode);
+
+/// Routine to open a controller device in the SOC.
+BOOL OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode);
 
 #endif // _DMAP_SUPPORT_H_

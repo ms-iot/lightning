@@ -3,15 +3,17 @@
 // See License.txt in the project root for license information.
 
 #include "PCAL9535ASuppport.h"
+#include "ExpanderDefs.h"
+#include "I2cController.h"
 
-BOOL PCAL9535ADevice::SetBitState(UCHAR i2cAdr, UCHAR portBit, UCHAR state)
+BOOL PCAL9535ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     UCHAR outPortBuf[1] = { 0x02 };         // Address of Output port, starts at Port 0
     UCHAR dataBuf[1] = { 0 };
-    UCHAR bit = portBit;
+    ULONG bit = portBit;
 
 
     if (portBit > P1_7)
@@ -85,21 +87,79 @@ BOOL PCAL9535ADevice::SetBitState(UCHAR i2cAdr, UCHAR portBit, UCHAR state)
         if (!status) { error = GetLastError(); }
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
+    if (!status) { SetLastError(error); }
     return status;
 }
 
-BOOL PCAL9535ADevice::SetBitDirection(UCHAR i2cAdr, UCHAR portBit, UCHAR direction)
+BOOL PCAL9535ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    I2cTransactionClass transaction;
+    UCHAR inPortBuf[1] = { 0x00 };         // Address of Input port, starts at Port 0
+    UCHAR dataBuf[1] = { 0 };
+    ULONG bit = portBit;
+
+
+    if (portBit > P1_7)
+    {
+        status = FALSE;
+        error = ERROR_INVALID_PARAMETER;
+    }
+
+    if (status)
+    {
+        // Set the I2C address of the I/O Expander we want to talk to.
+        status = transaction.setAddress(i2cAdr);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // If the bit is on Port1, correct the input port address and bit number.
+        if (portBit > P0_7)
+        {
+            inPortBuf[0]++;
+            bit = bit - P1_0;               // Bit number on Input port 1
+        }
+
+        // Queue sending the address of the input port to the I/O Expander chip.
+        status = transaction.queueWrite(inPortBuf, 1);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue reading the port contents from the I/O Expander chip.
+        status = transaction.queueRead(dataBuf, sizeof(dataBuf));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Perform the I2C transfers queued above.
+        status = transaction.execute();
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Pass back the bit value read from the port.
+        state = (dataBuf[0] >> bit) & 0x01;
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+BOOL PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG direction)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     UCHAR configAdrBuf[1] = { 0x06 };       // Address of config register, initially Port 0
     UCHAR dataBuf[1] = { 0 };
-    UCHAR bit = portBit;
+    ULONG bit = portBit;
     UCHAR newData = 1;                      // Default to input direction
 
 
@@ -192,9 +252,6 @@ BOOL PCAL9535ADevice::SetBitDirection(UCHAR i2cAdr, UCHAR portBit, UCHAR directi
         if (!status) { error = GetLastError(); }
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
+    if (!status) { SetLastError(error); }
     return status;
 }

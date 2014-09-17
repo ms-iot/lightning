@@ -46,7 +46,7 @@ public:
     // has already been mapped using mapIfNeeded().
     //
 
-    inline BOOL masterModeIsSet()
+    inline BOOL masterModeIsSet() const
     {
         return (m_controller->IC_CON.MASTER_MODE == 1);
     }
@@ -71,7 +71,7 @@ public:
         m_controller->IC_ENABLE.ENABLE = 0;
     }
 
-    inline BOOL isActive()
+    inline BOOL isActive() const
     {
         return (m_controller->IC_ENABLE_STATUS.IC_EN == 1);
     }
@@ -101,42 +101,42 @@ public:
         m_controller->IC_CON.IC_10BITADDR_MASTER = 0;
     }
 
-    inline void setAddress(ULONG adr)       // Supports 7 or 10 bit addressing
+    inline void setAddress(const ULONG adr)       // Supports 7 or 10 bit addressing
     {
         m_controller->IC_TAR.IC_TAR = (adr & 0x3FF);
     }
 
-    inline ULONG getAddress()
+    inline ULONG getAddress() const
     {
         return m_controller->IC_TAR.IC_TAR;
     }
 
-    inline BOOL txFifoNotFull()
+    inline BOOL txFifoNotFull() const
     {
         return (m_controller->IC_STATUS.TFNF == 1);
     }
 
-    inline BOOL txFifoFull()
+    inline BOOL txFifoFull() const
     {
         return (m_controller->IC_STATUS.TFNF == 0);
     }
 
-    inline BOOL txFifoEmpty()
+    inline BOOL txFifoEmpty() const
     {
         return (m_controller->IC_STATUS.TFE == 1);
     }
 
-    inline BOOL rxFifoNotEmtpy()
+    inline BOOL rxFifoNotEmtpy() const
     {
         return (m_controller->IC_STATUS.RFNE == 1);
     }
 
-    inline BOOL rxFifoEmpty()
+    inline BOOL rxFifoEmpty() const
     {
         return (m_controller->IC_STATUS.RFNE == 0);
     }
 
-    inline void issueCmd(ULONG cmd)
+    inline void issueCmd(ULONG cmd) const
     {
         m_controller->IC_DATA_CMD.ALL_BITS = cmd;
     }
@@ -591,28 +591,28 @@ public:
         m_preRestart = TRUE;
     }
 
-    inline void setBuffer(PUCHAR buffer, ULONG bufBytes)
+    inline void setBuffer(PUCHAR buffer, const ULONG bufBytes)
     {
         m_pBuffer = buffer;
         m_bufBytes = bufBytes;
     }
 
-    inline PUCHAR getBuffer()
+    inline PUCHAR getBuffer() const
     {
         return m_pBuffer;
     }
 
-    inline ULONG getBufferSize()
+    inline ULONG getBufferSize() const
     {
         return m_bufBytes;
     }
 
-    inline BOOL transferIsRead()
+    inline BOOL transferIsRead() const
     {
         return m_isRead;
     }
 
-    inline BOOL preResart()
+    inline BOOL preResart() const
     {
         return m_preRestart;
     }
@@ -623,7 +623,7 @@ public:
     }
 
     // Returns nullptr when there is no "next transfer".
-    inline I2cTransferClass* getNextTransfer()
+    inline I2cTransferClass* getNextTransfer() const
     {
         return m_pNextXfr;
     }
@@ -632,7 +632,7 @@ public:
     inline BOOL getNextCmd(UCHAR & next);
 
     // Returns TRUE is the last command byte has been fetched from buffer.
-    inline BOOL lastCmdFetched()
+    inline BOOL lastCmdFetched() const
     {
         return m_lastCmdFetched;
     }
@@ -719,6 +719,7 @@ public:
         {
             m_hI2cLock = INVALID_HANDLE_VALUE;
         }
+        m_abort = FALSE;
     }
 
     virtual ~I2cTransactionClass()
@@ -736,40 +737,46 @@ public:
     void reset();
 
     // Sets the 7-bit address of the slave for this tranaction.
-    BOOL setAddress(UCHAR slaveAdr);
+    BOOL setAddress(ULONG slaveAdr);
 
     // Add a write transfer to the transaction.
-    BOOL queueWrite(PUCHAR buffer, ULONG bufferBytes)
+    BOOL queueWrite(PUCHAR buffer, const ULONG bufferBytes)
     {
         return queueWrite(buffer, bufferBytes, FALSE);
     }
 
-    BOOL queueWrite(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart);
+    BOOL queueWrite(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
 
     // Add a read transfer to the transaction.
-    BOOL queueRead(PUCHAR buffer, ULONG bufferBytes)
+    BOOL queueRead(PUCHAR buffer, const ULONG bufferBytes)
     {
         return queueRead(buffer, bufferBytes, FALSE);
     }
 
-    BOOL queueRead(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart);
+    BOOL queueRead(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
 
     // Method to queue a callback routine at the current point in the transaction.
-    BOOL queueCallback(std::function<BOOL()> callBack);
+    BOOL queueCallback(const std::function<BOOL()> callBack);
 
     // Method to perform the transfers associated with this transaction.
     BOOL execute();
 
     // Method to get the number of 1 mSec ticsk that occurred while waiting for outstanding reads.
-    inline void getReadWaitTicks(ULONG & waits)
+    inline void getReadWaitTicks(ULONG & waits) const
     {
         waits = m_maxWaitTicks;
     }
 
     // Method to determine if a transfer is the last transfer in the transaction.
-    inline BOOL isLastTransfer(I2cTransferClass* pXfr)
+    inline BOOL isLastTransfer(I2cTransferClass* pXfr) const
     {
         return (pXfr == m_pXfrQueueTail);
+    }
+
+    /// Method to abort any remaining transfers.
+    inline void abort()
+    {
+        m_abort = TRUE;
     }
 
 private:
@@ -780,7 +787,7 @@ private:
 
     // The address of the I2C slave for this transaction.
     // Currently, only 7-bit addresses are supported.
-    UCHAR m_slaveAddress;
+    ULONG m_slaveAddress;
 
     // Queue of transfers for this transaction.
     I2cTransferClass* m_pFirstXfr;
@@ -799,6 +806,9 @@ private:
 
     // The I2C Mutex handle.
     HANDLE m_hI2cLock;
+
+    // Set to TRUE to abort the remainder of the transaction.
+    BOOL m_abort;
 
     //
     // I2cTransactionClass private member functions.
