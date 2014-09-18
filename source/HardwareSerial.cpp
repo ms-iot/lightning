@@ -192,13 +192,20 @@ void HardwareSerial::begin(unsigned long baud, uint8_t config)
 
 void HardwareSerial::end(void)
 {
-    if (_comHandle != INVALID_HANDLE_VALUE && CloseHandle(_comHandle) == 0)
+    if (_comHandle != INVALID_HANDLE_VALUE)
     {
-        _comHandle = INVALID_HANDLE_VALUE;
+        if(CloseHandle(_comHandle) == 0)
+        {
 #ifdef _DEBUG
-        Log("Error %d when closing Com Handle: ", GetLastError());
-        LogLastError();
+            Log("Error %d when closing Com Handle: ", GetLastError());
+            LogLastError();
 #endif
+        }
+        else
+        {
+            // it worked, so mark the Handle as an INVALID HANDLE
+            _comHandle = INVALID_HANDLE_VALUE;
+        }
     }
 }
 
