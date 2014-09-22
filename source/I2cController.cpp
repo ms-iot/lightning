@@ -17,12 +17,12 @@ BOOL I2cControllerClass::beginExternal()
 
 
     // Set the MUXes for external I2C use.
-    status = g_pins._setPinFunction(PIN_I2C_CLK, FUNC_I2C);
+    status = g_pins._verifyPinFunction(PIN_I2C_CLK, FUNC_I2C, GalileoPinsClass::LOCK_FUNCTION);
     if (!status) { status = GetLastError(); }
 
     if (status)
     {
-        status = g_pins._setPinFunction(PIN_I2C_DAT, FUNC_I2C);
+        status = g_pins._verifyPinFunction(PIN_I2C_DAT, FUNC_I2C, GalileoPinsClass::LOCK_FUNCTION);
         if (!status) { status = GetLastError(); }
     }
 
@@ -37,9 +37,9 @@ BOOL I2cControllerClass::beginExternal()
 void I2cControllerClass::endExternal()
 {
     // Set the pns used for I2C back to Digital inputs, on a best effort basis.
-    g_pins._setPinFunction(PIN_I2C_DAT, FUNC_DIO);
+    g_pins._verifyPinFunction(PIN_I2C_DAT, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION);
     g_pins._setPinMode(PIN_I2C_DAT, DIRECTION_IN, false);
-    g_pins._setPinFunction(PIN_I2C_CLK, FUNC_DIO);
+    g_pins._verifyPinFunction(PIN_I2C_CLK, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION);
     g_pins._setPinMode(PIN_I2C_CLK, DIRECTION_IN, false);
 }
 

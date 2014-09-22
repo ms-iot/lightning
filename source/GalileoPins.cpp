@@ -188,9 +188,11 @@ BOOL GalileoPinsClass::_pinNumberIsValid(ULONG pin)
 Method to determine whether a pin is set to a desired function or not, 
 and to set it to that function if possible.
 \param[in] pin The number of the pin in question
-\param[in] function The desired function
+\param[in] function The desired function. See functions below.
+\param[in] lockAction Desired lock action.  See lock actions below.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 \sa FUNC_DIO \sa FUNC_PWM \sa FUNC_AIN \sa FUNC_I2C \sa FUNC_SPI \sa FUNC_SER
+\sa NO_LOCK_CHANGE \sa LOCK_FUNCTION \sa UNLOCK_FUNCTION
 */
 BOOL GalileoPinsClass::_verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction)
 {

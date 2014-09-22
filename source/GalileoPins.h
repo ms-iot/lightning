@@ -78,9 +78,9 @@ public:
 
     /// Enum of function lock actions.
     const enum FUNC_LOCK_ACTION {
-        NO_LOCK_CHANGE,
-        LOCK_FUNCTION,
-        UNLOCK_FUNCTION
+        NO_LOCK_CHANGE,         ///< Don't take any lock action
+        LOCK_FUNCTION,          ///< Lock the pin to this function
+        UNLOCK_FUNCTION         ///< Unlock the pin function
     };
 
     /// Method to set an I/O pin to a state (HIGH or LOW).
@@ -92,13 +92,14 @@ public:
     /// Method to set the direction of a pin (DIRECTION_IN or DIRECTION_OUT).
     BOOL _setPinMode(ULONG pin, ULONG mode, BOOL pullUp);
 
-    /// Method to configure an I/O Pin for one of the functions it suppports.
-    BOOL _setPinFunction(ULONG pin, ULONG function);
 
     /// Method to verify that a pin is configured for the desired function.
     BOOL _verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction);
 
 private:
+
+    /// Method to configure an I/O Pin for one of the functions it suppports.
+    BOOL _setPinFunction(ULONG pin, ULONG function);
 
     /// Pointer to the array of pin attributes.
     const PORT_ATTRIBUTES* m_PinAttributes;

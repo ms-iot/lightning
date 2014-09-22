@@ -157,8 +157,8 @@ void HardwareSerial::begin(unsigned long baud, uint8_t config)
 
     if ( _comPortName == L"\\\\.\\COM1" )
     {
-        _PinFunction(0, ALTERNATE_MUX);
-        _PinFunction(1, ALTERNATE_MUX);
+        g_pins._verifyPinFunction(0, FUNC_SER, GalileoPinsClass::LOCK_FUNCTION);
+        g_pins._verifyPinFunction(1, FUNC_SER, GalileoPinsClass::LOCK_FUNCTION);
         pinMode(0, DIRECTION_IN);
         pinMode(1, DIRECTION_OUT);
     }
@@ -190,13 +190,18 @@ void HardwareSerial::begin(unsigned long baud, uint8_t config)
 
 void HardwareSerial::end(void)
 {
-    if (_comHandle != INVALID_HANDLE_VALUE && CloseHandle(_comHandle) == 0)
+    if (_comHandle != INVALID_HANDLE_VALUE)
     {
+        if (CloseHandle(_comHandle) == 0)
+        {
+            #ifdef _DEBUG
+            Log("Error %d when closing Com Handle: ", GetLastError());
+            LogLastError();
+            #endif
+        }
         _comHandle = INVALID_HANDLE_VALUE;
-#ifdef _DEBUG
-        Log("Error %d when closing Com Handle: ", GetLastError());
-        LogLastError();
-#endif
+        g_pins._verifyPinFunction(1, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION);
+        g_pins._verifyPinFunction(0, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION);
     }
 }
 

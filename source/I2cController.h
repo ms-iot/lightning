@@ -736,8 +736,14 @@ public:
     // Any previously set slave address is not affected by this method.
     void reset();
 
-    // Sets the 7-bit address of the slave for this tranaction.
+    // Sets the 7-bit address of the slave for this transaction.
     BOOL setAddress(ULONG slaveAdr);
+
+    // Gets the 7-bit address of the slave for this transaction.
+    ULONG getAddress()
+    {
+        return m_slaveAddress;
+    }
 
     // Add a write transfer to the transaction.
     BOOL queueWrite(PUCHAR buffer, const ULONG bufferBytes)

@@ -43,9 +43,7 @@ public:
         this->end();
     }
 
-    //
-    // Initialize the externally accessible SPI bus for use.
-    //
+    /// Initialize the externally accessible SPI bus for use.
     void begin()
     {
         if (m_controller == nullptr)
@@ -54,7 +52,7 @@ public:
         }
 
         // Set SCK and MOSI as outputs dedicated to SPI, and pulled LOW.
-        if (!g_pins._setPinFunction(PIN_SCK, FUNC_SPI))
+        if (!g_pins._verifyPinFunction(PIN_SCK, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
         {
             ThrowError("An error occurred configuring pinSCK for SPI use: %08x", GetLastError());
         }
@@ -64,7 +62,7 @@ public:
             ThrowError("An error occurred setting pinSCK LOW: %08x", GetLastError());
         }
 
-        if (!g_pins._setPinFunction(PIN_MOSI, FUNC_SPI))
+        if (!g_pins._verifyPinFunction(PIN_MOSI, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
         {
             ThrowError("An error occurred configuring pinMOSI for SPI use: %08x", GetLastError());
         }
@@ -75,7 +73,7 @@ public:
         }
 
         // Set MISO as an input dedicated to SPI.
-        if (!g_pins._setPinFunction(PIN_MISO, FUNC_SPI))
+        if (!g_pins._verifyPinFunction(PIN_MISO, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
         {
             ThrowError("An error occurred configuring pinMISO for SPI use: %08x", GetLastError());
         }
@@ -97,11 +95,28 @@ public:
         }
     }
 
-    // Free up the external SPI bus so its pins can be used for other functions.
+    /// Free up the external SPI bus so its pins can be used for other functions.
     void end()
     {
-        delete m_controller;
-        m_controller = nullptr;
+        if (m_controller != nullptr)
+        {
+            delete m_controller;
+            m_controller = nullptr;
+
+            // Set all SPI pins as digitial I/O.
+            if (!g_pins._verifyPinFunction(PIN_SCK, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
+            {
+                ThrowError("An error occurred reverting pinSCK from SPI use: %08x", GetLastError());
+            }
+            if (!g_pins._verifyPinFunction(PIN_MOSI, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
+            {
+                ThrowError("An error occurred reverting pinMOSI from SPI use: %08x", GetLastError());
+            }
+            if (!g_pins._verifyPinFunction(PIN_MISO, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
+            {
+                ThrowError("An error occurred reverting pinMISO from SPI use: %08x", GetLastError());
+            }
+        }
     }
 
     // Set the SPI bit shift order.  Expected valuse are MSBFIRST or LSBFIRST.
