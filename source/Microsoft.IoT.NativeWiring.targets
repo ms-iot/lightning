@@ -10,13 +10,6 @@
       <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
   </ItemDefinitionGroup>
-
-  <ItemDefinitionGroup>
-    <Link>
-      <AdditionalDependencies>embprpusr.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(MSBuildThisFileDirectory)\lib;</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Servo.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\HardwareSerial.cpp" />
@@ -24,5 +17,13 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Stream.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\WString.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PulseIn.cpp" />    
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\DmapSupport.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\GalileoPins.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\GpioController.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\I2cController.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PCA9685Support.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PCAL9535ASuppport.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Spi.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\SpiController.cpp" />
   </ItemGroup>
 </Project>
