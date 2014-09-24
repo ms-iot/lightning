@@ -9,6 +9,12 @@
 
 #include <windows.h>
 
+#include <algorithm>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <vector>
+
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
 #endif
@@ -27,6 +33,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include "avr/macros.h"
 
 #define NUM_ARDUINO_PINS 20
 #define NUM_ANALOG_PINS 6
@@ -157,7 +164,7 @@ inline unsigned long micros(void)
 //
 inline bool _IsAnalogPin(int num)
 {
-    return num >= GALILEO_A0;
+    return num >= A0;
 }
 
 // This function throws an error if the specified pin number is not a valid
