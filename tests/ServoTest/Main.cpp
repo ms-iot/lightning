@@ -11,27 +11,41 @@ int _tmain(int argc, _TCHAR* argv[])
 }
 
 Servo myservo;  // create servo object to control a servo a maximum of eight servo objects can be created 
+Servo myservo2;
 int pos = 0;    // variable to store the servo position 
+int delayAmount = 2000; // used for debugging and spacing out the data
+int pin = 3; // the pin that the Servo is on
+int pin2 = 5;
 
 void setup()
 {
-    myservo.attach(9);  // attaches the servo on pin 9 to the servo object 
 }
 
 
 void loop()
 {
+    myservo.attach(pin);  // attaches the servo on pin to the servo object 
+    myservo2.attach(pin2);
+
+    myservo2.write(0);
+    delay(delayAmount);
+    myservo2.write(180);
+
     /* Tested to work on 9/26 at 4:41pm */
-    //myservo.write(0);
-    //delay(1000);
-    //myservo.write(180);
-    //delay(1000);
+    myservo.write(-90);
+    delay(delayAmount);
+    myservo.write(0);
+    delay(delayAmount);
+    myservo.write(180);
+    delay(delayAmount);
+    myservo.write(200);
+    delay(delayAmount);
 
     /*Tested to work on 9/26 at 4:44pm */
     myservo.writeMicroseconds(544);
-    delay(1000);
-    myservo.writeMicroseconds(2400);
-    delay(1000);
+    delay(delayAmount);
+    myservo.writeMicroseconds(4000);
+    delay(delayAmount);
 
     Log("ServoIndex: %d\n", myservo.read());
     if (myservo.attached())
