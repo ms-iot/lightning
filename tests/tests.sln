@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HardwareSerialReadTest", "H
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ToneTest", "ToneTest\ToneTest.vcxproj", "{E4D71596-AA96-43B5-9B52-9CAB891210A2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ServoTest", "ServoTest\ServoTest.vcxproj", "{F2F15831-D78D-4CE6-8AE6-8E12F339EE47}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -57,6 +59,11 @@ Global
 		{E4D71596-AA96-43B5-9B52-9CAB891210A2}.Debug|Win32.Deploy.0 = Debug|Win32
 		{E4D71596-AA96-43B5-9B52-9CAB891210A2}.Release|Win32.ActiveCfg = Release|Win32
 		{E4D71596-AA96-43B5-9B52-9CAB891210A2}.Release|Win32.Build.0 = Release|Win32
+		{F2F15831-D78D-4CE6-8AE6-8E12F339EE47}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F2F15831-D78D-4CE6-8AE6-8E12F339EE47}.Debug|Win32.Build.0 = Debug|Win32
+		{F2F15831-D78D-4CE6-8AE6-8E12F339EE47}.Debug|Win32.Deploy.0 = Debug|Win32
+		{F2F15831-D78D-4CE6-8AE6-8E12F339EE47}.Release|Win32.ActiveCfg = Release|Win32
+		{F2F15831-D78D-4CE6-8AE6-8E12F339EE47}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
