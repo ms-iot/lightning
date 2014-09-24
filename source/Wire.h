@@ -263,6 +263,16 @@ public:
         return 1;
     }
 
+    void onReceive(void(*)(int))
+    {
+        Log("FEATURE UNAVAILABLE: Galileo cannot act as I2C slave device!");
+    }
+    
+    void onRequest(void(*)(void))
+    {
+        Log("FEATURE UNAVAILABLE: Galileo cannot act as I2C slave device!");
+    }
+
     /// Queue an array of bytes write on the I2C bus.
     /**
     \param[in] data Pointer to the first byte to send over the I2C bus.
@@ -270,6 +280,7 @@ public:
     \return The number of bytes "sent" (the value cbData in this case).
     */
     size_t write(const uint8_t *data, size_t cbData)
+
     {
         this->m_writeBuff.reserve(this->m_writeBuff.size() + cbData);
         std::copy_n(data, cbData, this->m_writeBuff.end());
