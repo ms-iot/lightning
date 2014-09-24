@@ -22,6 +22,7 @@ public:
     void write(int angle);
     void writeMicroseconds(int value);
     int read();
+    int readMicroseconds();
     bool attached();
 
 };
