@@ -114,8 +114,8 @@ void Servo::writeMicroseconds(int value)
     }
 
     // Making the frequency 50 Hz which is equal to a 20ms period
-    int frequency = (double) 1 / ((double)REFRESH_INTERVAL / 1000000);
-
+    int frequency = (int)((double) 1 / ((double) REFRESH_INTERVAL / 1000000));
+    
     // Validation of the pin to make sure PWM functionality is allowed
     _ValidatePwmPin(_attachedPin);
     _ValidatePinOkToChange(_attachedPin);
@@ -125,7 +125,7 @@ void Servo::writeMicroseconds(int value)
 
     // Scale the duty cycle to the range used by the driver.
     // From 0-255 to 0-PWM_MAX_DUTYCYCLE, rounding to nearest value.
-    ULONG dutyCycle = (((double) alternateValue / REFRESH_INTERVAL * 255UL * PWM_MAX_DUTYCYCLE) + 127UL) / 255UL;
+    ULONG dutyCycle = (ULONG) ((((double) alternateValue / REFRESH_INTERVAL * 255UL * PWM_MAX_DUTYCYCLE) + 127UL) / 255UL);
 
     // If PWM operation is not currently enabled on this pin:
     if (!_pinData[_attachedPin].pwmIsEnabled)
@@ -162,12 +162,19 @@ void Servo::writeMicroseconds(int value)
 }
 
 ///
-/// \brief Returns the last value written to the servo
+/// \brief Returns the last value written to the servo in angles
 ///
 int Servo::read()
 {
-    // returns the current angle of the servo
     return _servoIndex;
+}
+
+///
+/// \brief Returns the last value written to the servo in microseconds
+///
+int Servo::readMicroseconds()
+{
+    return (int)(((double) _servoIndex / 180) * (_max - _min) + _min);
 }
 
 ///

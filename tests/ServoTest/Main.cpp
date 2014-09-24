@@ -28,26 +28,43 @@ void loop()
     myservo2.attach(pin2);
 
     myservo2.write(0);
+    Log("ServoIndex: %d\n", myservo2.read());
+    Log("ServoIndex in Microseconds: %d\n", myservo2.readMicroseconds());
     delay(delayAmount);
     myservo2.write(180);
+    Log("ServoIndex: %d\n", myservo2.read());
+    Log("ServoIndex in Microseconds: %d\n", myservo2.readMicroseconds());
 
     /* Tested to work on 9/26 at 4:41pm */
     myservo.write(-90);
+    Log("ServoIndex: %d\n", myservo.read());
+    Log("ServoIndex in Microseconds: %d\n", myservo.readMicroseconds());
     delay(delayAmount);
     myservo.write(0);
+    Log("ServoIndex: %d\n", myservo.read());
+    Log("ServoIndex in Microseconds: %d\n", myservo.readMicroseconds());
     delay(delayAmount);
     myservo.write(180);
+    Log("ServoIndex: %d\n", myservo.read());
+    Log("ServoIndex in Microseconds: %d\n", myservo.readMicroseconds());
     delay(delayAmount);
     myservo.write(200);
+    Log("ServoIndex: %d\n", myservo.read());
+    Log("ServoIndex in Microseconds: %d\n", myservo.readMicroseconds());
     delay(delayAmount);
 
     /*Tested to work on 9/26 at 4:44pm */
     myservo.writeMicroseconds(544);
+    Log("ServoIndex: %d\n", myservo.read());
+    Log("ServoIndex in Microseconds: %d\n", myservo.readMicroseconds());
     delay(delayAmount);
     myservo.writeMicroseconds(4000);
+    Log("ServoIndex: %d\n", myservo.read());
+    Log("ServoIndex in Microseconds: %d\n", myservo.readMicroseconds());
     delay(delayAmount);
 
     Log("ServoIndex: %d\n", myservo.read());
+    Log("ServoIndex in Microseconds: %d\n", myservo.readMicroseconds());
     if (myservo.attached())
     {
         Log("Servo is attached\n");
