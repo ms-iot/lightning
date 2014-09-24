@@ -6,6 +6,7 @@
 #define PGM_SPACE_H
 
 #include <cstdint>
+#include <cstring>
 
 /*
  * The avr/pgmspace.h file providies a set of macros
