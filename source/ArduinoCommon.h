@@ -13,6 +13,12 @@ const UCHAR DIRECTION_IN = 0x00;
 const UCHAR DIRECTION_OUT = 0x01;
 const UCHAR INPUT_PULLUP = 0x02;
 
+// INPUT pin mode
+#define INPUT DIRECTION_IN
+
+// OUTPUT pin mode
+#define OUTPUT DIRECTION_OUT
+
 const UCHAR LSBFIRST = 0x00;
 const UCHAR MSBFIRST = 0x01;
 

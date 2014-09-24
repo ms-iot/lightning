@@ -11,7 +11,7 @@ setlocal enableextensions disabledelayedexpansion
 if not (%1)==() goto GETOPTS
 
 echo Cleaning outputs
-del Microsoft.IoT.Galileo.Arduino*.nupkg 2> NUL
+del Microsoft.IoT.NativeWiring*.nupkg 2> NUL
 rmdir /s /q nupkg 2> NUL
 
 :: if a clean was requested, exit here
@@ -28,13 +28,10 @@ md nupkg\build\native\lib
 
 echo.
 echo Copying files into nuget package structure
-copy Microsoft.IoT.Galileo.Arduino.nuspec nupkg /y || goto err
-copy Microsoft.IoT.Galileo.Arduino.targets nupkg\build\native /y || goto err
+copy Microsoft.IoT.NativeWiring.nuspec nupkg /y || goto err
+copy Microsoft.IoT.NativeWiring.targets nupkg\build\native /y || goto err
 copy *.h nupkg\build\native\include /y || goto err
 copy *.cpp nupkg\build\native\source /y || goto err
-copy ..\extern\inc\embprpusr.h nupkg\build\native\include /y || goto err
-copy ..\extern\inc\galileo.h nupkg\build\native\include /y || goto err
-copy ..\extern\lib\x86\embprpusr.lib nupkg\build\native\lib /y || goto err
 copy ..\license.txt nupkg /y || goto err
 
 :: skip packaging step if requested
@@ -46,7 +43,7 @@ IF ERRORLEVEL 1 (
     echo Please install nuget.exe from http://nuget.org
     goto err
 )
-nuget pack nupkg\Microsoft.IoT.Galileo.Arduino.nuspec || goto err
+nuget pack nupkg\Microsoft.IoT.NativeWiring.nuspec || goto err
 
 
 :end
