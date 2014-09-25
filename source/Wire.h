@@ -17,6 +17,11 @@
 #define TWI_FREQ 100000L
 #endif
 
+#define BUFFER_LENGTH 32
+
+// Forward declaration(s):
+int Log(const char *format, ...);
+
 class TwoWire
 {
 
