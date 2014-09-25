@@ -11,6 +11,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\eeprom.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Servo.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\HardwareSerial.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\NetworkSerial.cpp" />
