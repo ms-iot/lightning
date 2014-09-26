@@ -37,6 +37,10 @@
 #define SPI_CLOCK_DIV_MAX 7
 #define SPI_CLOCK_DIV_DEFAULT 2
 
+// Bit order values.
+#define LSBFIRST        0x00
+#define MSBFIRST        0x01
+
 class SPIClass
 {
 public:
@@ -66,6 +70,7 @@ public:
 			cfg.ConnectionSpeed = SPI1_SPEED;
 			cfg.DataBitLength = SPI1_BITS_PER_WORD;
 			cfg.SpiMode = SPI1_MODE;
+            _bitOrder = MSBFIRST;
 
 			hr = SpiSetControllerConfig(this->spi, &cfg);
 			if (FAILED(hr))
@@ -167,17 +172,46 @@ public:
 			ThrowError("Failed to set SPI_CONTROLLER controller configuration");
 		}
 	}
+    
+    // Reverse the bit order or a byte.
+	unsigned char _reverseBitOrder(unsigned char valIn)
+	{
+		unsigned char retVal = 0;
+
+		for (int i = 0; i < 8; i++)
+		{
+			retVal = retVal << 1;
+			retVal = retVal | ((valIn >> i) & 1);
+		}
+		return retVal;
+	}
 
 	// Transfer one byte over the SPI in each direction (send one, receive one).
 	unsigned char transfer(unsigned char val)
 	{
 		unsigned char ret;
-		HRESULT hr = SpiTransfer(this->spi, 0, &val, sizeof(val), &ret, sizeof(ret));
+        unsigned char writeVal;
+        
+        if(_bitOrder == LSBFIRST)
+        {
+            writeVal = _reverseBitOrder(val);
+        }
+        else
+        {
+            writeVal = val;
+        }
+        
+		HRESULT hr = SpiTransfer(this->spi, 0, &writeVal, sizeof(writeVal), &ret, sizeof(ret));
 		if (FAILED(hr))
 		{
 			ThrowError("SPI_CONTROLLER transfer failed");
 		}
 
+        if(_bitOrder == LSBFIRST)
+        {
+            ret = _reverseBitOrder(ret);
+        }
+        
 		return ret;
 	}
 
@@ -185,9 +219,24 @@ public:
 	{
 		return spi;
 	}
+    
+    // Set the write and read bit order.
+	// The default bit order is MSBit first.
+	void setBitOrder(int bitOrder)
+	{
+		if (bitOrder == LSBFIRST)
+		{
+			_bitOrder = LSBFIRST;
+		}
+		else
+		{
+			_bitOrder = MSBFIRST;
+		}
+	}
 
 private:
 	SPI_CONTROLLER *spi;
+    int _bitOrder;
 };
 
 __declspec(selectany) SPIClass SPI;
