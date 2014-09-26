@@ -27,6 +27,10 @@
 #define SPI_MODE2 2
 #define SPI_MODE3 3
 
+// Bit order values.
+#define LSBFIRST        0x00
+#define MSBFIRST        0x01
+
 class SPIClass
 {
 public:
