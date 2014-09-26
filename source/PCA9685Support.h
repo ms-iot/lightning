@@ -14,6 +14,9 @@ public:
     /// Set a PWM chip output to constant on or constant off.
     static BOOL SetBitState(ULONG i2cAdr, ULONG bit, ULONG state);
 
+    /// Get the current state of a PWM chip output.
+    static BOOL GetBitState(ULONG i2cAdr, ULONG bit, ULONG & state);
+
 private:
     static const UCHAR MODE1_ADR;       ///< Address of MODE1 register
     static const UCHAR MODE2_ADR;       ///< Address of MODE2 register

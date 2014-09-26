@@ -24,13 +24,18 @@ public:
         m_flipBitOrder = FALSE;
 
         // Load values for the SPI clock generators.
-        spiSpeed8mhz = { 666666, 4 };
-        spiSpeed4mhz = { 666666, 9};
-        spiSpeed2mhz = { 666666, 19 };
-        spiSpeed1mhz = { 400000, 24 };
-        spiSpeed500khz = { 200000, 24 };
-        spiSpeed250khz = { 200000, 49 };
-        spiSpeed125khz = { 100000, 49 };
+        spiSpeed8mhz = { 0x666666, 4 };
+        spiSpeed4mhz = { 0x666666, 9};
+        spiSpeed2mhz = { 0x666666, 19 };
+        spiSpeed1mhz = { 0x400000, 24 };
+        spiSpeed500khz = { 0x200000, 24 };
+        spiSpeed250khz = { 0x200000, 49 };
+        spiSpeed125khz = { 0x100000, 49 };
+        spiSpeed50khz = { 0x100000, 124 };
+        spiSpeed25khz = { 0x80000, 124};
+        spiSpeed10khz = { 0x20000, 77 };
+        spiSpeed5khz = { 0x20000, 154 };
+        spiSpeed1khz = { 0x8000, 194 };
     }
 
     virtual ~SPIControllerClass()
@@ -424,6 +429,11 @@ private:
     SPI_BUS_SPEED spiSpeed500khz;
     SPI_BUS_SPEED spiSpeed250khz;
     SPI_BUS_SPEED spiSpeed125khz;
+    SPI_BUS_SPEED spiSpeed50khz;
+    SPI_BUS_SPEED spiSpeed25khz;
+    SPI_BUS_SPEED spiSpeed10khz;
+    SPI_BUS_SPEED spiSpeed5khz;
+    SPI_BUS_SPEED spiSpeed1khz;
 
     // Method to set one of the clock rates we support.
     BOOL _setClockRate(ULONG clockKhz)
@@ -460,6 +470,26 @@ private:
         else if (clockKhz >= 125)
         {
             pSpeed = &spiSpeed125khz;
+        }
+        else if (clockKhz >= 50)
+        {
+            pSpeed = &spiSpeed50khz;
+        }
+        else if (clockKhz >= 25)
+        {
+            pSpeed = &spiSpeed25khz;
+        }
+        else if (clockKhz >= 10)
+        {
+            pSpeed = &spiSpeed10khz;
+        }
+        else if (clockKhz >= 5)
+        {
+            pSpeed = &spiSpeed5khz;
+        }
+        else if (clockKhz >= 1)
+        {
+            pSpeed = &spiSpeed1khz;
         }
         else
         {

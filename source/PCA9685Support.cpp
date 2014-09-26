@@ -67,7 +67,7 @@ BOOL PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
     if (status)
     {
         // Calculate the address of the first register for the port in question.
-        bitRegsAdr = (UCHAR) (LEDS_BASE_ADR + (portBit * REGS_PER_LED));
+        bitRegsAdr = (UCHAR)(LEDS_BASE_ADR + (portBit * REGS_PER_LED));
 
         // Queue sending the base address of the port registers to the chip.
         status = transaction.queueWrite(&bitRegsAdr, 1);
@@ -95,6 +95,99 @@ BOOL PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
         if (!status) { error = GetLastError(); }
     }
 
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+This expects the port bit to be configured to be constantly on or off.
+\param[in] i2cAdr The I2C address of the PWM chip.
+\param[in] portBit The number of the port bit to modify.
+\param[out] state The state of the port bit to: HIGH or LOW.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    I2cTransactionClass transaction;
+    UCHAR bitRegsAdr = 0;                       // Address of start of registers for bit in question
+    UCHAR bitData[REGS_PER_LED] = { 0 };        // Buffer for bit register contents
+
+
+    if (portBit >= LED_COUNT)
+    {
+        status = FALSE;
+        error = ERROR_INVALID_ADDRESS;
+    }
+
+    if (status && (state != HIGH) && (state != LOW))
+    {
+        status = FALSE;
+        error = ERROR_INVALID_PARAMETER;
+    }
+
+    if (status)
+    {
+        // If the chip is not initialized, the ports don't work.
+        if (!m_chipIsInitialized)
+        {
+            status = FALSE;
+            error = ERROR_INVALID_ENVIRONMENT;
+        }
+    }
+
+    if (status)
+    {
+        // Set the I2C address of the PWM chip.
+        status = transaction.setAddress(i2cAdr);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Calculate the address of the first register for the port in question.
+        bitRegsAdr = (UCHAR)(LEDS_BASE_ADR + (portBit * REGS_PER_LED));
+
+        // Queue sending the base address of the port registers to the chip.
+        status = transaction.queueWrite(&bitRegsAdr, 1);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue reading the registers for the bit in question.
+        status = transaction.queueRead(bitData, REGS_PER_LED);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Actually perform the I2C transfers specified above.
+        status = transaction.execute();
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // If constant OFF bit is 1, the port bit is LOW, regardless of constant ON bit.
+        if ((bitData[3] & 0x10) != 0)
+        {
+            state = LOW;
+        }
+        // If constant OFF bit is 0, and constant ON bit is 1, the port bit is HIGH.
+        else if ((bitData[1] & 0x10) != 0)
+        {
+            state = HIGH;
+        }
+        // If both constant state bits are zero, the port bit is not in a constant state.
+        {
+            status = FALSE;
+            error = ERROR_INVALID_STATE;
+
+        }
+    }
 
     if (!status) { SetLastError(error); }
     return status;

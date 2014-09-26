@@ -255,3 +255,80 @@ BOOL PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG directi
     if (!status) { SetLastError(error); }
     return status;
 }
+
+BOOL PCAL9535ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direction)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    I2cTransactionClass transaction;
+    UCHAR configAdrBuf[1] = { 0x06 };       // Address of config register, initially Port 0
+    UCHAR dataBuf[1] = { 0 };
+    ULONG bit = portBit;
+
+
+    if (portBit > P1_7)
+    {
+        status = FALSE;
+        error = ERROR_INVALID_PARAMETER;
+    }
+
+    if (status)
+    {
+        // Set the I2C address of the I/O Expander we want to talk to.
+        status = transaction.setAddress(i2cAdr);
+        if (!status) { error = GetLastError(); }
+    }
+
+    //
+    // Read what is currently in the configuration register.
+    //
+
+    if (status)
+    {
+        // If the bit is on Port1, correct the config register address and bit number.
+        if (portBit > P0_7)
+        {
+            configAdrBuf[0]++;
+            bit = bit - P1_0;               // Bit number on Port 1
+        }
+
+        // Send the address of the configuration register to the I/O Expander chip.
+        status = transaction.queueWrite(configAdrBuf, 1);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Read the configuration register contents from the I/O Expander chip.
+        status = transaction.queueRead(dataBuf, sizeof(dataBuf));
+        if (!status) { error = GetLastError(); }
+    }
+
+    //
+    // Perform the transfers specified above.
+    //
+    if (status)
+    {
+        // Actually perform the transfers.
+        status = transaction.execute();
+        if (!status) { error = GetLastError(); }
+    }
+
+    //
+    // Extract the desired bit from the port data.
+    //
+    if (status)
+    {
+        if (((dataBuf[0] >> bit) & 0x01) == 0)
+        {
+            direction = DIRECTION_OUT;
+        }
+        else
+        {
+            direction = DIRECTION_IN;
+        }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}

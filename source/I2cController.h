@@ -24,6 +24,7 @@ public:
     {
         m_hController = INVALID_HANDLE_VALUE;
         m_controller = nullptr;
+        m_controllerInitialized = FALSE;
     }
 
     virtual ~I2cControllerClass()
@@ -40,6 +41,18 @@ public:
 
     // This method maps the I2C controller if needed.
     inline BOOL mapIfNeeded();
+
+    // This method records that the controller has been initialized.
+    inline void setInitialized()
+    {
+        m_controllerInitialized = TRUE;
+    }
+
+    // This method returns TRUE if the I2C Controller has been initialized, FALSE otherwise.
+    inline BOOL isInitialized()
+    {
+        return m_controllerInitialized;
+    }
 
     //
     // I2C Controller accessor methods.  These methods assume the I2C Controller
@@ -532,6 +545,9 @@ private:
     // Pointer to the object used to address the I2C Controller registers after
     // they are mapped into this process' address space.
     PI2C_CONTROLLER m_controller;
+
+    // TRUE if the controller has been initialized.
+    BOOL m_controllerInitialized;
 
     // Method to map the I2C controller into this process' virtual address space.
     BOOL _mapController();

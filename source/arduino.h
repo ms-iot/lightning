@@ -18,7 +18,6 @@
 #include "ArduinoError.h"
 #include "WindowsRandom.h"
 #include "WindowsTime.h"
-#include "WString.h"
 #include "GalileoPins.h"
 #include "binary.h"
 #include "wire.h"
@@ -288,7 +287,6 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
 // Arduino Sketch Plumbing
 //
 
-#include "Stream.h"
 #include "HardwareSerial.h"
 
 void setup();
