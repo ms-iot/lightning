@@ -91,11 +91,15 @@ public:
 
     inline void setStandardSpeed()
     {
+        m_controller->IC_SS_SCL_HCNT.IC_SS_SCL_HCNT = 0x92;
+        m_controller->IC_SS_SCL_LCNT.IC_SS_SCL_LCNT = 0xAB;
         m_controller->IC_CON.SPEED = 1;
     }
 
     inline void setFastSpeed()
     {
+        m_controller->IC_FS_SCL_HCNT.IC_FS_SCL_HCNT = 0x14;
+        m_controller->IC_FS_SCL_LCNT.IC_FS_SCL_LCNT = 0x2E;
         m_controller->IC_CON.SPEED = 2;
     }
 
