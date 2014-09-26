@@ -62,6 +62,11 @@ public:
             ThrowError("An error occurred setting pinSCK LOW: %08x", GetLastError());
         }
 
+        if (!g_pins._setPinMode(PIN_SCK, DIRECTION_OUT, FALSE))
+        {
+            ThrowError("An error occurred setting pinSCK as output: %08x", GetLastError());
+        }
+
         if (!g_pins._verifyPinFunction(PIN_MOSI, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
         {
             ThrowError("An error occurred configuring pinMOSI for SPI use: %08x", GetLastError());
@@ -72,10 +77,20 @@ public:
             ThrowError("An error occurred setting pinMOSI LOW: %08x", GetLastError());
         }
 
+        if (!g_pins._setPinMode(PIN_MOSI, DIRECTION_OUT, FALSE))
+        {
+            ThrowError("An error occurred setting pinMOSI as output: %08x", GetLastError());
+        }
+
         // Set MISO as an input dedicated to SPI.
         if (!g_pins._verifyPinFunction(PIN_MISO, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
         {
             ThrowError("An error occurred configuring pinMISO for SPI use: %08x", GetLastError());
+        }
+
+        if (!g_pins._setPinMode(PIN_MISO, DIRECTION_IN, FALSE))
+        {
+            ThrowError("An error occurred setting pinMISO as output: %08x", GetLastError());
         }
 
         // Set the desired SPI bit shifting order.
@@ -148,9 +163,12 @@ public:
     //  SPI_CLOCK_DIV4 - Sets 4 MHz clock
     //  SPI_CLOCK_DIV8 - Sets 2 MHz clock
     //  SPI_CLOCK_DIV16 - Sets 1 MHz clock
-    //  SPI_CLICK_DIV32 - Sets 500 KHz clock
-    //  SPI_CLICK_DIV64 - Sets 250 KHz clock
-    //  SPI_CLICK_DIV128 - Sets 125 KHz clock
+    //  SPI_CLOCK_DIV32 - Sets 500 KHz clock
+    //  SPI_CLOCK_DIV64 - Sets 250 KHz clock
+    //  SPI_CLOCK_DIV128 - Sets 125 KHz clock
+    //
+    // Primarily for testing, this method also accepts the following values:
+    //  50, 25, 10, 5, 1 - Sets clock speed in KHz (50 KHz to 1 KHz).
     //
     // The actual value passed to this routine is the desired speed in KHz, with
     // an acceptable range of 125 or higher.  Underlying software layers may set a 
@@ -160,10 +178,6 @@ public:
     //
     void setClockDivider(ULONG clockKHz)
     {
-        if (clockKHz < 125)
-        {
-            ThrowError("SPI clock value must be 125 KHz or higher.");
-        }
         m_clockKHz = clockKHz;
 
         if (m_controller != nullptr)

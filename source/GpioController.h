@@ -57,6 +57,9 @@ public:
     /// Method to set the direction (input or output) of a Fabric GPIO port bit.
     inline BOOL setPinDirection(ULONG portBit, ULONG mode);
 
+    /// Method to get the direction (input or output) of a Fabric GPIO port bit.
+    inline BOOL getPinDirection(ULONG portBit, ULONG & mode);
+
 private:
 
     #pragma warning(push)
@@ -280,6 +283,9 @@ public:
     /// Method to set the direction (input or output) of a Legacy Core Well GPIO port bit.
     inline BOOL setCorePinDirection(ULONG portBit, ULONG mode);
 
+    /// Method to get the direction (input or output) of a Legacy Core Well GPIO port bit.
+    inline BOOL getCorePinDirection(ULONG portBit, ULONG & mode);
+
     /// Method to set the state of a Legacy Resume Well GPIO port bit.
     inline BOOL setResumePinState(ULONG portBit, ULONG state);
 
@@ -288,6 +294,9 @@ public:
 
     /// Method to set the direction (input or output) of a Legacy Resume Well GPIO port bit.
     inline BOOL setResumePinDirection(ULONG portBit, ULONG mode);
+
+    /// Method to get the direction (input or output) of a Legacy Resume Well GPIO port bit.
+    inline BOOL getResumePinDirection(ULONG portBit, ULONG & mode);
 
 private:
 
@@ -478,6 +487,36 @@ BOOL FabricGpioControllerClass::setPinDirection(ULONG portBit, ULONG mode)
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-7.
+\param[out] mode The mode of the bit, DIRECTION_IN or DIRECTION_OUT
+\return TRUE success, FALSE failure, GetLastError() provides the error code.
+*/
+inline BOOL FabricGpioControllerClass::getPinDirection(ULONG portBit, ULONG & mode)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+
+    status = mapIfNeeded();
+    if (!status) { error = GetLastError(); }
+
+    if (status)
+    {
+        if ((m_controller->GPIO_SWPORTA_DDR.ALL_BITS >> portBit) == 0)
+        {
+            mode = DIRECTION_IN;
+        }
+        else
+        {
+            mode = DIRECTION_OUT;
+        }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+This method assumes the caller has checked the input parameters.
+\param[in] portBit The number of the bit to modify. Range: 0-7.
 \param[in] state The state to set on the port bit. 0 - low, 1 - high.
 \return TRUE success, FALSE failure, GetLastError() provides the error code.
 */
@@ -536,33 +575,33 @@ BOOL LegacyGpioControllerClass::getCorePinState(ULONG portBit, ULONG & state)
     DWORD bytesReturned;
     DWORD portContents;
 
-    status = openIfNeeded();
+status = openIfNeeded();
+if (!status) { error = GetLastError(); }
+
+if (status)
+{
+    inp.Bank = QUARKLGPIO_BANK_COREWELL;
+    inp.Mask = 0x1 << portBit;
+
+    status = DeviceIoControl(
+        m_hController,
+        IOCTL_QUARKLGPIO_READ_PINS,
+        &inp,
+        sizeof(inp),
+        &portContents,
+        sizeof(portContents),
+        &bytesReturned,
+        nullptr);
     if (!status) { error = GetLastError(); }
+}
 
-    if (status)
-    {
-        inp.Bank = QUARKLGPIO_BANK_COREWELL;
-        inp.Mask = 0x1 << portBit;
+if (status)
+{
+    state = (portContents >> portBit) & 0x01;
+}
 
-        status = DeviceIoControl(
-            m_hController,
-            IOCTL_QUARKLGPIO_READ_PINS,
-            &inp,
-            sizeof(inp),
-            &portContents,
-            sizeof(portContents),
-            &bytesReturned,
-            nullptr);
-        if (!status) { error = GetLastError(); }
-    }
-
-    if (status)
-    {
-        state = (portContents >> portBit) & 0x01;
-    }
-
-    if (!status) { SetLastError(error); }
-    return status;
+if (!status) { SetLastError(error); }
+return status;
 }
 
 /**
@@ -599,12 +638,118 @@ BOOL LegacyGpioControllerClass::setCorePinDirection(ULONG portBit, ULONG mode)
 }
 
 /**
+This method assumes the caller has checked the input parameters.  This method is largely
+intended for testing use--it is more efficient to just set the desired direction rather
+than checking first.
+\param[in] portBit The number of the bit to modify. Range: 0-1.
+\param[out] mode The mode of the bit, DIRECTION_IN or DIRECTION_OUT
+\return TRUE success, FALSE failure, GetLastError() provides the error code.
+*/
+inline BOOL LegacyGpioControllerClass::getCorePinDirection(ULONG portBit, ULONG & mode)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    QUARKLGPIO_INPUT_BUFFER inp;
+    DWORD readValue;
+    DWORD bytesReturned;
+
+    status = openIfNeeded();
+    if (!status) { error = GetLastError(); }
+
+    if (status)
+    {
+
+        inp.Bank = QUARKLGPIO_BANK_COREWELL;
+        inp.Mask = 0xFF;                // Not used, but if it were, we would want all 8 bits
+
+        status = DeviceIoControl(
+            m_hController,
+            IOCTL_QUARKLGPIO_GET_DIR,
+            &inp,
+            sizeof(inp),
+            &readValue,
+            sizeof(readValue),
+            &bytesReturned,
+            nullptr);
+        if (!status) { error = GetLastError(); }
+
+        if (status)
+        {
+            if (((readValue >> portBit) && 0x01) == 1)
+            {
+                mode = DIRECTION_IN;
+            }
+            else
+            {
+                mode = DIRECTION_OUT;
+            }
+        }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+This method assumes the caller has checked the input parameters.  This method is largely
+intended for testing use--it is more efficient to just set the desired direction rather
+than checking first.
+\param[in] portBit The number of the bit to modify. Range: 0-5.
+\param[out] mode The mode of the bit, DIRECTION_IN or DIRECTION_OUT
+\return TRUE success, FALSE failure, GetLastError() provides the error code.
+*/
+BOOL LegacyGpioControllerClass::getResumePinDirection(ULONG portBit, ULONG & mode)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    QUARKLGPIO_INPUT_BUFFER inp;
+    DWORD readValue;
+    DWORD bytesReturned;
+
+    status = openIfNeeded();
+    if (!status) { error = GetLastError(); }
+
+    if (status)
+    {
+
+        inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
+        inp.Mask = 0xFF;                // Not used, but if it were, we would want all 8 bits
+
+        status = DeviceIoControl(
+            m_hController,
+            IOCTL_QUARKLGPIO_GET_DIR,
+            &inp,
+            sizeof(inp),
+            &readValue,
+            sizeof(readValue),
+            &bytesReturned,
+            nullptr);
+        if (!status) { error = GetLastError(); }
+
+        if (status)
+        {
+            if (((readValue >> portBit) && 0x01) == 1)
+            {
+                mode = DIRECTION_IN;
+            }
+            else
+            {
+                mode = DIRECTION_OUT;
+            }
+        }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-5.
 \param[in] mode The mode to set for the bit.  Range: DIRECTION_IN or DIRECTION_OUT
 \return TRUE success, FALSE failure, GetLastError() provides the error code.
 */
-BOOL LegacyGpioControllerClass::setResumePinDirection(ULONG portBit, ULONG mode)
+inline BOOL LegacyGpioControllerClass::setResumePinDirection(ULONG portBit, ULONG mode)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;

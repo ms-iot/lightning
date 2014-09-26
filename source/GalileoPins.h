@@ -92,7 +92,6 @@ public:
     /// Method to set the direction of a pin (DIRECTION_IN or DIRECTION_OUT).
     BOOL _setPinMode(ULONG pin, ULONG mode, BOOL pullUp);
 
-
     /// Method to verify that a pin is configured for the desired function.
     BOOL _verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction);
 

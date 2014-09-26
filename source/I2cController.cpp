@@ -407,7 +407,7 @@ BOOL I2cTransactionClass::_initializeI2cForTransaction()
     status = g_i2c.mapIfNeeded();
     if (!status) { error = GetLastError(); }
 
-    if (status && (g_i2c.getAddress() != m_slaveAddress))
+    if (status && (!g_i2c.isInitialized() || (g_i2c.getAddress() != m_slaveAddress)))
     {
         // Make sure the I2C controller is disabled.
         g_i2c.disableController();

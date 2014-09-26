@@ -24,6 +24,8 @@ public:
 
     static BOOL SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG direction);
 
+    static BOOL GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direction);
+
 private:
 };
 
