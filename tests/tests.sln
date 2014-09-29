@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2013 for Windows Desktop
-VisualStudioVersion = 12.0.30723.0
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30324.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DigitalPinModeOutputTest", "DigitalPinModeOutputTest\DigitalPinModeOutputTest.vcxproj", "{5CD71A4C-A67E-444A-9A8F-FAB3B4701454}"
 EndProject
@@ -22,6 +22,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "eepromTest", "eepromTest\eepromTest.vcxproj", "{B88C8544-A066-42A1-A394-1750FE674604}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AnalogWriteResolutionTest", "AnalogWriteResolutionTest\AnalogWriteResolutionTest.vcxproj", "{7A24E480-5C27-4970-8BCA-8AA99300B28F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpiSetBitOrderTest", "SpiSetBitOrderTest\SpiSetBitOrderTest.vcxproj", "{6ED131F3-3082-4B31-9A52-82147478C82B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -80,6 +82,11 @@ Global
 		{7A24E480-5C27-4970-8BCA-8AA99300B28F}.Release|Win32.ActiveCfg = Release|Win32
 		{7A24E480-5C27-4970-8BCA-8AA99300B28F}.Release|Win32.Build.0 = Release|Win32
 		{7A24E480-5C27-4970-8BCA-8AA99300B28F}.Release|Win32.Deploy.0 = Release|Win32
+		{6ED131F3-3082-4B31-9A52-82147478C82B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6ED131F3-3082-4B31-9A52-82147478C82B}.Debug|Win32.Build.0 = Debug|Win32
+		{6ED131F3-3082-4B31-9A52-82147478C82B}.Debug|Win32.Deploy.0 = Debug|Win32
+		{6ED131F3-3082-4B31-9A52-82147478C82B}.Release|Win32.ActiveCfg = Release|Win32
+		{6ED131F3-3082-4B31-9A52-82147478C82B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
