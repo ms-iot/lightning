@@ -189,7 +189,7 @@ public:
 	// Transfer one byte over the SPI in each direction (send one, receive one).
 	unsigned char transfer(unsigned char val)
 	{
-		unsigned char ret;
+        unsigned char ret;
         unsigned char writeVal;
         
         if(_bitOrder == LSBFIRST)
