@@ -15,9 +15,9 @@
 #define dmapGpioDeviceName L"\\\\.\\PCI#VEN_8086&DEV_0934&SUBSYS_09348086&REV_10#3&b1bfb68&0&AA#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\1"
 
 
-#define legacyGpioDeviceName L"\\\\.\\ACPI#INT3498#4&431f7f5&0#{091a7d51-bb55-42e4-ae25-1d0b563fa177}"
+//#define legacyGpioDeviceName L"\\\\.\\ACPI#INT3498#4&431f7f5&0#{091a7d51-bb55-42e4-ae25-1d0b563fa177}"
 //#define legacyGpioDeviceName L"\\\\.\\ACPI#INT3499#4&431f7f5&0#{091a7d51-bb55-42e4-ae25-1d0b563fa177}"
-//#define legacyGpioDeviceName L"\\\\.\\ACPI#INT3488#4&431f7f5&0#{091a7d51-bb55-42e4-ae25-1d0b563fa177}"
+#define legacyGpioDeviceName L"\\\\.\\ACPI#INT3488#4&431f7f5&0#{091a7d51-bb55-42e4-ae25-1d0b563fa177}"
 
 /// Routine to get the base address of a memory mapped controller with no sharing allowed.
 BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress);
