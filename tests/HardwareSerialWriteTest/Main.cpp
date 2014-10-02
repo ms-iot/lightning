@@ -14,34 +14,60 @@ void setup()
     Serial1.begin(CBR_9600, Serial.SERIAL_8N1);
     Serial.begin(CBR_300, Serial.SERIAL_7O2);
     Serial1.print("Serial Beginning");
-    Serial.print("Serial Beginning");
+    //Serial.print("Serial Beginning");
 }
 
 int count = 0;
 char c = 'a';
+uint8_t dataArray[5] = { 0x03, 0x03, 0x00, 0x03, 0x03 };
 
 void loop()
 {
-    // Sending characters
-    Serial1.write(c);
-    if (Serial.write(c) <= 0)
+    for (count = 0; count < 5; count++)
     {
-        Log(L"Serial.write failed\n");
-    }
-    else
-    {
-        Log(L"%c being sent\n", c);
+        if (Serial1.write(dataArray[count]) != 1)
+        {
+            Log("Error writing Serial1! %d\n", count);
+        }
+
+        if (Serial.write(dataArray[count]) != 1)
+        {
+            Log("Error writing Serial! %d\n", count);
+        }
     }
 
-    if (c == 'z')
+    Sleep(500);
+    int available = Serial.available();
+    if (available)
     {
-        c = 'a';
+        Log("Received %d bytes\n", available);
+        for (int i = 0; i < available; i++)
+        {
+            auto byte = (uint8_t) Serial.read();
+            Log("%X,", byte);
+        }
     }
-    else
-    {
-        c++;
-    }
-    
+
+    // Sending characters
+    //Serial1.write(c);
+    //if (Serial.write(c) <= 0)
+    //{
+    //    Log(L"Serial.write failed\n");
+    //}
+    //else
+    //{
+    //    Log(L"%c being sent\n", c);
+    //}
+
+    //if (c == 'z')
+    //{
+    //    c = 'a';
+    //}
+    //else
+    //{
+    //    c++;
+    //}
+
     // Sending negative integer in string
     //Serial.print("-100");
 
