@@ -34,81 +34,81 @@ HardwareSerial & HardwareSerial::operator= (HardwareSerial &) { return *this; }
 DCB HardwareSerial::dcbArray[] =
 {
     // sizeof(DCB)
-    //   Baudrate at which running 
-    //      Binary Mode (skip EOF check)
-    //         Enable parity checking 
-    //            CTS handshaking on output
-    //               DSR handshaking on output  
-    //                  DTR Flow control
-    //                     DSR Sensitivity
-    //                        Continue TX when Xoff sent
-    //                           Enable output X-ON/X-OFF
-    //                              Enable input X-ON/X-OFF
-    //                                 Enable Err Replacement 
-    //                                    Enable Null stripping
-    //                                       Rts Flow control
-    //                                          Abort all reads and writes on Error
-    //                                             Reserved
-    //                                                Not currently used
-    //                                                   Transmit X-ON threshold
-    //                                                      Transmit X-OFF threshold
-    //                                                         Number of bits/byte, 4-8
-    //                                                            0-4=None,Odd,Even,Mark,Space
-    //                                                                      0,1,2 = 1, 1.5, 2 
-    //                                                                                  Tx and Rx X-ON character
-    //                                                                                     Tx and Rx X-OFF character
-    //                                                                                        Error replacement char
-    //                                                                                           End of Input character
-    //                                                                                              Received Event character
-    //                                                                                                 Fill for now.
-    // SERIAL_5N1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, NOPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    //             Baudrate at which running 
+    //                Binary Mode (skip EOF check)
+    //                   Enable parity checking 
+    //                      CTS handshaking on output
+    //                         DSR handshaking on output  
+    //                            DTR Flow control
+    //                               DSR Sensitivity
+    //                                  Continue TX when Xoff sent
+    //                                     Enable output X-ON/X-OFF
+    //                                        Enable input X-ON/X-OFF
+    //                                           Enable Err Replacement 
+    //                                              Enable Null stripping
+    //                                                 Rts Flow control
+    //                                                    Abort all reads and writes on Error
+    //                                                       Reserved
+    //                                                          Not currently used
+    //                                                             Transmit X-ON threshold
+    //                                                                Transmit X-OFF threshold
+    //                                                                   Number of bits/byte, 4-8
+    //                                                                      0-4=None,Odd,Even,Mark,Space
+    //                                                                                0,1,2 = 1, 1.5, 2 
+    //                                                                                            Tx and Rx X-ON character
+    //                                                                                                Tx and Rx X-OFF character
+    //                                                                                                    Error replacement char
+    //                                                                                                       End of Input character
+    //                                                                                                          Received Event character
+    //                                                                                                             Fill for now.
+    // SERIAL_5N1                                                                                         
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, NOPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_6N1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, NOPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, NOPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_7N1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, NOPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, NOPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_8N1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, NOPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 }, 
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, NOPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_5N2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, NOPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, NOPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_6N2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, NOPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, NOPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_7N2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, NOPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, NOPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_8N2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, NOPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, NOPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_5E1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, EVENPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, EVENPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_6E1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, EVENPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, EVENPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_7E1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, EVENPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, EVENPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_8E1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, EVENPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, EVENPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_5E2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, EVENPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, EVENPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_6E2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, EVENPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, EVENPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_7E2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, EVENPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, EVENPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_8E2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, EVENPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, EVENPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_5O1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, ODDPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, ODDPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_6O1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, ODDPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, ODDPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_7O1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, ODDPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, ODDPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_8O1
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, ODDPARITY, ONESTOPBIT, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, ODDPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
     // SERIAL_5O2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, ODDPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, ODDPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_6O2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, ODDPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, ODDPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_7O2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, ODDPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 },
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, ODDPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
     // SERIAL_8O2
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, ODDPARITY, TWOSTOPBITS, 0, 0, 0, 0, 0, 0 }
+    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, ODDPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 }
 };
 
 HardwareSerial::operator bool(void)
