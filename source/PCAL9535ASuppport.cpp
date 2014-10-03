@@ -39,7 +39,7 @@ BOOL PCAL9535ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
         if (portBit > P0_7)
         {
             outPortBuf[0]++;
-            bit = bit - P1_0;               // Bit number on Output port 1
+            bit = bit & 0x07;               // Bit number on Output port 1
         }
 
         // Send the address of the output port to the I/O Expander chip.
@@ -120,7 +120,7 @@ BOOL PCAL9535ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
         if (portBit > P0_7)
         {
             inPortBuf[0]++;
-            bit = bit - P1_0;               // Bit number on Input port 1
+            bit = bit & 0x07;               // Bit number on Output port 1
         }
 
         // Queue sending the address of the input port to the I/O Expander chip.
@@ -192,7 +192,7 @@ BOOL PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG directi
         if (portBit > P0_7)
         {
             configAdrBuf[0]++;
-            bit = bit - P1_0;               // Bit number on Port 1
+            bit = bit & 0x07;               // Bit number on Output port 1
         }
 
         // Send the address of the configuration register to the I/O Expander chip.
@@ -289,7 +289,7 @@ BOOL PCAL9535ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direc
         if (portBit > P0_7)
         {
             configAdrBuf[0]++;
-            bit = bit - P1_0;               // Bit number on Port 1
+            bit = bit & 0x07;               // Bit number on Output port 1
         }
 
         // Send the address of the configuration register to the I/O Expander chip.

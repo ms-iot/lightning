@@ -11,6 +11,7 @@ const UCHAR GPIO_LEGRES = 2;    ///< GPIO is from the SOC Legacy sub-system that
 const UCHAR GPIO_LEGCOR = 3;    ///< GPIO is from the SOC Legacy sub-system that can not resume from sleep
 const UCHAR GPIO_EXP1 = 4;      ///< GPIO is from a port bit on I/O Expander 1
 const UCHAR GPIO_EXP2 = 5;      ///< GPIO is from a port bit on  I/O Expander 2
+const UCHAR GPIO_CY8 = 6;       ///< GPIO is from a port on the CY8 I/O Expander (on Gen1)
 
 // GPIO pin driver selection values.
 const UCHAR GPIO_INPUT_DRIVER_SELECT = 1;   ///< Specify input circuitry should be enabled
@@ -21,12 +22,14 @@ const UCHAR EXP0       =  0;    ///< Value specifies I/O Expander 0
 const UCHAR EXP1       =  1;    ///< Value specifies I/O Expander 1
 const UCHAR EXP2       =  2;    ///< Value specifies I/O Expander 2
 const UCHAR PWM        =  3;    ///< Value specifies PWM used as I/O Expander
-const UCHAR NUM_IO_EXP =  4;    ///< The number of I/O Expanders present
+const UCHAR CY8        =  4;    ///< Value specifies CY8 I/O Expander (on Gen1)
+const UCHAR NUM_IO_EXP =  5;    ///< The number of I/O Expanders present
 const UCHAR NO_X       = 15;    ///< Value specifies that no I/O Expander is used
 
 // I/O Expander types.
-const UCHAR PCAL9535A = 0;      ///< I/O Expander chip
-const UCHAR PCA9685 = 1;        ///< PWM chip
+const UCHAR PCAL9535A = 0;      ///< I/O Expander chip used on Gen2
+const UCHAR PCA9685 = 1;        ///< PWM chip used on Gen2
+const UCHAR CY8c9540A = 2;      ///< I/O Expander/PWM chip used on Gen1
 const UCHAR NUM_EXP_TYPSES = 2; ///< The number of I/O Expanders types present
 
 // PWM chip bit values.
@@ -47,7 +50,7 @@ const UCHAR LED13 = 13;         ///< PWM chip LED13 output
 const UCHAR LED14 = 14;         ///< PWM chip LED14 output
 const UCHAR LED15 = 15;         ///< PWM chip LED15 output
 
-// MUX name values.
+// MUX name values for Gen2.
 const UCHAR MUX0      =  0;     ///< Mux number 0
 const UCHAR MUX1      =  1;     ///< Mux number 1
 const UCHAR MUX2      =  2;     ///< Mux number 2
@@ -62,8 +65,27 @@ const UCHAR MUX10     = 10;     ///< Mux number 10
 const UCHAR AMUX1     = 11;     ///< Dual analog mux number 1
 const UCHAR AMUX2_1   = 12;     ///< Mux number 1 in dual mux package number 2
 const UCHAR AMUX2_2   = 13;     ///< Mux number 2 in dual mux package number 2
-const UCHAR NUM_MUXES = 14;     ///< Number of muxes present
 const UCHAR NO_MUX    = 15;     ///< Value indicates no mux is present
+
+// MUX name values for Gen1.
+const UCHAR MUX_U1_1  =  0;     ///< Mux number 1 in package U1 
+const UCHAR MUX_U1_2  =  1;     ///< Mux number 2 in package U1 
+const UCHAR MUX_U2_1  =  2;     ///< Mux number 1 in package U2 
+const UCHAR MUX_U2_2  =  3;     ///< Mux number 2 in package U2
+const UCHAR MUX_U3_1  =  4;     ///< Mux number 1 in package U3
+const UCHAR MUX_U3_2  =  5;     ///< Mux number 2 in package U3
+const UCHAR MUX_U4_1  =  6;     ///< Mux number 1 in package U4
+const UCHAR MUX_U4_2  =  7;     ///< Mux number 2 in package U4
+const UCHAR MUX_U5_1  =  8;     ///< Mux number 1 in package U5
+const UCHAR MUX_U5_2  =  9;     ///< Mux number 2 in package U5
+const UCHAR MUX_U6_1  = 10;     ///< Mux number 1 in package U6
+const UCHAR MUX_U6_2  = 11;     ///< Mux number 2 in package U6
+const UCHAR MUX_U7    = 12;     ///< Both muxes in pack U7
+const UCHAR MUX_U9_1  = 13;     ///< Mux number 1 in package U9
+const UCHAR MUX_U9_2  = 14;     ///< Mux number 2 in package U9
+
+// Maximum number of MUXes.
+const UCHAR MAX_MUXES = 15;     ///< Maximum number of MUXes on a Gen1 or Gen2 board.
 
 /// The global table of pin attributes for the Galileo Gen2 board.
 /**
@@ -101,7 +123,7 @@ const GalileoPinsClass::PORT_ATTRIBUTES g_Gen2PinAttributes[] =
 This table contains the information needed to set each mux to a desired state.  It is indexed by
 mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
 */
-const GalileoPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[NUM_MUXES] =
+const GalileoPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[MAX_MUXES] =
 {
     { PWM,  LED1 },     ///< MUX0
     { PWM,  LED2 },     ///< MUX1
@@ -116,7 +138,8 @@ const GalileoPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[NUM_MUXES] =
     { PWM,  LED13 },    ///< MUX10
     { EXP2, P1_4 },     ///< AMUX1
     { PWM,  LED14 },    ///< AMUX2_1
-    { PWM,  LED15 }     ///< AMUX2_2
+    { PWM,  LED15 },    ///< AMUX2_2
+    { NO_X, 0 }         ///< Not used on Gen2
 };
 
 /// The global table of I/O Expander attributes for the Galileo Gen2 board.
@@ -125,6 +148,7 @@ This table contains the information needed to communicate with each I/O Expander
 It is indexed by Expander number and contains the type of chip used for that I/O Expander
 and the address on the I2C bus the chip responds to.
 */
+// TODO: The Gen1/Gen2 expanders should be broken into seperate namspaces or (probably best) combined into one table.
 const GalileoPinsClass::EXP_ATTRIBUTES g_Gen2ExpAttributes[] =
 {
     { PCAL9535A, 0x25 },    ///< EXP0
@@ -132,6 +156,76 @@ const GalileoPinsClass::EXP_ATTRIBUTES g_Gen2ExpAttributes[] =
     { PCAL9535A, 0x27 },    ///< EXP2
     { PCA9685,   0x47 }     ///< PWM
 };
+
+/// The global table of pin attributes for the Galileo Gen1 board.
+/**
+This table contains all the pin-specific attributes needed to configure and use an I/O pin.
+It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
+*/
+const GalileoPinsClass::PORT_ATTRIBUTES g_Gen1PinAttributes[] =
+{
+    //gpioType           pullExp  triSExp  muxA              Muxes (A,B) by function:      triStIn   Function_mask
+    //             portBit     pullBit  triSBit      muxB    Dio  Pwm  AnIn I2C  Spi  Ser     _pad
+    { GPIO_CY8,    P4_6, NO_X, 0, NO_X, 0, MUX_U2_1, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_SER },            // D0
+    { GPIO_CY8,    P4_7, NO_X, 0, NO_X, 0, MUX_U2_2, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_SER },            // D1
+    { GPIO_FABRIC, 6,    NO_X, 0, NO_X, 0, MUX_U9_2, NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO },                       // D2
+    { GPIO_FABRIC, 7,    NO_X, 0, NO_X, 0, MUX_U9_1, NO_MUX, 0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_PWM },            // D3
+    { GPIO_CY8,    P1_4, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO },                       // D4
+    { GPIO_CY8,    P0_1, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_PWM },            // D5
+    { GPIO_CY8,    P1_0, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_PWM },            // D6
+    { GPIO_CY8,    P1_3, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_PWM },            // D7
+    { GPIO_CY8,    P1_2, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_PWM },            // D8
+    { GPIO_CY8,    P0_3, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_PWM },            // D9
+    { GPIO_FABRIC, 2,    NO_X, 0, NO_X, 0, MUX_U1_1, NO_MUX, 0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_PWM },            // D10
+    { GPIO_CY8,    P1_1, NO_X, 0, NO_X, 0, MUX_U1_2, NO_MUX, 1,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_PWM | FUNC_SPI }, // D11
+    { GPIO_CY8,    P3_2, NO_X, 0, NO_X, 0, MUX_U3_1, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_SPI },            // D12
+    { GPIO_CY8,    P3_3, NO_X, 0, NO_X, 0, MUX_U3_2, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_SPI },            // D13
+    { GPIO_CY8,    P4_0, NO_X, 0, NO_X, 0, MUX_U4_1, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_AIN },            // A0
+    { GPIO_CY8,    P4_1, NO_X, 0, NO_X, 0, MUX_U4_2, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_AIN },            // A1
+    { GPIO_CY8,    P4_2, NO_X, 0, NO_X, 0, MUX_U5_1, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_AIN },            // A2
+    { GPIO_CY8,    P4_3, NO_X, 0, NO_X, 0, MUX_U5_2, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_AIN },            // A3
+    { GPIO_CY8,    P4_4, NO_X, 0, NO_X, 0, MUX_U6_1, MUX_U7, 1,1, 0,0, 0,1, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_AIN | FUNC_I2C }, // A4
+    { GPIO_CY8,    P4_5, NO_X, 0, NO_X, 0, MUX_U6_2, MUX_U7, 1,1, 0,0, 0,1, 0,0, 0,0, 0,0, 0, 0, FUNC_DIO | FUNC_AIN | FUNC_I2C }  // A5
+};
+
+/// The global table of mux attributes for the Galileo Gen1 board.
+/**
+This table contains the information needed to set each mux to a desired state.  It is indexed by
+mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
+*/
+const GalileoPinsClass::MUX_ATTRIBUTES g_Gen1MuxAttributes[MAX_MUXES] =
+{
+    { CY8, P3_6 },      ///< MUX_U1_1
+    { CY8, P3_7 },      ///< MUX_U1_2
+    { CY8, P3_4 },      ///< MUX_U2_1
+    { CY8, P3_5 },      ///< MUX_U2_2
+    { CY8, P5_2 },      ///< MUX_U3_1
+    { CY8, P5_3 },      ///< MUX_U3_2
+    { CY8, P3_1 },      ///< MUX_U4_1
+    { CY8, P3_0 },      ///< MUX_U4_2
+    { CY8, P0_7 },      ///< MUX_U5_1
+    { CY8, P0_6 },      ///< MUX_U5_2
+    { CY8, P0_5 },      ///< MUX_U6_1
+    { CY8, P0_4 },      ///< MUX_U6_2
+    { CY8, P1_5 },      ///< MUX_U7
+    { CY8, P1_6 },      ///< MUX_U9_1
+    { CY8, P1_7 }       ///< MUX_U9_2
+};
+
+/// The global table of I/O Expander attributes for the Galileo Gen1 board.
+/**
+This table contains the information needed to communicate with each I/O Expander chip.
+It is indexed by Expander number and contains the type of chip used for that I/O Expander
+and the address on the I2C bus the chip responds to.
+*/
+const GalileoPinsClass::EXP_ATTRIBUTES g_Gen1ExpAttributes[] =
+{
+    { PCAL9535A, 0x25 },    ///< EXP0
+    { PCAL9535A, 0x26 },    ///< EXP1
+    { PCAL9535A, 0x27 },    ///< EXP2
+    { PCA9685, 0x47 }     ///< PWM
+};
+
 
 /// The global table of Pin Function tracking structures.
 /**
@@ -401,6 +495,13 @@ BOOL GalileoPinsClass::_setPinAnalogInput(ULONG pin)
     {
         // Set the MUX to the desired state for Analog Input.
         status = _setMux(m_PinAttributes[pin].muxB, m_PinAttributes[pin].anInMuxB);
+        if (!status) { error = GetLastError(); }
+    }
+
+    // Make sure the digital I/O functions on this pin are set to INPUT without pull-up.
+    if (status)
+    {
+        status = _setPinMode(pin, DIRECTION_IN, FALSE);
         if (!status) { error = GetLastError(); }
     }
 
@@ -752,22 +853,19 @@ BOOL GalileoPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
     expNo = m_PinAttributes[pin].pullupExp;
     bitNo = m_PinAttributes[pin].pullupBit;
 
-    // Set the I/O Expander bit high.
-    status = _setExpBitToState(expNo, bitNo, 1);
-    if (!status)  { error = GetLastError(); }
 
     // If the pullup is wanted:
     if (pullup)
     {
-        // Make the I/O Expander bit an output.
-        status = _setExpBitDirection(expNo, bitNo, DIRECTION_OUT);
+        // Set the I/O Expander bit high (also sets it as an output)
+        status = _setExpBitToState(expNo, bitNo, 1);
         if (!status)  { error = GetLastError(); }
     }
 
     // If no pullup is wanted:
     else
     {
-        // Make the I/O Expander bit as an input.
+        // Make the I/O Expander bit an input.
         status = _setExpBitDirection(expNo, bitNo, DIRECTION_IN);
         if (!status)  { error = GetLastError(); }
     }
@@ -790,8 +888,8 @@ BOOL GalileoPinsClass::_setMux(ULONG mux, ULONG selection)
     ULONG bitNo = 0;                // Bit number on I/O Expander
 
 
-    // If the MUX number is outside the valid range, fail.
-    if (mux >= NUM_MUXES)
+    // If the MUX number is outside the valid range for this board, fail.
+    if ((mux >= MAX_MUXES) || (m_MuxAttributes[mux].selectExp == NO_X))
     {
         status = FALSE;
         error = ERROR_INVALID_PARAMETER;
