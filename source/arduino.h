@@ -21,6 +21,7 @@
 #include "GalileoPins.h"
 #include "binary.h"
 #include "wire.h"
+#include "Adc.h"
 
 #define NUM_ARDUINO_PINS 20
 #define NUM_ANALOG_PINS 6
@@ -230,20 +231,75 @@ inline int digitalRead(int pin)
     return readData;
 }
 
-//
-// Configures the specified pin to behave either as an input
-// or an output (IO0 - IO13).  A0-A5 are mapped to 14-19
-// 
-// Example:
-//
-//  // Set IO4 as input.
-//  pinMode(4, INPUT);
-//
+/// Perform an analog to digital conversion on one of the analog inputs.
+/**
+\param[in] pin The analog pin to read (A0-A5).
+\return Digitized analong value read from the pin (0-1023 for 0-5v pin voltage).
+*/
+inline int analogRead(int pin)
+{
+    ULONG value = 0;
+    ULONG bits = 0;
+    ULONG ioPin = 0;
+    ULONG chan = 0;
+
+    // Translate the pin number passed in to an I/O Pin number and a channel number.
+    if ((pin >= 0) && (pin < NUM_ANALOG_PINS))
+    {
+        ioPin = A0 + pin;
+        chan = pin;
+    }
+    else if ((pin >= A0) && (pin <= A5))
+    {
+        ioPin = pin;
+        chan = pin - A0;
+    }
+    else
+    {
+        ThrowError("Pin: %d is not an analog input pin.", pin);
+    }
+
+    if (!g_pins._verifyPinFunction(pin, FUNC_AIN, GalileoPinsClass::NO_LOCK_CHANGE))
+    {
+        ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", pin, GetLastError());
+    }
+
+    if (!g_adc.readValue(chan, value, bits))
+    {
+        ThrowError("Error performing analogRead on pin: %d, Error: 0x%08x", pin, GetLastError());
+    }
+    return value;
+}
+
+/// Configure a pin for input or output duty.
+/**
+\param[in] pin The number of the pin (D0-D13, A0, A5)
+\param[in] mode The desired pin mode (INPUT, OUTPUT, INPUT_PULLUP)
+*/
 inline void pinMode(unsigned int pin, unsigned int mode)
 {
-    if (!g_pins._setPinMode(pin, mode, false))
+    switch (mode)
     {
-        ThrowError("Error setting mode: %d for pin: %d, Error: %08x", mode, pin, GetLastError());
+    case INPUT:
+        if (!g_pins._setPinMode(pin, DIRECTION_IN, false))
+        {
+            ThrowError("Error setting mode: INPUT for pin: %d, Error: 0x%08x", pin, GetLastError());
+        }
+        break;
+    case OUTPUT:
+        if (!g_pins._setPinMode(pin, DIRECTION_OUT, false))
+        {
+            ThrowError("Error setting mode: OUTPUT for pin: %d, Error: 0x%08x", pin, GetLastError());
+        }
+        break;
+    case INPUT_PULLUP:
+        if (!g_pins._setPinMode(pin, DIRECTION_IN, true))
+        {
+            ThrowError("Error setting mode: INPUT_PULLUP for pin: %d, Error: 0x%08x", pin, GetLastError());
+        }
+        break;
+    default:
+        ThrowError("Invalid mode: %d specified for pin: %d.", mode, pin);
     }
 }
 
