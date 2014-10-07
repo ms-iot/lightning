@@ -231,17 +231,23 @@ inline int digitalRead(int pin)
     return readData;
 }
 
+/// The number of bits used to return digitized analog values.
+__declspec (selectany) ULONG g_analogValueBits = 10;
+
 /// Perform an analog to digital conversion on one of the analog inputs.
 /**
 \param[in] pin The analog pin to read (A0-A5).
-\return Digitized analong value read from the pin (0-1023 for 0-5v pin voltage).
+\return Digitized analog value read from the pin.
+\note The number of bits of the digitized analog value can be set by calling the 
+analogReadResolution() API.  By default ten bits are returned (0-1023 for 0-5v pin voltage).
+\sa analogReadResolution
 */
 inline int analogRead(int pin)
 {
-    ULONG value = 0;
-    ULONG bits = 0;
-    ULONG ioPin = 0;
-    ULONG chan = 0;
+    ULONG value;
+    ULONG bits;
+    ULONG ioPin;
+    ULONG chan;
 
     // Translate the pin number passed in to an I/O Pin number and a channel number.
     if ((pin >= 0) && (pin < NUM_ANALOG_PINS))
@@ -259,16 +265,43 @@ inline int analogRead(int pin)
         ThrowError("Pin: %d is not an analog input pin.", pin);
     }
 
-    if (!g_pins._verifyPinFunction(pin, FUNC_AIN, GalileoPinsClass::NO_LOCK_CHANGE))
+    if (!g_pins._verifyPinFunction(ioPin, FUNC_AIN, GalileoPinsClass::NO_LOCK_CHANGE))
     {
-        ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", pin, GetLastError());
+        ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, GetLastError());
     }
 
     if (!g_adc.readValue(chan, value, bits))
     {
         ThrowError("Error performing analogRead on pin: %d, Error: 0x%08x", pin, GetLastError());
     }
+
+    // Scale the digitized analog value to the currently set analog read resolution.
+    if (g_analogValueBits > bits)
+    {
+        value = value << (g_analogValueBits - bits);
+    }
+    else if (bits > g_analogValueBits)
+    {
+        value = value >> (bits - g_analogValueBits);
+    }
+
     return value;
+}
+
+/// Set the number of bits returned by an analogRead() call.
+/**
+\param[in] bits The number of bits returned from an analogRead() call.
+\note If more bits are specified than are natively produced by the ADC on the board
+the digitized analog values are padded with zeros.  If fewer bits are specified, analog
+values truncated to the desired length.
+*/
+inline void analogReadResolution(int bits)
+{
+    if ((bits < 1) || (bits > 32))
+    {
+        ThrowError("Attempt to set analog read resolution to %d bits.  Supported range: 1-32.");
+    }
+    g_analogValueBits = bits;
 }
 
 /// Configure a pin for input or output duty.
