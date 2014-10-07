@@ -288,6 +288,9 @@ inline int analogRead(int pin)
     return value;
 }
 
+/// Analog reference value.
+#define DEFAULT 0
+
 /// Set the number of bits returned by an analogRead() call.
 /**
 \param[in] bits The number of bits returned from an analogRead() call.
@@ -299,9 +302,24 @@ inline void analogReadResolution(int bits)
 {
     if ((bits < 1) || (bits > 32))
     {
-        ThrowError("Attempt to set analog read resolution to %d bits.  Supported range: 1-32.");
+        ThrowError("Attempt to set analog read resolution to %d bits.  Supported range: 1-32.", bits);
     }
     g_analogValueBits = bits;
+}
+
+/// Set the reference voltage used for analog inputs.
+/**
+The Galileo only supports an internal 5v reference.  Attempting to select any other
+reference than DEFAULT throws an error.
+\param[in] type The type of analong reference desired.
+\note DEFAULT - ok, INTERNAL, INTERNAL1V1, INTERNAL2V56 or EXTERNAL - error.
+*/
+inline void analogReference(int type)
+{
+    if (type != DEFAULT)
+    {
+        ThrowError("The only supported analog reference is DEFAULT.");
+    }
 }
 
 /// Configure a pin for input or output duty.
