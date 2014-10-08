@@ -15,7 +15,7 @@
     <copyright>Copyright 2014</copyright>
     <tags>galileo arduino microsoft native nativepackage</tags>
     <dependencies>
-        <dependency id="Microsoft.IoT.Arduino.SDK" version="(,1.0.0]"/>
+        <dependency id="Microsoft.IoT.SDKFromArduino" version="(,1.0.0]"/>
     </dependencies>
   </metadata>
 </package>
