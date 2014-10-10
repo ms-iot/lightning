@@ -125,13 +125,13 @@ mux number and specifies which port bit of which I/O Expander drives the mux sel
 */
 const GalileoPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[MAX_MUXES] =
 {
-    { PWM,  LED1 },     ///< MUX0
+    { PWM,  LED0 },     ///< MUX0
     { PWM,  LED2 },     ///< MUX1
-    { PWM,  LED5 },     ///< MUX2
-    { PWM,  LED7 },     ///< MUX3
-    { PWM,  LED9 },     ///< MUX4
+    { PWM,  LED4 },     ///< MUX2
+    { PWM,  LED6 },     ///< MUX3
+    { PWM,  LED8 },     ///< MUX4
     { EXP1, P1_4 },     ///< MUX5
-    { PWM,  LED11 },    ///< MUX6
+    { PWM,  LED10 },    ///< MUX6
     { EXP1, P1_5 },     ///< MUX7
     { EXP1, P1_6 },     ///< MUX8
     { PWM,  LED12 },    ///< MUX9
@@ -140,6 +140,35 @@ const GalileoPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[MAX_MUXES] =
     { PWM,  LED14 },    ///< AMUX2_1
     { PWM,  LED15 },    ///< AMUX2_2
     { NO_X, 0 }         ///< Not used on Gen2
+};
+
+/// The global table of PWM information for the Galileo Gen2 board.
+/**
+This table contains the information needed to drive the PWM channels.  It is indexed by the
+Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM for that pin.
+*/
+const GalileoPinsClass::PWM_CHANNEL g_Gen2PwmChannels[] =
+{
+    { NO_X, 0 },        ///< D0
+    { NO_X, 0 },        ///< D1
+    { NO_X, 0 },        ///< D2
+    { PWM, LED1 },      ///< D3
+    { NO_X, 0 },         ///< D4
+    { PWM, LED3 },      ///< D5
+    { PWM, LED5 },      ///< D6
+    { NO_X, 0 },        ///< D7
+    { NO_X, 0 },        ///< D8
+    { PWM, LED7 },      ///< D9
+    { PWM, LED11 },     ///< D10
+    { PWM, LED9 },      ///< D11
+    { NO_X, 0 },        ///< D12
+    { NO_X, 0 },        ///< D13
+    { NO_X, 0 },        ///< A0
+    { NO_X, 0 },        ///< A1
+    { NO_X, 0 },        ///< A2
+    { NO_X, 0 },        ///< A3
+    { NO_X, 0 },        ///< A4
+    { NO_X, 0 }         ///< A5
 };
 
 /// The global table of I/O Expander attributes for the Galileo Gen2 board.
@@ -226,6 +255,35 @@ const GalileoPinsClass::EXP_ATTRIBUTES g_Gen1ExpAttributes[] =
     { PCA9685, 0x47 }     ///< PWM
 };
 
+/// The global table of PWM information for the Galileo Gen1 board.
+/**
+This table contains the information needed to drive the PWM channels.  It is indexed by the
+Galileo GPIO pin number, and specifies the chip and PWM channel used for that pin.
+*/
+const GalileoPinsClass::PWM_CHANNEL g_Gen1PwmChannels[] =
+{
+    { NO_X, 0 },        ///< D0
+    { NO_X, 0 },        ///< D1
+    { NO_X, 0 },        ///< D2
+    { CY8, 3 },         ///< D3
+    { NO_X, 0 },        ///< D4
+    { CY8, 5 },         ///< D5
+    { CY8, 6 },         ///< D6
+    { CY8, 0 },         ///< D7
+    { CY8, 2 },         ///< D8
+    { CY8, 1 },         ///< D9
+    { CY8, 7 },         ///< D10
+    { CY8, 4 },         ///< D11
+    { NO_X, 0 },        ///< D12
+    { NO_X, 0 },        ///< D13
+    { NO_X, 0 },        ///< A0
+    { NO_X, 0 },        ///< A1
+    { NO_X, 0 },        ///< A2
+    { NO_X, 0 },        ///< A3
+    { NO_X, 0 },        ///< A4
+    { NO_X, 0 }         ///< A5
+};
+
 
 /// The global table of Pin Function tracking structures.
 /**
@@ -264,7 +322,8 @@ GalileoPinsClass::GalileoPinsClass()
     m_PinAttributes(g_Gen2PinAttributes),
     m_MuxAttributes(g_Gen2MuxAttributes),
     m_ExpAttributes(g_Gen2ExpAttributes),
-    m_PinFunctions(g_GenxPinFunctions)
+    m_PinFunctions(g_GenxPinFunctions),
+    m_PwmChannels(g_Gen2PwmChannels)
 {
 }
 
@@ -459,6 +518,13 @@ BOOL GalileoPinsClass::_setPinPwm(ULONG pin)
     {
         // Set the MUX to the desired state for PWM.
         status = _setMux(m_PinAttributes[pin].muxB, m_PinAttributes[pin].pwmMuxB);
+        if (!status) { error = GetLastError(); }
+    }
+
+    // Set the pin as an output.
+    if (status)
+    {
+        status = _setPinMode(pin, DIRECTION_OUT, FALSE);
         if (!status) { error = GetLastError(); }
     }
 
@@ -1014,6 +1080,37 @@ BOOL GalileoPinsClass::_getPinState(ULONG pin, ULONG & state)
     return status;
 }
 
+/**
+This method expects the call to have verified the pin number is in range, supports
+PWM functions, and is in PWM mode.
+\param[in] pin The number of the GPIO pin in question.
+\param[in] dutyCycle The desired duty-cycle of the positive pulses (0-0xFFFFFFFF for 0-100%).
+*/
+BOOL GalileoPinsClass::_setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
+{
+
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    ULONG expNo = m_PwmChannels[pin].expander;
+    ULONG channel = m_PwmChannels[pin].channel;
+    ULONG expType = m_ExpAttributes[expNo].Exp_Type;
+    ULONG i2cAdr = m_ExpAttributes[expNo].I2c_Address;
+
+    // Dispatch to the correct code based on the PWM chip type:
+    switch (expType)
+    {
+    case PCA9685:
+        status = PCA9685Device::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
+        if (!status) { error = GetLastError(); }
+        break;
+    default:
+        status = FALSE;
+        error = ERROR_NOT_SUPPORTED;
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
 
 
 

@@ -76,6 +76,15 @@ public:
         BOOLEAN locked;         ///< True locks the pin to current function, false allows change
     } PIN_FUNCTION, *PPIN_FUNCTION;
 
+    /// Struct used to store PWM Channel information.
+    /**
+    This struct stores PWM Channel attributes for a GPIO pin.
+    */
+    typedef struct {
+        UCHAR expander;         ///< I/O Expander that drives PWM for this pin
+        UCHAR channel;          ///< PWM channel on the expander for PWM for this pin
+    } PWM_CHANNEL, *PPWM_CHANNEL;
+
     /// Enum of function lock actions.
     const enum FUNC_LOCK_ACTION {
         NO_LOCK_CHANGE,         ///< Don't take any lock action
@@ -95,6 +104,9 @@ public:
     /// Method to verify that a pin is configured for the desired function.
     BOOL _verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction);
 
+    /// Method to set the PWM duty cycle for a pin.
+    BOOL _setPwmDutyCycle(ULONG pin, ULONG dutyCycle);
+
 private:
 
     /// Method to configure an I/O Pin for one of the functions it suppports.
@@ -109,8 +121,11 @@ private:
     /// Pointer to the array of I/O Expander attributes.
     const EXP_ATTRIBUTES* m_ExpAttributes;
 
-    /// Pointer to array of pin fucntion tracking structures.
+    /// Pointer to array of pin function tracking structures.
     const PPIN_FUNCTION m_PinFunctions;
+
+    /// Pointer to array of PWM channels.
+    const PWM_CHANNEL* m_PwmChannels;
 
     /// Method to configure an I/O Pin for Digital I/O use.
     BOOL _setPinDigitalIo(ULONG pin);
