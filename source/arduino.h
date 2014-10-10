@@ -236,7 +236,7 @@ __declspec (selectany) ULONG g_analogValueBits = 10;
 
 /// Perform an analog to digital conversion on one of the analog inputs.
 /**
-\param[in] pin The analog pin to read (A0-A5).
+\param[in] pin The analog pin to read (A0-A5, or 0-5).
 \return Digitized analog value read from the pin.
 \note The number of bits of the digitized analog value can be set by calling the 
 analogReadResolution() API.  By default ten bits are returned (0-1023 for 0-5v pin voltage).
@@ -247,18 +247,15 @@ inline int analogRead(int pin)
     ULONG value;
     ULONG bits;
     ULONG ioPin;
-    ULONG chan;
 
-    // Translate the pin number passed in to an I/O Pin number and a channel number.
+    // Translate the pin number passed in to a Galileo GPIO Pin number.
     if ((pin >= 0) && (pin < NUM_ANALOG_PINS))
     {
         ioPin = A0 + pin;
-        chan = pin;
     }
     else if ((pin >= A0) && (pin <= A5))
     {
         ioPin = pin;
-        chan = pin - A0;
     }
     else
     {
@@ -270,7 +267,7 @@ inline int analogRead(int pin)
         ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, GetLastError());
     }
 
-    if (!g_adc.readValue(chan, value, bits))
+    if (!g_adc.readValue(ioPin, value, bits))
     {
         ThrowError("Error performing analogRead on pin: %d, Error: 0x%08x", pin, GetLastError());
     }
@@ -320,6 +317,55 @@ inline void analogReference(int type)
     {
         ThrowError("The only supported analog reference is DEFAULT.");
     }
+}
+
+/// The number of bits used to specify PWM duty cycles.
+__declspec (selectany) ULONG g_pwmResolutionBits = 8;
+
+/// Set the PWM duty cycle for a pin.
+/**
+\param[in] pin The number of the GPIO pin for the PWM output.
+\param[in] dutyCycle The high pulse time, range 0 to pwm_resolution_count - 1, (defaults 
+to a count of 255, for 8-bit PWM resolution.)
+\Note: This call throws an error if the pin number is outside the range supported
+on the board, or if a pin that does not support PWM is specified.
+*/
+inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
+{
+    ULONGLONG scaledDutyCycle;
+    _ValidateArduinoPinNumber(pin);
+
+    // Verify the pin is in PWM mode, and configure it for PWM use if not.
+    if (!g_pins._verifyPinFunction(pin, FUNC_PWM, GalileoPinsClass::NO_LOCK_CHANGE))
+    {
+        ThrowError("Error occurred verifying pin: %d function: PWM, Error: %08x", pin, GetLastError());
+    }
+
+    // Scale the duty cycle passed in using the current analog write resolution.
+    if ((g_pwmResolutionBits < 32) && (dutyCycle >= (1UL << g_pwmResolutionBits)))
+    {
+        ThrowError("Specified duty cycle: %d is greater than PWM resolution: %d bits.", dutyCycle, g_pwmResolutionBits);
+    }
+    scaledDutyCycle = (((ULONGLONG)dutyCycle * (1ULL << 32)) + (1ULL << (g_pwmResolutionBits - 1))) / (1ULL << g_pwmResolutionBits);
+
+    // Set the PWM duty cycle.
+    if (!g_pins._setPwmDutyCycle(pin, (ULONG) scaledDutyCycle))
+    {
+        ThrowError("Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", pin, dutyCycle, GetLastError());
+    }
+}
+
+/// Set the number of bits used to specify PWM duty cycles to analogWrite().
+/**
+\param[in] bits The number of bits to use for analogWrite() duty cycle values.
+*/
+inline void analogWriteResolution(int bits)
+{
+    if ((bits < 1) || (bits > 32))
+    {
+        ThrowError("Attempt to set analog write resolution to %d bits.  Supported range: 1-32.", bits);
+    }
+    g_pwmResolutionBits = bits;
 }
 
 /// Configure a pin for input or output duty.

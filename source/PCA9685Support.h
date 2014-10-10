@@ -17,7 +17,17 @@ public:
     /// Get the current state of a PWM chip output.
     static BOOL GetBitState(ULONG i2cAdr, ULONG bit, ULONG & state);
 
+    /// Set the PWM pulse width.
+    static BOOL SetPwmDutyCycle(ULONG i2cAdr, ULONG bit, ULONG pulseWidth);
+
+    /// Method to get the resolution of this PWM chip.
+    static ULONG GetResolution()
+    {
+        return PWM_BITS;
+    }
+
 private:
+    static const ULONG PWM_BITS;        ///< Number of bits of resolution this PWM chip has
     static const UCHAR MODE1_ADR;       ///< Address of MODE1 register
     static const UCHAR MODE2_ADR;       ///< Address of MODE2 register
     static const UCHAR SUBADR1_ADR;     ///< Address of SUBADR1 register
@@ -68,6 +78,9 @@ private:
 
     /// Set to TRUE when the chip is known to have been initialized.
     static BOOL m_chipIsInitialized;
+
+    /// The current PWM pulse rate pre-scale value for all channels.
+    static UCHAR m_freqPreScale;
 
     /// Method to take any necessary actions to initialize the PWM chip.
     static BOOL _InitializeChip(ULONG i2cAdr);
