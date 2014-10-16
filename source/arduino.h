@@ -39,9 +39,9 @@
 // Definition of Constants as defined on http://wiring.org.co/reference/index.html and http://arduino.cc/en/Reference/Constants
 //
 
-#define PI              3.1415926535897932384626433832795
-#define HALF_PI         1.5707963267948966192313216916398
-#define TWO_PI          6.283185307179586476925286766559
+#define PI              M_PI
+#define HALF_PI         M_PI/2
+#define TWO_PI          M_PI*2
 
 #define boolean bool
 typedef uint8_t byte;
