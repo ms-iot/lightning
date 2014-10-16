@@ -120,8 +120,8 @@ public:
 	// prints an unsigned char (1 byte)
 	size_t print(unsigned char c, int base = DEC)
 	{
-
-		return write(c);
+        UNREFERENCED_PARAMETER(base);
+        return write(c);
 	}
 
 	// prints a integer (4 bytes) based on its base

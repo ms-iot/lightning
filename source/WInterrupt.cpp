@@ -79,6 +79,7 @@ static HANDLE s_sharedInterruptTimer = INVALID_HANDLE_VALUE;
 //! test the condition and call the callback.
 static void CALLBACK InterruptTimerHandler(void* arg, DWORD, DWORD)
 {
+    UNREFERENCED_PARAMETER(arg);
     // During an interrupt handler, the caller can call detachInterrupt which modifies the list.
     // To handle this, we'll copy the list.
     std::vector<shared_ptr<InterruptTracker>> list;
