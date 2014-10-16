@@ -964,6 +964,8 @@ public:
     ///
     static VOID CALLBACK TimeProcStopTone(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
     {
+        UNREFERENCED_PARAMETER(dwTimerLowValue);
+        UNREFERENCED_PARAMETER(dwTimerHighValue);
         int pin = reinterpret_cast<int>(lpArg);
         noTone(pin);
     }

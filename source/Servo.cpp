@@ -158,7 +158,7 @@ void Servo::writeMicroseconds(int value)
     }
 
     double servoIndexDouble = (double) (alternateValue - _min) / (_max - _min) * 180;
-    _servoIndex = (int) servoIndexDouble;
+    _servoIndex = static_cast<uint8_t>(servoIndexDouble);
 }
 
 ///
