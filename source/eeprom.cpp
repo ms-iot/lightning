@@ -23,7 +23,7 @@ EEPROMClass::read (
 
     // Return response
     Wire.requestFrom(EEPROM_ADDR7, 1);
-    return Wire.read();
+    return static_cast<uint8_t>(Wire.read());
 }
 
 void

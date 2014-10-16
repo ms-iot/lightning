@@ -94,9 +94,9 @@
 #define WLED            (QRK_LEGACY_RESUME_SUS1)
 #define LED_BUILTIN     WLED
 
-#define PI              3.1415926535897932384626433832795
-#define HALF_PI         1.5707963267948966192313216916398
-#define TWO_PI          6.283185307179586476925286766559
+#define PI              M_PI
+#define HALF_PI         M_PI/2
+#define TWO_PI          M_PI*2
 
 #define boolean bool
 typedef uint8_t byte;
@@ -964,6 +964,8 @@ public:
     ///
     static VOID CALLBACK TimeProcStopTone(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
     {
+        UNREFERENCED_PARAMETER(dwTimerLowValue);
+        UNREFERENCED_PARAMETER(dwTimerHighValue);
         int pin = reinterpret_cast<int>(lpArg);
         noTone(pin);
     }
@@ -1481,8 +1483,8 @@ inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 // Turn passed in macro into a string
 #define STRINGIFY_MACRO(x) STRINGIFY(x)
 
-inline float radians(float deg) { return deg * 180 / PI; }
-inline float degrees(float rad) { return rad * PI / 180; }
+inline float radians(float deg) { return deg * 180.0f / static_cast<float>(PI); }
+inline float degrees(float rad) { return rad * static_cast<float>(PI) / 180.0f; }
 
 #include "Wire.h"
 #endif // _WINDOWS_ARDUINO_H_
