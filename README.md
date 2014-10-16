@@ -11,24 +11,14 @@ You'll want to redirect visual studio's *user templates* to the repository you a
 
 Under *Projects and Solutions*, select *General*,
 
-###For Visual Studio Pro and Ultimate
+###Nuget Package sources
 
 In order to install nuget packages from your local builds, you'll need to add both the galileo-sdk and arduino-sdk to the nuget package manager sources. Following the below instructions for each sdk source:
 
-*Tools -> Library Package Manager -> Package Manager Settings*
+For Visual Studio Express, nativate to *Tools -> Nuget Package Manager -> Package Manager Settings*
+For Other editions of Visual Studio, nativate to *Tools -> Library Package Manager -> Package Manager Settings*
 
 ![Package Config](images/Nuget_PackageSourceConfig_VSU2013.png)
-
-
-1. Click the "+" button to add a new source
-1. Set the name to something descriptive
-1. Click the "..." button and navigate to your local sources directory (.\source folder)
-1. Click the "Update" button to save the Package Sources changes
-
-###For Visual Studio Express
-*Tools -> Nuget Package Manager -> Package Manager Settings*
-
-![Package Config](images/Nuget_PackageSourceConfig_VSE2013.png)
 
 
 1. Click the "+" button to add a new source
