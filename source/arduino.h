@@ -632,8 +632,8 @@ inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 // Turn passed in macro into a string
 #define STRINGIFY_MACRO(x) STRINGIFY(x)
 
-inline float radians(float deg) { return deg * 180 / PI; }
-inline float degrees(float rad) { return rad * PI / 180; }
+inline float radians(float deg) { return deg * 180.0f / static_cast<float>(PI); }
+inline float degrees(float rad) { return rad * static_cast<float>(PI) / 180.0f; }
 
 #include "Wire.h"
 #endif // _WINDOWS_ARDUINO_H_
