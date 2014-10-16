@@ -52,43 +52,43 @@ public:
         }
 
         // Set SCK and MOSI as outputs dedicated to SPI, and pulled LOW.
-        if (!g_pins._verifyPinFunction(PIN_SCK, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
+        if (!g_pins.verifyPinFunction(PIN_SCK, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
         {
             ThrowError("An error occurred configuring pinSCK for SPI use: %08x", GetLastError());
         }
 
-        if (!g_pins._setPinState(PIN_SCK, LOW))
+        if (!g_pins.setPinState(PIN_SCK, LOW))
         {
             ThrowError("An error occurred setting pinSCK LOW: %08x", GetLastError());
         }
 
-        if (!g_pins._setPinMode(PIN_SCK, DIRECTION_OUT, FALSE))
+        if (!g_pins.setPinMode(PIN_SCK, DIRECTION_OUT, FALSE))
         {
             ThrowError("An error occurred setting pinSCK as output: %08x", GetLastError());
         }
 
-        if (!g_pins._verifyPinFunction(PIN_MOSI, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
+        if (!g_pins.verifyPinFunction(PIN_MOSI, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
         {
             ThrowError("An error occurred configuring pinMOSI for SPI use: %08x", GetLastError());
         }
 
-        if (!g_pins._setPinState(PIN_MOSI, LOW))
+        if (!g_pins.setPinState(PIN_MOSI, LOW))
         {
             ThrowError("An error occurred setting pinMOSI LOW: %08x", GetLastError());
         }
 
-        if (!g_pins._setPinMode(PIN_MOSI, DIRECTION_OUT, FALSE))
+        if (!g_pins.setPinMode(PIN_MOSI, DIRECTION_OUT, FALSE))
         {
             ThrowError("An error occurred setting pinMOSI as output: %08x", GetLastError());
         }
 
         // Set MISO as an input dedicated to SPI.
-        if (!g_pins._verifyPinFunction(PIN_MISO, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
+        if (!g_pins.verifyPinFunction(PIN_MISO, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
         {
             ThrowError("An error occurred configuring pinMISO for SPI use: %08x", GetLastError());
         }
 
-        if (!g_pins._setPinMode(PIN_MISO, DIRECTION_IN, FALSE))
+        if (!g_pins.setPinMode(PIN_MISO, DIRECTION_IN, FALSE))
         {
             ThrowError("An error occurred setting pinMISO as output: %08x", GetLastError());
         }
@@ -119,15 +119,15 @@ public:
             m_controller = nullptr;
 
             // Set all SPI pins as digitial I/O.
-            if (!g_pins._verifyPinFunction(PIN_SCK, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
+            if (!g_pins.verifyPinFunction(PIN_SCK, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
             {
                 ThrowError("An error occurred reverting pinSCK from SPI use: %08x", GetLastError());
             }
-            if (!g_pins._verifyPinFunction(PIN_MOSI, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
+            if (!g_pins.verifyPinFunction(PIN_MOSI, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
             {
                 ThrowError("An error occurred reverting pinMOSI from SPI use: %08x", GetLastError());
             }
-            if (!g_pins._verifyPinFunction(PIN_MISO, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
+            if (!g_pins.verifyPinFunction(PIN_MISO, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
             {
                 ThrowError("An error occurred reverting pinMISO from SPI use: %08x", GetLastError());
             }

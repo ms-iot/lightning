@@ -3,6 +3,7 @@
 // See License.txt in the project root for license information.
 
 #include "I2cController.h"
+#include "HiResTimer.h"
 
 //
 // I2cControllerClass methods.
@@ -17,12 +18,12 @@ BOOL I2cControllerClass::beginExternal()
 
 
     // Set the MUXes for external I2C use.
-    status = g_pins._verifyPinFunction(PIN_I2C_CLK, FUNC_I2C, GalileoPinsClass::LOCK_FUNCTION);
+    status = g_pins.verifyPinFunction(PIN_I2C_CLK, FUNC_I2C, GalileoPinsClass::LOCK_FUNCTION);
     if (!status) { status = GetLastError(); }
 
     if (status)
     {
-        status = g_pins._verifyPinFunction(PIN_I2C_DAT, FUNC_I2C, GalileoPinsClass::LOCK_FUNCTION);
+        status = g_pins.verifyPinFunction(PIN_I2C_DAT, FUNC_I2C, GalileoPinsClass::LOCK_FUNCTION);
         if (!status) { status = GetLastError(); }
     }
 
@@ -37,10 +38,10 @@ BOOL I2cControllerClass::beginExternal()
 void I2cControllerClass::endExternal()
 {
     // Set the pns used for I2C back to Digital inputs, on a best effort basis.
-    g_pins._verifyPinFunction(PIN_I2C_DAT, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION);
-    g_pins._setPinMode(PIN_I2C_DAT, DIRECTION_IN, false);
-    g_pins._verifyPinFunction(PIN_I2C_CLK, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION);
-    g_pins._setPinMode(PIN_I2C_CLK, DIRECTION_IN, false);
+    g_pins.verifyPinFunction(PIN_I2C_DAT, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION);
+    g_pins.setPinMode(PIN_I2C_DAT, DIRECTION_IN, false);
+    g_pins.verifyPinFunction(PIN_I2C_CLK, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION);
+    g_pins.setPinMode(PIN_I2C_CLK, DIRECTION_IN, false);
 }
 
 // This method maps the I2C controller if needed.
@@ -143,6 +144,8 @@ void I2cTransactionClass::reset()
     m_readsOutstanding = 0;
     m_maxWaitTicks = 0;
     m_abort = FALSE;
+    m_error = SUCCESS;
+    m_isIncomplete = FALSE;
 }
 
 // Sets the 7-bit address of the slave for this tranaction.
@@ -214,6 +217,9 @@ BOOL I2cTransactionClass::queueWrite(PUCHAR buffer, ULONG bufferBytes, BOOL preR
 
         // Queue the transfer as part of this transaction.
         _queueTransfer(pXfr);
+
+        // Indicate this transaction has at least one incomplete transfer.
+        m_isIncomplete = TRUE;
     }
 
     if (!status) { SetLastError(error); }
@@ -261,6 +267,9 @@ BOOL I2cTransactionClass::queueRead(PUCHAR buffer, ULONG bufferBytes, BOOL preRe
 
         // Queue the transfer as part of this transaction.
         _queueTransfer(pXfr);
+
+        // Indicate this transaction has at least one incomplete transfer.
+        m_isIncomplete = TRUE;
     }
 
     if (!status) { SetLastError(error); }
@@ -303,6 +312,9 @@ BOOL I2cTransactionClass::queueCallback(std::function<BOOL()> callBack)
     {
         // Queue the transfer as part of this transaction.
         _queueTransfer(pXfr);
+
+        // Indicate this transaction has at least one incomplete "transfer."
+        m_isIncomplete = TRUE;
     }
 
     if (!status) { SetLastError(error); }
@@ -359,9 +371,13 @@ BOOL I2cTransactionClass::execute()
     {
         status = _processTransfers();
         if (!status) { error = GetLastError(); }
+    }
 
+    if (status)
+    {
         // Shut down the controller.
-        _shutDownI2cAfterTransaction();
+        status = _shutDownI2cAfterTransaction();
+        if (!status) { error = GetLastError(); }
     }
 
     // Release this transaction's claim on the controller.
@@ -412,11 +428,11 @@ BOOL I2cTransactionClass::_initializeI2cForTransaction()
         // Make sure the I2C controller is disabled.
         g_i2c.disableController();
 
-        // Wait for the controller to go inactive, but only for 100 mS.
-        // It can latch in a mode in which it does not go inactive, but appears 
+        // Wait for the controller to go disabled, but only for 100 mS.
+        // It can latch in a mode in which it does not go disabled, but appears 
         // to come out of this state when used again.
         waitStartTicks = GetTickCount64();
-        while (g_i2c.isActive() && ((GetTickCount64() - waitStartTicks) < 100))
+        while (g_i2c.isEnabled() && ((GetTickCount64() - waitStartTicks) < 100))
         {
             Sleep(0);       // Give the CPU to any thread that is waiting
         }
@@ -442,6 +458,9 @@ BOOL I2cTransactionClass::_initializeI2cForTransaction()
 
         // Enable the controller.
         g_i2c.enableController();
+
+        // Indicate the I2C Controller is now initialized.
+        g_i2c.setInitialized();
     }
 
     if (!status) { SetLastError(error); }
@@ -455,6 +474,10 @@ BOOL I2cTransactionClass::_processTransfers()
     BOOL error = ERROR_SUCCESS;
     I2cTransferClass* pXfr = nullptr;
 
+    // Clear out any data from a previous use of this transaction.
+    m_maxWaitTicks = 0;
+    m_abort = FALSE;
+    m_error = SUCCESS;
 
     // For each sequence of transfers in the queue, or until transaction is aborted:
     pXfr = m_pFirstXfr;
@@ -477,6 +500,9 @@ BOOL I2cTransactionClass::_processTransfers()
             }
         }
     }
+
+    // Signal that this transaction has been processed.
+    m_isIncomplete = FALSE;
 
     if (!status) { SetLastError(error); }
     return status;
@@ -522,7 +548,7 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
 
     // For each transfer in this section of the transaction:
     cmdXfr = pXfr;
-    while ((m_cmdsOutstanding > 0) && (cmdXfr != nullptr))
+    while (status && (m_cmdsOutstanding > 0) && (cmdXfr != nullptr))
     {
         // If this is the first read transfer in this sequence of transfers:
         if ((readXfr == nullptr) && cmdXfr->transferIsRead())
@@ -543,7 +569,7 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
         }
 
         // For each byte in the transfer:
-        while (cmdXfr->getNextCmd(writeByte))
+        while (status && (cmdXfr->getNextCmd(writeByte)))
         {
             // Wait for at least one empty space in the TX FIFO.
             while (g_i2c.txFifoFull());
@@ -571,12 +597,16 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
             {
                 cmdDat = cmdDat | (1 << 9);
             }
+            
 
             g_i2c.issueCmd(cmdDat);
             m_cmdsOutstanding--;
 
+            status = _handleErrors();
+            if (!status) { error = GetLastError(); }
+
             // Pull any available bytes out of the receive FIFO.
-            while (g_i2c.rxFifoNotEmtpy())
+            while (status && g_i2c.rxFifoNotEmtpy())
             {
                 // Read a byte from the I2C Controller.
                 readByte = g_i2c.readByte();
@@ -596,16 +626,23 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
                         readPtr = readXfr->getNextReadLocation();
                     }
                 }
+                else
+                {
+                    g_pins.setPinState(0, 1);
+                    g_pins.setPinState(0, 0);
+                }
             }
         }
-        cmdXfr = cmdXfr->getNextTransfer();
-        //cmdXfr = nextXfr;
+        if (status)
+        {
+            cmdXfr = cmdXfr->getNextTransfer();
+        }
     }
 
-    // Complete any outstanding reads.
+    // Complete any outstanding reads and wait for the TX FIFO to empty.
     startWaitTicks = GetTickCount64();
     currentTicks = startWaitTicks;
-    while (status && (m_readsOutstanding > 0))
+    while (status && ((m_readsOutstanding > 0) || !g_i2c.txFifoEmpty()) && !g_i2c.errorOccured())
     {
         // Pull any available bytes out of the receive FIFO.
         while (g_i2c.rxFifoNotEmtpy())
@@ -629,18 +666,24 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
                 }
             }
         }
-        
 
-        // Wait up to to one second for all reads to come in.
+        // Wait up to to 100 milliseconds for transfers to happen.
         if (m_readsOutstanding > 0)
         {
             currentTicks = GetTickCount64();
-            if ((currentTicks - startWaitTicks) > 1000)
+            if ((currentTicks - startWaitTicks) > 100)
             {
                 status = FALSE;
                 error = ERROR_RECEIVE_PARTIAL;
             }
         }
+    }
+
+    // Determine if an error occured on this transaction.
+    if (status)
+    {
+        status = _handleErrors();
+        error = GetLastError();
     }
 
     // Pass the next transfer pointer back to the caller.
@@ -654,7 +697,7 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
 
     if (status)
     {
-        // Check for errors.
+        // Check for some catch-all errors.
         if (m_cmdsOutstanding > 0)
         {
             status = FALSE;
@@ -681,16 +724,20 @@ BOOL I2cTransactionClass::_shutDownI2cAfterTransaction()
 {
     BOOL status = TRUE;
     BOOL error = ERROR_SUCCESS;
-    ULONG loopCount = 0;
+    HiResTimerClass timeOut;
 
 
-    // Wait for the TX FIFO to go empty.
-    while (!g_i2c.txFifoEmpty())
+    // Wait up to two milliseconds for the I2C Controller to go.  It takes less than two
+    // milliseconds to transfer a full TX FIFO at "Standard" I2C bus speed (100 kbps).
+    timeOut.StartTimeout(2000);
+    while (g_i2c.isActive() && !timeOut.TimeIsUp());
+
+    // Handle a bus error if we got one.
+    if (m_error == SUCCESS)
     {
-        // Voluntarily give up the CPU if another thread is waiting.
-        Sleep(0);
+        status = _handleErrors();
+        if (!status) { error = GetLastError(); }
     }
-
     if (!status) { SetLastError(error); }
     return status;
 }
@@ -724,5 +771,43 @@ BOOL I2cTransactionClass::_calculateCurrentCounts(I2cTransferClass* nextXfr)
     }
 
     if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+Determine whether an error occured, and if so (and it is the first error on this
+transaction) record the error information.
+\return TRUE no error occured. FALSE error occured, GetLastError() provides error code.
+*/
+BOOL I2cTransactionClass::_handleErrors()
+{
+    BOOL status = TRUE;
+
+    // If an error occurred during this transaction:
+    if (g_i2c.errorOccured())
+    {
+        // If error information has not yet been captured for this transaction:
+        if (m_error == SUCCESS)
+        {
+            // Record the type of error that occured.
+            if (g_i2c.addressWasNacked())
+            {
+                m_error = ADR_NACK;
+            }
+            else if (g_i2c.dataWasNacked())
+            {
+                m_error = DATA_NACK;
+            }
+            else
+            {
+                m_error = OTHER;
+            }
+        }
+        // Clear the error.
+        g_i2c.clearErrors();
+
+        status = FALSE;
+        SetLastError(ERROR_BUS_RESET);
+    }
     return status;
 }

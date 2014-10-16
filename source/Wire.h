@@ -32,15 +32,9 @@ public:
     };
 
     /// Constructor.
-    TwoWire() :
-        m_i2cTransaction(),
-        m_writeBuffs(),
-        m_writeBuff(),
-        m_readBuffs(),
-        m_readBuffIndex(0),
-        m_readByteIndex(0),
-        m_readBytesAvailable(0)
+    TwoWire()
     {
+        _cleanTransaction();
     }
 
     /// Destructor.
@@ -64,9 +58,7 @@ public:
     /// Method to end use of the I2C bus by the code using this library.
     void end()
     {
-        m_writeBuffs.clear();
-        m_readBuffs.clear();
-        m_writeBuff.clear();
+        _cleanTransaction();
 
         g_i2c.endExternal();
     }
@@ -115,7 +107,7 @@ public:
     TRUE, all queued transfers are performed and the bus is released with a STOP.  If 
     sendStop is false, the write transfer is queued and no other action is taken.
     \param[in] sendStop FALSE - just queue a write transfer, TRUE - also perform all queued transfers.
-    \return SUCCESS - Success, ADDR_NACK_RECV - Slave did not ACK a transfer operation.
+    \return SUCCESS - Success. ADDR_NACK_RECV, DATA_NACK_RECV, OTHER ERROR - Error.
     */
     ULONG endTransmission(BOOL sendStop)
     {
@@ -130,6 +122,7 @@ public:
         // Queue a write from the buffer.
         if (!m_i2cTransaction.queueWrite(m_writeBuffs.back().data(), m_writeBuffs.back().size()))
         {
+            _cleanTransaction();
             ThrowError("An error occurred queueing an I2C write of %d bytes.  Error: 0x%08X", m_writeBuffs.back().size(), GetLastError());
         }
 
@@ -138,15 +131,26 @@ public:
         {
             if (!m_i2cTransaction.execute())
             {
-                retVal = ADDR_NACK_RECV;
+                if (m_i2cTransaction.getError() == I2cTransactionClass::ERROR_CODE::ADR_NACK)
+                {
+                    retVal = ADDR_NACK_RECV;
+                }
+                else if (m_i2cTransaction.getError() == I2cTransactionClass::ERROR_CODE::DATA_NACK)
+                {
+                    retVal = DATA_NACK_RECV;
+                }
+                else
+                {
+                    retVal = OTHER_ERROR;
+                }
+                m_readBuffs.clear();
             }
 
             // Clean up all queued transfers now that they have been performed (or failed).
-            m_i2cTransaction.reset();
             m_writeBuffs.clear();
 
             // Get the current count of bytes available in the read buffer.  Any read buffers
-            // queued should be full of data (or zeros, if the transfer failed).
+            // queued should be full of data (or gone, if the transfer failed).
             _calculateReadBytesInBuffer();
         }
 
@@ -185,6 +189,7 @@ public:
     {
         if (quantity == 0)
         {
+            _cleanTransaction();
             ThrowError("Zero byte I2C reads are not allowed.");
         }
 
@@ -198,7 +203,8 @@ public:
         // Queue a read into the buffer.
         if (!m_i2cTransaction.queueRead(m_readBuffs.back().data(), quantity))
         {
-            ThrowError("An error occurred queueing an I2C read of %d bytes to address: 0x%02X.  Error: 0x%08X", quantity, address, GetLastError() );
+            _cleanTransaction();
+            ThrowError("An error occurred queueing an I2C read of %d bytes to address: 0x%02X.  Error: 0x%08X", quantity, address, GetLastError());
         }
 
         // Perform all queued transfers if a STOP was specified.
@@ -206,10 +212,11 @@ public:
         {
             if (!m_i2cTransaction.execute())
             {
+                _cleanTransaction();
                 ThrowError("Error encountered performing queued I2C transfers to address: 0x%02X, Error: 0x%08X", address, GetLastError());
             }
+
             // Clear out queued transfers now that we are done with them.
-            m_i2cTransaction.reset();
             m_writeBuffs.clear();
 
             // Get the current count of bytes available in the read buffer.
@@ -221,30 +228,25 @@ public:
 
     /// Set the address of the I2C slave we are talking to.
     /**
-    This method determines if the slave address is changing, and if so it
-    completes any previously queued transfers, cleans up the I2C transaction
-    object and then initializes it with the new address.
+    This method determines if the slave address is changing.  If the address 
+    is changing and the I2C transaction has not yet been processed, an error 
+    is thrown.
     \param[in] address The slave address to set.
-    \return None.
     */
     void _setSlaveAddress(ULONG address)
     {
         if (address != m_i2cTransaction.getAddress())
         {
-            if (m_i2cTransaction.getAddress() != 0)
+            if ((m_i2cTransaction.getAddress() != 0) && m_i2cTransaction.isIncomplete())
             {
-                if (!m_i2cTransaction.execute())
-                {
-                    ThrowError("Error encountered performing previously queued I2C transfers: 0x%08X", GetLastError());
-                }
-
-                // Get the current count of bytes available in the read buffer.
-                _calculateReadBytesInBuffer();
+                _cleanTransaction();
+                ThrowError("Previous I2C operation to address: 0x%02X must be completed before starting new operation to address: 0x%02X", m_i2cTransaction.getAddress(), address);
             }
             m_i2cTransaction.reset();
             m_writeBuffs.clear();
             if (!m_i2cTransaction.setAddress(address))
             {
+                _cleanTransaction();
                 ThrowError("Error encountered setting I2C address: 0x%02X, Error: 0x%08X", address, GetLastError());
             }
         }
@@ -381,6 +383,18 @@ private:
         {
             m_readBytesAvailable += i->size();
         }
+    }
+
+    /// Method to clean up any existing transaction.
+    void _cleanTransaction()
+    {
+        m_i2cTransaction.reset();
+        m_writeBuff.clear();
+        m_writeBuff.clear();
+        m_readBuffs.clear();
+        m_readBuffIndex = 0;
+        m_readByteIndex = 0;
+        m_readBytesAvailable = 0;
     }
 };
 

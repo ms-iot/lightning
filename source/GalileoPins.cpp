@@ -4,6 +4,7 @@
 
 #include <Windows.h>
 #include "GalileoPins.h"
+#include "I2cController.h"
 
 // GPIO type values.
 const UCHAR GPIO_FABRIC = 1;    ///< GPIO is from the SOC Fabric sub-system (memory mapped)
@@ -29,7 +30,7 @@ const UCHAR NO_X       = 15;    ///< Value specifies that no I/O Expander is use
 // I/O Expander types.
 const UCHAR PCAL9535A = 0;      ///< I/O Expander chip used on Gen2
 const UCHAR PCA9685 = 1;        ///< PWM chip used on Gen2
-const UCHAR CY8c9540A = 2;      ///< I/O Expander/PWM chip used on Gen1
+const UCHAR CY8C9540A = 2;      ///< I/O Expander/PWM chip used on Gen1
 const UCHAR NUM_EXP_TYPSES = 2; ///< The number of I/O Expanders types present
 
 // PWM chip bit values.
@@ -171,20 +172,26 @@ const GalileoPinsClass::PWM_CHANNEL g_Gen2PwmChannels[] =
     { NO_X, 0 }         ///< A5
 };
 
-/// The global table of I/O Expander attributes for the Galileo Gen2 board.
+/// The global table of I/O Expander attributes for the Galileo board.
 /**
 This table contains the information needed to communicate with each I/O Expander chip.
 It is indexed by Expander number and contains the type of chip used for that I/O Expander
 and the address on the I2C bus the chip responds to.
 */
-// TODO: The Gen1/Gen2 expanders should be broken into seperate namspaces or (probably best) combined into one table.
-const GalileoPinsClass::EXP_ATTRIBUTES g_Gen2ExpAttributes[] =
+const GalileoPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
 {
-    { PCAL9535A, 0x25 },    ///< EXP0
-    { PCAL9535A, 0x26 },    ///< EXP1
-    { PCAL9535A, 0x27 },    ///< EXP2
-    { PCA9685,   0x47 }     ///< PWM
+    { PCAL9535A, 0x25 },    ///< EXP0 - Gen2
+    { PCAL9535A, 0x26 },    ///< EXP1 - Gen2
+    { PCAL9535A, 0x27 },    ///< EXP2 - Gen2
+    { PCA9685,   0x47 },    ///< PWM - Gen2
+    { CY8C9540A, 0x20 }     ///< CY8 - Gen1
 };
+
+/// The Gen2 I/O expander signature.
+const ULONG g_gen2ExpSig = 0x0F;
+
+/// The Gen1 I/O expander signature.
+const ULONG g_gen1ExpSig = 0x10;
 
 /// The global table of pin attributes for the Galileo Gen1 board.
 /**
@@ -252,7 +259,8 @@ const GalileoPinsClass::EXP_ATTRIBUTES g_Gen1ExpAttributes[] =
     { PCAL9535A, 0x25 },    ///< EXP0
     { PCAL9535A, 0x26 },    ///< EXP1
     { PCAL9535A, 0x27 },    ///< EXP2
-    { PCA9685, 0x47 }     ///< PWM
+    { PCA9685,   0x47 },    ///< PWM
+    { CY8C9540A, 0x20 }     ///< CY8
 };
 
 /// The global table of PWM information for the Galileo Gen1 board.
@@ -319,22 +327,13 @@ Initialize the data members that point to the global attributes tables.
 */
 GalileoPinsClass::GalileoPinsClass()
     :
-    m_PinAttributes(g_Gen2PinAttributes),
-    m_MuxAttributes(g_Gen2MuxAttributes),
-    m_ExpAttributes(g_Gen2ExpAttributes),
+    m_boardGeneration(0),
+    m_PinAttributes(NULL),
+    m_MuxAttributes(NULL),
+    m_ExpAttributes(g_GenxExpAttributes),
     m_PinFunctions(g_GenxPinFunctions),
-    m_PwmChannels(g_Gen2PwmChannels)
+    m_PwmChannels(NULL)
 {
-}
-
-/**
-Method to determine if a pin number is in the legal range or not.
-\param[in] pin the pin number to check for range
-\return TRUE if pin number is in range, FALSE otherwise
-*/
-BOOL GalileoPinsClass::_pinNumberIsValid(ULONG pin)
-{
-    return (pin < NUM_ARDUINO_PINS);
 }
 
 /**
@@ -347,7 +346,7 @@ and to set it to that function if possible.
 \sa FUNC_DIO \sa FUNC_PWM \sa FUNC_AIN \sa FUNC_I2C \sa FUNC_SPI \sa FUNC_SER
 \sa NO_LOCK_CHANGE \sa LOCK_FUNCTION \sa UNLOCK_FUNCTION
 */
-BOOL GalileoPinsClass::_verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction)
+BOOL GalileoPinsClass::verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -405,6 +404,13 @@ BOOL GalileoPinsClass::_setPinFunction(ULONG pin, ULONG function)
     // Verify the pin number is in range.
     status = _pinNumberIsValid(pin);
     if (!status) { error = ERROR_INVALID_PARAMETER; }
+
+    if (status)
+    {
+        // Make sure the pin attributes table is set up for the board generation.
+        status = _verifyBoardGeneration();
+        if (!status) { error = GetLastError(); }
+    }
 
     // Verify the requsted function is supported on this pin.
     if (status && ((m_PinAttributes[pin].funcMask & function) == 0))
@@ -524,7 +530,7 @@ BOOL GalileoPinsClass::_setPinPwm(ULONG pin)
     // Set the pin as an output.
     if (status)
     {
-        status = _setPinMode(pin, DIRECTION_OUT, FALSE);
+        status = setPinMode(pin, DIRECTION_OUT, FALSE);
         if (!status) { error = GetLastError(); }
     }
 
@@ -567,7 +573,7 @@ BOOL GalileoPinsClass::_setPinAnalogInput(ULONG pin)
     // Make sure the digital I/O functions on this pin are set to INPUT without pull-up.
     if (status)
     {
-        status = _setPinMode(pin, DIRECTION_IN, FALSE);
+        status = setPinMode(pin, DIRECTION_IN, FALSE);
         if (!status) { error = GetLastError(); }
     }
 
@@ -693,7 +699,7 @@ This method sets the mode and drive type of a pin (Input, Output, etc.)
 \param[in] pullup True to enable pin pullup resistor, false to disable pullup
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setPinMode(ULONG pin, ULONG mode, BOOL pullup)
+BOOL GalileoPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -704,10 +710,17 @@ BOOL GalileoPinsClass::_setPinMode(ULONG pin, ULONG mode, BOOL pullup)
         status = FALSE;
         error = ERROR_INVALID_ADDRESS;
     }
-    else if ((mode != DIRECTION_IN) && (mode != DIRECTION_OUT))
+   
+    if (status && (mode != DIRECTION_IN) && (mode != DIRECTION_OUT))
     {
         status = FALSE;
         error = ERROR_NOT_SUPPORTED;
+    }
+
+    if (status)
+    {
+        status = _verifyBoardGeneration();
+        if (!status) { error = GetLastError(); }
     }
 
     if (status)
@@ -875,6 +888,12 @@ BOOL GalileoPinsClass::_configurePinDrivers(ULONG pin, ULONG mode)
 
     if (status)
     {
+        status = _verifyBoardGeneration();
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
         // Determine which I/O Expander controls the GPIO-pin drivers.
         expNo = m_PinAttributes[pin].triStExp;
         // If there is an I/O Expander that controls the this pin drivers.
@@ -915,25 +934,33 @@ BOOL GalileoPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
     ULONG bitNo = 0;                // Bit number on I/O Expander
     ULONG state = 0;                // Desired pin state
 
-    // Determine which I/O Expander pin controls the GPIO-pin drivers.
-    expNo = m_PinAttributes[pin].pullupExp;
-    bitNo = m_PinAttributes[pin].pullupBit;
-
-
-    // If the pullup is wanted:
-    if (pullup)
+    if (status)
     {
-        // Set the I/O Expander bit high (also sets it as an output)
-        status = _setExpBitToState(expNo, bitNo, 1);
-        if (!status)  { error = GetLastError(); }
+        status = _verifyBoardGeneration();
+        if (!status) { error = GetLastError(); }
     }
 
-    // If no pullup is wanted:
-    else
+    if (status)
     {
-        // Make the I/O Expander bit an input.
-        status = _setExpBitDirection(expNo, bitNo, DIRECTION_IN);
-        if (!status)  { error = GetLastError(); }
+        // Determine which I/O Expander pin controls the GPIO-pin drivers.
+        expNo = m_PinAttributes[pin].pullupExp;
+        bitNo = m_PinAttributes[pin].pullupBit;
+
+        // If the pullup is wanted:
+        if (pullup)
+        {
+            // Set the I/O Expander bit high (also sets it as an output)
+            status = _setExpBitToState(expNo, bitNo, 1);
+            if (!status)  { error = GetLastError(); }
+        }
+
+        // If no pullup is wanted:
+        else
+        {
+            // Make the I/O Expander bit an input.
+            status = _setExpBitDirection(expNo, bitNo, DIRECTION_IN);
+            if (!status)  { error = GetLastError(); }
+        }
     }
 
     if (!status) { SetLastError(error); }
@@ -985,7 +1012,7 @@ Method to set a GPIO pin to a specified state.
 \param[in] state The desired state (HIGH or LOW).
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setPinState(ULONG pin, ULONG state)
+BOOL GalileoPinsClass::setPinState(ULONG pin, ULONG state)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -996,10 +1023,16 @@ BOOL GalileoPinsClass::_setPinState(ULONG pin, ULONG state)
         error = ERROR_INVALID_ADDRESS;
     }
 
-    if (state > 1)
+    if (status && (state > 1))
     {
         status = FALSE;
         error = ERROR_INVALID_STATE;
+    }
+
+    if (status)
+    {
+        status = _verifyBoardGeneration();
+        if (!status) { error = GetLastError(); }
     }
 
     if (status)
@@ -1032,13 +1065,14 @@ BOOL GalileoPinsClass::_setPinState(ULONG pin, ULONG state)
     if (!status) { SetLastError(error); }
     return status;
 }
+
 /**
 Method to read a GPIO input pin.
 \param[in] pin The number of the pin in question.
 \param[out] state The variable to pass back the pin state (HIGH or LOW).
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_getPinState(ULONG pin, ULONG & state)
+BOOL GalileoPinsClass::getPinState(ULONG pin, ULONG & state)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1047,6 +1081,12 @@ BOOL GalileoPinsClass::_getPinState(ULONG pin, ULONG & state)
     {
         status = FALSE;
         error = ERROR_INVALID_ADDRESS;
+    }
+
+    if (status)
+    {
+        status = _verifyBoardGeneration();
+        if (!status) { error = GetLastError(); }
     }
 
     if (status)
@@ -1085,16 +1125,29 @@ This method expects the call to have verified the pin number is in range, suppor
 PWM functions, and is in PWM mode.
 \param[in] pin The number of the GPIO pin in question.
 \param[in] dutyCycle The desired duty-cycle of the positive pulses (0-0xFFFFFFFF for 0-100%).
+\return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
+BOOL GalileoPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
 {
-
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
-    ULONG expNo = m_PwmChannels[pin].expander;
-    ULONG channel = m_PwmChannels[pin].channel;
-    ULONG expType = m_ExpAttributes[expNo].Exp_Type;
-    ULONG i2cAdr = m_ExpAttributes[expNo].I2c_Address;
+    ULONG expNo;
+    ULONG channel;
+    ULONG expType;
+    ULONG i2cAdr;
+
+    if (status)
+    {
+        status = _verifyBoardGeneration();
+        if (!status) { error = GetLastError(); }
+    }
+
+    // These statements depend on the board generation being set, so they must come
+    // after the _verifyBoardGeneration() call.
+    expNo = m_PwmChannels[pin].expander;
+    channel = m_PwmChannels[pin].channel;
+    expType = m_ExpAttributes[expNo].Exp_Type;
+    i2cAdr = m_ExpAttributes[expNo].I2c_Address;
 
     // Dispatch to the correct code based on the PWM chip type:
     switch (expType)
@@ -1112,6 +1165,111 @@ BOOL GalileoPinsClass::_setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
     return status;
 }
 
+/**
+Method to determine the generation of the board this code is running on, and
+to configure the code appropriately.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::_determineBoardGeneration()
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    ULONG expSig = 0;
+    int i;
+
+    // Try to access each of the known I/O Expander chips.
+    for (i = 0; i < NUM_IO_EXP; i++)
+    {
+        if (_testI2cAddress(g_GenxExpAttributes[i].I2c_Address))
+        {
+            expSig = expSig | (1 << i);
+        }
+    }
+
+    // Compare the signature of expanders found to the Gen1 and Gen2 signatures.
+    if ((expSig & (g_gen2ExpSig)) == g_gen2ExpSig)
+    {
+        status = setBoardGeneration(2);
+        if (!status) { error = GetLastError(); }
+    }
+    else if ((expSig & (g_gen1ExpSig)) == g_gen1ExpSig)
+    {
+        status = setBoardGeneration(1);
+        if (!status) { error = GetLastError(); }
+    }
+    else
+    {
+        m_boardGeneration = 0;
+        status = FALSE;
+        error = ERROR_INVALID_ENVIRONMENT;
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+Method to manually specify the board generation.  This can be used to avoid
+board generation auto-detection, which could cause problems if the user has
+connect I2C slaves at the addresses of the I/O expanders.
+\param[in] gen The generation of board to set (currently should be 1 or 2).
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::setBoardGeneration(ULONG gen)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+
+    if (gen == 2)
+    {
+        m_boardGeneration = 2;
+        m_PinAttributes = g_Gen2PinAttributes;
+        m_MuxAttributes = g_Gen2MuxAttributes;
+        m_PwmChannels = g_Gen2PwmChannels;
+    }
+    else if (gen == 1)
+    {
+        m_boardGeneration = 1;
+        m_PinAttributes = g_Gen1PinAttributes;
+        m_MuxAttributes = g_Gen1MuxAttributes;
+        m_PwmChannels = g_Gen1PwmChannels;
+    }
+    else
+    {
+        m_boardGeneration = 0;
+        status = FALSE;
+        error = ERROR_INVALID_ENVIRONMENT;
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+Attempt to access an I2C slave at a specified address to determine if the slave
+is present or not.
+\param[in] i2cAdr The I2C address to probe.
+*/
+BOOL GalileoPinsClass::_testI2cAddress(ULONG i2cAdr)
+{
+    BOOL status = TRUE;
+    I2cTransactionClass trans;
+    UCHAR buffer[1] = { 0 };
+
+    status = trans.setAddress(i2cAdr);
+
+    if (status)
+    {
+        status = trans.queueWrite(buffer, sizeof(buffer));
+    }
+
+    if (status)
+    {
+        status = trans.execute();
+    }
+
+    return status;
+}
 
 
 

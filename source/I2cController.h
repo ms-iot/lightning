@@ -84,7 +84,7 @@ public:
         m_controller->IC_ENABLE.ENABLE = 0;
     }
 
-    inline BOOL isActive() const
+    inline BOOL isEnabled() const
     {
         return (m_controller->IC_ENABLE_STATUS.IC_EN == 1);
     }
@@ -168,9 +168,58 @@ public:
         m_controller->IC_INTR_MASK.ALL_BITS = 0;
     }
 
+    inline BOOL isActive() const
+    {
+        return (m_controller->IC_STATUS.MST_ACTIVITY == 1);
+    }
+
     inline void clearAllInterrupts()
     {
         ULONG dummy = m_controller->IC_CLR_INTR.ALL_BITS;
+    }
+
+    /// Determine whether a TX Error has occurred or not.
+    /**
+    All I2C bus errors we are interested in are TX errors: failure to ACK an
+    an address or write data.
+    \return TRUE, an error occured.  FALSE, no error has occured.
+    */
+    inline BOOL errorOccured()
+    {
+        return (m_controller->IC_RAW_INTR_STAT.TX_ABRT == 1);
+    }
+
+    /// Determine if an I2C address was sent but not acknowledged by any slave.
+    /**
+    This method tests for the error that is expected to occur if an attempt
+    is made talk to an I2C slave that does not exist.
+    \return TRUE, an I2C address was not acknowdged.  FALSE, all addresses sent
+    have been acknowledged by at least one slave.
+    */
+    inline BOOL addressWasNacked()
+    {
+        return (m_controller->IC_TX_ABRT_SOURCE.ABRT_7B_ADDR_NOACK == 1);
+    }
+
+    /// Determine if I2C data was sent but not acknowledged by a slave.
+    /**
+    This method tests for the error that occurs if a slave has been found, 
+    but then fails to acknowledge a data byte sent by the master.
+    \return TRUE, I2C data was not acknowdged.  FALSE, all data sent has 
+    been acknowledged by a slave.
+    */
+    inline BOOL dataWasNacked()
+    {
+        return (m_controller->IC_TX_ABRT_SOURCE.ABRT_TXDATA_NOACK == 1);
+    }
+
+    /// Reset the controller after a bus error has occured.
+    /**
+    The actul error condition is cleard by reading the IC_CLR_TX_ABRT register.
+    */
+    inline void clearErrors()
+    {
+        ULONG dummy = m_controller->IC_CLR_TX_ABRT.ALL_BITS;
     }
 
 private:
@@ -681,7 +730,7 @@ public:
     // Return TRUE if this transfer specifies a callback function.
     inline BOOL hasCallback() const
     {
-        return m_callBack != nullptr;
+        return (!m_callBack._Empty() && (m_callBack != nullptr));
     }
 
 private:
@@ -740,6 +789,8 @@ public:
             m_hI2cLock = INVALID_HANDLE_VALUE;
         }
         m_abort = FALSE;
+        m_error = SUCCESS;
+        m_isIncomplete = FALSE;
     }
 
     virtual ~I2cTransactionClass()
@@ -805,6 +856,32 @@ public:
         m_abort = TRUE;
     }
 
+    /// Enum for transaction error codes;
+    const enum ERROR_CODE {
+        SUCCESS,                ///< No Error has occured
+        ADR_NACK,               ///< Slave address was not acknowledged
+        DATA_NACK,              ///< Slave did not acknowledge data
+        OTHER                   ///< Some other error occured
+    };
+
+    /// Get the current error code for this transaction.
+    inline ERROR_CODE getError()
+    {
+        return m_error;
+    }
+
+    /// Method to determine if an error occured during this transaction.
+    inline BOOL errorOccured()
+    {
+        return (m_error != SUCCESS);
+    }
+
+    /// Method to dermine if this transaction has been completed or not.
+    inline BOOL isIncomplete()
+    {
+        return m_isIncomplete;
+    }
+
 private:
 
     //
@@ -836,6 +913,12 @@ private:
     // Set to TRUE to abort the remainder of the transaction.
     BOOL m_abort;
 
+    /// Error code 
+    ERROR_CODE m_error;
+
+    /// TRUE if one or more incompleted transfers exist on this transaction.
+    BOOL m_isIncomplete;
+
     //
     // I2cTransactionClass private member functions.
     //
@@ -858,6 +941,9 @@ private:
     // Method to calculate the command and read counts for the current section
     // of the transaction.
     BOOL _calculateCurrentCounts(I2cTransferClass* nextXfr);
+
+    /// Method to handle any errors that occured during this transaction.
+    BOOL _handleErrors();
 };
 
 #endif // _I2C_CONTROLLER_H_
