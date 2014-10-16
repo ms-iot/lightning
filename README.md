@@ -27,12 +27,12 @@ For Other editions of Visual Studio, nativate to *Tools -> Library Package Manag
 1. Click the "Update" button to save the Package Sources changes
 
 ##Build the Nuget package
-Please download the Nuget command line utility [nuget.exe](http://nuget.org/nuget.exe) into the Galileo-SDK .\source folder.
+Please download the Nuget command line utility [nuget.exe](http://nuget.org/nuget.exe) into the Galileo-SDK and arduino-sdk .\source folders.
 Run the Nuget package builder from the .\source folder:
 
-{% highlight PowerShell %}
+~~~
 build-nupkg.cmd
-{% endhighlight %}
+~~~
 
 ##Building the Project
 You can now goto *File -> New Project* then Select *Templates -> Visual C++ -> Galileo -> Galileo Wiring app*:
