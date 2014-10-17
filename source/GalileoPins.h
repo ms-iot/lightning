@@ -93,24 +93,24 @@ public:
     };
 
     /// Method to set an I/O pin to a state (HIGH or LOW).
-    BOOL _setPinState(ULONG pin, ULONG state);
+    BOOL setPinState(ULONG pin, ULONG state);
 
     /// Method to read the state of an I/O pin.
-    BOOL _getPinState(ULONG pin, ULONG & state);
+    BOOL getPinState(ULONG pin, ULONG & state);
 
     /// Method to set the direction of a pin (DIRECTION_IN or DIRECTION_OUT).
-    BOOL _setPinMode(ULONG pin, ULONG mode, BOOL pullUp);
+    BOOL setPinMode(ULONG pin, ULONG mode, BOOL pullUp);
 
     /// Method to verify that a pin is configured for the desired function.
-    BOOL _verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction);
+    BOOL verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction);
 
     /// Method to set the PWM duty cycle for a pin.
-    BOOL _setPwmDutyCycle(ULONG pin, ULONG dutyCycle);
+    BOOL setPwmDutyCycle(ULONG pin, ULONG dutyCycle);
+
+    /// Method to override auto-detection of board generation.
+    BOOL setBoardGeneration(ULONG gen);
 
 private:
-
-    /// Method to configure an I/O Pin for one of the functions it suppports.
-    BOOL _setPinFunction(ULONG pin, ULONG function);
 
     /// Pointer to the array of pin attributes.
     const PORT_ATTRIBUTES* m_PinAttributes;
@@ -126,6 +126,12 @@ private:
 
     /// Pointer to array of PWM channels.
     const PWM_CHANNEL* m_PwmChannels;
+
+    /// The generation of the board we are running on.
+    ULONG m_boardGeneration;
+
+    /// Method to configure an I/O Pin for one of the functions it suppports.
+    BOOL _setPinFunction(ULONG pin, ULONG function);
 
     /// Method to configure an I/O Pin for Digital I/O use.
     BOOL _setPinDigitalIo(ULONG pin);
@@ -162,9 +168,45 @@ private:
 
     /// Method to test whether a pin number is in the valid range or not.
     inline BOOL _pinNumberIsValid(ULONG pin);
+
+    /// Method to verify the board generation has been configured.
+    BOOL _verifyBoardGeneration();
+
+    /// Method to determine if we are running on a Gen1 or Gen2 board.
+    BOOL _determineBoardGeneration();
+
+    /// Test an I2C address to see if a slave is present on it.
+    BOOL _testI2cAddress(ULONG i2cAdr);
 };
 
 /// Global object used to configure and use the I/O pins.
 __declspec (selectany) GalileoPinsClass g_pins;
+
+/**
+Method to determine if a pin number is in the legal range or not.
+\param[in] pin the pin number to check for range
+\return TRUE if pin number is in range, FALSE otherwise
+*/
+inline BOOL GalileoPinsClass::_pinNumberIsValid(ULONG pin)
+{
+    return (pin < NUM_ARDUINO_PINS);
+}
+
+/**
+Determine if the board generation has been determined yet, and if not, determine the
+board generation and configure the code for that generation.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+inline BOOL GalileoPinsClass::_verifyBoardGeneration()
+{
+    if (m_boardGeneration != 0)
+    {
+        return TRUE;
+    }
+    else
+    {
+        return _determineBoardGeneration();
+    }
+}
 
 #endif // _GALILEO_PINS_H_
