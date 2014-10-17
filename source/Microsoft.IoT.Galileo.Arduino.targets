@@ -5,9 +5,11 @@
       <PreprocessorDefinitions>ARDUINO=100;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include\avr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include\avr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
   </ItemDefinitionGroup>
 
@@ -22,9 +24,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Servo.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\HardwareSerial.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\NetworkSerial.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Stream.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\WString.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PulseIn.cpp" />    
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\WInterrupt.cpp" />    
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\arduino.cpp" />    
   </ItemGroup>
 </Project>

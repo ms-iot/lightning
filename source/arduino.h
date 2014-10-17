@@ -10,6 +10,7 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+
 #include <windows.h>
 
 #ifdef USE_NETWORKSERIAL
@@ -17,7 +18,11 @@
 #include <WS2tcpip.h>
 #endif
 
+#include <algorithm>
 #include <cstdint>
+#include <map>
+#include <memory>
+#include <vector>
 
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
@@ -25,23 +30,18 @@
 #include <math.h>
 
 #include "ArduinoError.h"
-#include "WindowsRandom.h"
-#include "WindowsTime.h"
-#include "WString.h"
+#include "binary.h"
 #include "embprpusr.h"
 #include "galileo.h"
-#include "binary.h"
+#include "pins_arduino.h"
+#include "WindowsRandom.h"
+#include "WindowsTime.h"
 #include "wire.h"
-
-#include <memory>
-#include <map>
-#include <vector>
-#include <algorithm>
+#include "WString.h"
+#include "avr/macros.h"
 
 #define NUM_ARDUINO_PINS 20
 #define NUM_ANALOG_PINS 6
-
-#define GALILEO_A0      14
 
 #define NOT_MUXED       0x0
 #define DEFAULT_MUX     0x0
@@ -49,26 +49,19 @@
 
 #define ARDUINO_CLOCK_SPEED 16000000UL    // 16 Mhz
 
-#define CY8_ADDRESS			0x20	// I2C address of CY8C9540A I/O Expander
-#define INPUT_PORTS_BASE	0x00	// Address of first input port register
-#define OUTPUT_PORTS_BASE	0x08	// Address of first output port register
-#define CY8_PORT_SELECT		0x18	// Address of Port Select register in I/O Expander
-#define CY8_PORT_CONFIG_BASE 0x19	// Address of first port configuration register in IOX
-#define CY8_PWM_SELECT		0x28	// Address of PWM Select register in I/O Expander
-#define CY8_PWM_CONFIG_BASE 0x29	// Address of first PWM configuration register in IOX
+#define CY8_ADDRESS          0x20   // I2C address of CY8C9540A I/O Expander
+#define INPUT_PORTS_BASE     0x00   // Address of first input port register
+#define OUTPUT_PORTS_BASE    0x08   // Address of first output port register
+#define CY8_PORT_SELECT      0x18   // Address of Port Select register in I/O Expander
+#define CY8_PORT_CONFIG_BASE 0x19   // Address of first port configuration register in IOX
+#define CY8_PWM_SELECT       0x28   // Address of PWM Select register in I/O Expander
+#define CY8_PWM_CONFIG_BASE  0x29   // Address of first PWM configuration register in IOX
 
 #define I2C_MUX GPORT1_BIT5			// Encoded port and bit for I2C MUX
 #define I2C_MUX_DISABLE 1			// MUX pin state to disable I2C through MUX
 #define IO18_A4_MUX GPORT0_BIT5		// Encoded port and bit for IO18/A4 MUX
 #define IO19_A5_MUX GPORT0_BIT4		// Encoded port and bit for IO19/A5 MUX
 #define IO_A_MUX_TO_IO 1			// IOnn/An MUX bit state for IO through MUX
-
-#define A0 14						// Analog pin 0 is digital "pin 14"
-#define A1 15						// Analog pin 1 is digital "pin 15"
-#define A2 16						// Analog pin 2 is digital "pin 16"
-#define A3 17						// Analog pin 3 is digital "pin 17"
-#define A4 18						// Analog pin 4 is digital "pin 18"
-#define A5 19						// Analog pin 5 is digital "pin 19"
 
 // Closest Galileo value to the 490hz used by most UNO PWMs, while still 
 // allowing full 8-bit PWM pulse width resolution, is 367 hz.
@@ -92,7 +85,6 @@
 #define RISING          0x03
 
 #define WLED            (QRK_LEGACY_RESUME_SUS1)
-#define LED_BUILTIN     WLED
 
 #define PI              M_PI
 #define HALF_PI         M_PI/2
@@ -244,7 +236,7 @@ inline unsigned long micros(void)
 //
 inline bool _IsAnalogPin(int num)
 {
-    return num >= GALILEO_A0;
+    return num >= A0;
 }
 
 // set up all the muxes
@@ -1472,6 +1464,10 @@ inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 #define bitSet(value, bit) ((value) |= (1UL << (bit)))
 #define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
 #define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
+
+// Interrupt enable/disable stubs
+#define cli()
+#define sei()
 
 #define bit(b) (1UL << (b))
 #define __attribute__(x)
