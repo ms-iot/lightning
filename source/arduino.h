@@ -87,8 +87,9 @@
 #define WLED            (QRK_LEGACY_RESUME_SUS1)
 
 #define PI              M_PI
-#define HALF_PI         M_PI/2
-#define TWO_PI          M_PI*2
+#define HALF_PI         M_PI_2
+#define TAU             (M_PI * 2.0f)
+#define TWO_PI          TAU
 
 #define boolean bool
 typedef uint8_t byte;
