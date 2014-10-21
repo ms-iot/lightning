@@ -438,7 +438,14 @@ BOOL I2cTransactionClass::_initializeI2cForTransaction()
         }
 
         // Set the desired I2C Clock speed.
-        g_i2c.setFastSpeed();
+        if (m_useHighSpeed)
+        {
+            g_i2c.setFastSpeed();
+        }
+        else
+        {
+            g_i2c.setStandardSpeed();
+        }
 
         // Allow bus restarts.
         g_i2c.enableRestartSupport();
@@ -671,7 +678,7 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
         if (m_readsOutstanding > 0)
         {
             currentTicks = GetTickCount64();
-            if ((currentTicks - startWaitTicks) > 100)
+            if (((currentTicks - startWaitTicks) > 100) && g_i2c.rxFifoEmpty())
             {
                 status = FALSE;
                 error = ERROR_RECEIVE_PARTIAL;

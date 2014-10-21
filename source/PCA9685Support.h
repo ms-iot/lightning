@@ -28,17 +28,17 @@ public:
 
 private:
     static const ULONG PWM_BITS;        ///< Number of bits of resolution this PWM chip has
-    static const UCHAR MODE1_ADR;       ///< Address of MODE1 register
-    static const UCHAR MODE2_ADR;       ///< Address of MODE2 register
-    static const UCHAR SUBADR1_ADR;     ///< Address of SUBADR1 register
-    static const UCHAR SUBADR2_ADR;     //< Address of SUBADR1 register
-    static const UCHAR SUBADR3_ADR;     ///< Address of SUBADR1 register
-    static const UCHAR ALLCALLADR_ADR;  ///< Address of ALLCALLADR register
-    static const UCHAR LEDS_BASE_ADR;   ///< Base address of LED output registers
-    static const UCHAR REGS_PER_LED;    ///< Number of registers for each LED
-    static const UCHAR PRE_SCALE_ADR;   ///< Address of frequency prescale register
-    static const UCHAR TestMode_ADR;    ///< Address of TestMode register
-    static const UCHAR LED_COUNT;       ///< Number of LEDs supported by PWM chip
+    static const ULONG MODE1_ADR;       ///< Address of MODE1 register
+    static const ULONG MODE2_ADR;       ///< Address of MODE2 register
+    static const ULONG SUBADR1_ADR;     ///< Address of SUBADR1 register
+    static const ULONG SUBADR2_ADR;     //< Address of SUBADR1 register
+    static const ULONG SUBADR3_ADR;     ///< Address of SUBADR1 register
+    static const ULONG ALLCALLADR_ADR;  ///< Address of ALLCALLADR register
+    static const ULONG LEDS_BASE_ADR;   ///< Base address of LED output registers
+    static const ULONG REGS_PER_LED;    ///< Number of registers for each LED
+    static const ULONG PRE_SCALE_ADR;   ///< Address of frequency prescale register
+    static const ULONG TestMode_ADR;    ///< Address of TestMode register
+    static const ULONG LED_COUNT;       ///< Number of LEDs supported by PWM chip
 
     /// Struct with the layout of the PWM chip MODE1 register.
     typedef struct {

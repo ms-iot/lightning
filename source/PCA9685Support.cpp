@@ -15,17 +15,17 @@ UCHAR PCA9685Device::m_freqPreScale = 5;
 
 const ULONG PCA9685Device::PWM_BITS         =   12;     // This PWM chip has 12 bits of resolution
 
-const UCHAR PCA9685Device::MODE1_ADR        = 0x00;     // Address of MODE1 register
-const UCHAR PCA9685Device::MODE2_ADR        = 0x01;     // Address of MODE2 register
-const UCHAR PCA9685Device::SUBADR1_ADR      = 0x02;     // Address of SUBADR1 register
-const UCHAR PCA9685Device::SUBADR2_ADR      = 0x03;     // Address of SUBADR1 register
-const UCHAR PCA9685Device::SUBADR3_ADR      = 0x04;     // Address of SUBADR1 register
-const UCHAR PCA9685Device::ALLCALLADR_ADR   = 0x05;     // Address of ALLCALLADR register
-const UCHAR PCA9685Device::LEDS_BASE_ADR    = 0x06;     // Base address of LED output registers
-const UCHAR PCA9685Device::REGS_PER_LED     = 0x04;     // Number of registers for each LED
-const UCHAR PCA9685Device::PRE_SCALE_ADR    = 0xFE;     // Address of frequency prescale register
-const UCHAR PCA9685Device::TestMode_ADR     = 0xFF;     // Address of TestMode register
-const UCHAR PCA9685Device::LED_COUNT        = 0x10;     // Number of "LED" ports on the chip
+const ULONG PCA9685Device::MODE1_ADR        = 0x00;     // Address of MODE1 register
+const ULONG PCA9685Device::MODE2_ADR        = 0x01;     // Address of MODE2 register
+const ULONG PCA9685Device::SUBADR1_ADR      = 0x02;     // Address of SUBADR1 register
+const ULONG PCA9685Device::SUBADR2_ADR      = 0x03;     // Address of SUBADR1 register
+const ULONG PCA9685Device::SUBADR3_ADR      = 0x04;     // Address of SUBADR1 register
+const ULONG PCA9685Device::ALLCALLADR_ADR   = 0x05;     // Address of ALLCALLADR register
+const ULONG PCA9685Device::LEDS_BASE_ADR    = 0x06;     // Base address of LED output registers
+const ULONG PCA9685Device::REGS_PER_LED     = 0x04;     // Number of registers for each LED
+const ULONG PCA9685Device::PRE_SCALE_ADR    = 0xFE;     // Address of frequency prescale register
+const ULONG PCA9685Device::TestMode_ADR     = 0xFF;     // Address of TestMode register
+const ULONG PCA9685Device::LED_COUNT        = 0x10;     // Number of "LED" ports on the chip
 /**
 This method takes the actions needed to set a port bit of the PWM chip to the desired state.
 \param[in] i2cAdr The I2C address of the PWM chip.
@@ -71,6 +71,9 @@ BOOL PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 
     if (status)
     {
+        // Indicate this chip supports high speed I2C transfers.
+        transaction.useHighSpeed();
+
         // Calculate the address of the first register for the port in question.
         bitRegsAdr = (UCHAR)(LEDS_BASE_ADR + (portBit * REGS_PER_LED));
 
@@ -151,6 +154,9 @@ BOOL PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 
     if (status)
     {
+        // Indicate this chip supports high speed I2C transfers.
+        transaction.useHighSpeed();
+
         // Calculate the address of the first register for the port in question.
         bitRegsAdr = (UCHAR)(LEDS_BASE_ADR + (portBit * REGS_PER_LED));
 
@@ -236,6 +242,9 @@ BOOL PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCycle
 
     if (status)
     {
+        // Indicate this chip supports high speed I2C transfers.
+        transaction.useHighSpeed();
+
         // Calculate the address of the first register for the port in question.
         bitRegsAdr = (UCHAR)(LEDS_BASE_ADR + (channel * REGS_PER_LED));
 
@@ -303,6 +312,9 @@ BOOL PCA9685Device::_InitializeChip(ULONG i2cAdr)
 
         if (status)
         {
+            // Indicate this chip supports high speed I2C transfers.
+            transaction.useHighSpeed();
+
             // Queue sending the address of the MODE1 regeister to the PWM chip.
             status = transaction.queueWrite(mode1RegAdr, sizeof(mode1Reg));
             if (!status) { error = GetLastError(); }
@@ -340,7 +352,7 @@ BOOL PCA9685Device::_InitializeChip(ULONG i2cAdr)
 
         if (status)
         {
-            // Queue sending the address of the PRE_SCAL register to the PWM chip.
+            // Queue sending the address of the PRE_SCALE register to the PWM chip.
             status = transaction.queueWrite(preScaleAdr, sizeof(preScaleAdr), TRUE);
             if (!status) { error = GetLastError(); }
         }

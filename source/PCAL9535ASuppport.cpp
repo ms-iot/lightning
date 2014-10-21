@@ -35,6 +35,9 @@ BOOL PCAL9535ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 
     if (status)
     {
+        // Indicate this chip supports high speed I2C transfers.
+        transaction.useHighSpeed();
+
         // If the bit is on Port1, correct the output port address and bit number.
         if (portBit > P0_7)
         {
@@ -116,6 +119,9 @@ BOOL PCAL9535ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 
     if (status)
     {
+        // Indicate this chip supports high speed I2C transfers.
+        transaction.useHighSpeed();
+
         // If the bit is on Port1, correct the input port address and bit number.
         if (portBit > P0_7)
         {
@@ -188,6 +194,9 @@ BOOL PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG directi
 
     if (status)
     {
+        // Indicate this chip supports high speed I2C transfers.
+        transaction.useHighSpeed();
+
         // If the bit is on Port1, correct the config register address and bit number.
         if (portBit > P0_7)
         {
@@ -285,6 +294,9 @@ BOOL PCAL9535ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direc
 
     if (status)
     {
+        // Indicate this chip supports high speed I2C transfers.
+        transaction.useHighSpeed();
+
         // If the bit is on Port1, correct the config register address and bit number.
         if (portBit > P0_7)
         {

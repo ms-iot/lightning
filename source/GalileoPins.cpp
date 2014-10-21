@@ -248,21 +248,6 @@ const GalileoPinsClass::MUX_ATTRIBUTES g_Gen1MuxAttributes[MAX_MUXES] =
     { CY8, P1_7 }       ///< MUX_U9_2
 };
 
-/// The global table of I/O Expander attributes for the Galileo Gen1 board.
-/**
-This table contains the information needed to communicate with each I/O Expander chip.
-It is indexed by Expander number and contains the type of chip used for that I/O Expander
-and the address on the I2C bus the chip responds to.
-*/
-const GalileoPinsClass::EXP_ATTRIBUTES g_Gen1ExpAttributes[] =
-{
-    { PCAL9535A, 0x25 },    ///< EXP0
-    { PCAL9535A, 0x26 },    ///< EXP1
-    { PCAL9535A, 0x27 },    ///< EXP2
-    { PCA9685,   0x47 },    ///< PWM
-    { CY8C9540A, 0x20 }     ///< CY8
-};
-
 /// The global table of PWM information for the Galileo Gen1 board.
 /**
 This table contains the information needed to drive the PWM channels.  It is indexed by the
@@ -741,11 +726,15 @@ BOOL GalileoPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
             if (!status) { error = GetLastError(); }
             break;
         case GPIO_EXP1:
-            status = _setExpBitDirection(EXP1, m_PinAttributes[pin].portBit, mode);
+            status = _setExpBitDirection(EXP1, m_PinAttributes[pin].portBit, mode, pullup);
             if (!status) { error = GetLastError(); }
             break;
         case GPIO_EXP2:
-            status = _setExpBitDirection(EXP2, m_PinAttributes[pin].portBit, mode);
+            status = _setExpBitDirection(EXP2, m_PinAttributes[pin].portBit, mode, pullup);
+            if (!status) { error = GetLastError(); }
+            break;
+        case GPIO_CY8:
+            status = _setExpBitDirection(CY8, m_PinAttributes[pin].portBit, mode, pullup);
             if (!status) { error = GetLastError(); }
             break;
         default:
@@ -777,9 +766,10 @@ This method sets the direction of an I/O Expander port pin.
 \param[in] expNo The number of the I/O Expander in question.
 \param[in] bitNo Specifies the port and bit number to set (such as: P1_4 for port 1, bit 4)
 \param[in] direction The desired direction: DIRECTION_IN or DIRECTION_OUT.
+\param[in] pullup TRUE - enable pullup resistor on the pin, FALSE - disable pullup resistor.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direction)
+BOOL GalileoPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direction, BOOL pullup)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -797,6 +787,12 @@ BOOL GalileoPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direc
     {
         // Set the bit of the I/O Expander chip to the desired direction.
         status = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, direction);
+        if (!status) { error = GetLastError(); }
+    }
+    else if (m_ExpAttributes[expNo].Exp_Type == CY8C9540A)
+    {
+        // Set the bit of the I/O Expander chip to the desired direction.
+        status = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, direction, pullup);
         if (!status) { error = GetLastError(); }
     }
     else if (m_ExpAttributes[expNo].Exp_Type == PCA9685)
@@ -853,6 +849,19 @@ BOOL GalileoPinsClass::_setExpBitToState(ULONG expNo, ULONG bitNo, ULONG state)
         // Set the bit of the PWM chip to the desired state.
         status = PCA9685Device::SetBitState(i2cAdr, bitNo, state);
         if (!status) { error = GetLastError(); }
+    }
+    else if (m_ExpAttributes[expNo].Exp_Type == CY8C9540A)
+    {
+        // Set the bit of a CY8 I/O Expander chip to the desired state.
+        status = CY8C9540ADevice::SetBitState(i2cAdr, bitNo, state);
+        if (!status) { error = GetLastError(); }
+
+        if (status)
+        {
+            // Set the bit of the I/O Expander chip to be an output.
+            status = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT, FALSE);
+            if (!status) { error = GetLastError(); }
+        }
     }
     else
     {
@@ -946,20 +955,24 @@ BOOL GalileoPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
         expNo = m_PinAttributes[pin].pullupExp;
         bitNo = m_PinAttributes[pin].pullupBit;
 
-        // If the pullup is wanted:
-        if (pullup)
+        // If this pin has a pullup controlled by an I/O Expander port output pin:
+        if (expNo != NO_X)
         {
-            // Set the I/O Expander bit high (also sets it as an output)
-            status = _setExpBitToState(expNo, bitNo, 1);
-            if (!status)  { error = GetLastError(); }
-        }
+            // If the pullup is wanted:
+            if (pullup)
+            {
+                // Set the I/O Expander bit high (also sets it as an output)
+                status = _setExpBitToState(expNo, bitNo, 1);
+                if (!status)  { error = GetLastError(); }
+            }
 
-        // If no pullup is wanted:
-        else
-        {
-            // Make the I/O Expander bit an input.
-            status = _setExpBitDirection(expNo, bitNo, DIRECTION_IN);
-            if (!status)  { error = GetLastError(); }
+            // If no pullup is wanted:
+            else
+            {
+                // Make the I/O Expander bit an input.
+                status = _setExpBitDirection(expNo, bitNo, DIRECTION_IN, FALSE);
+                if (!status)  { error = GetLastError(); }
+            }
         }
     }
 
@@ -1056,6 +1069,11 @@ BOOL GalileoPinsClass::setPinState(ULONG pin, ULONG state)
                 m_ExpAttributes[EXP2].I2c_Address,
                 m_PinAttributes[pin].portBit,
                 state);
+        case GPIO_CY8:
+            return CY8C9540ADevice::SetBitState(
+                m_ExpAttributes[CY8].I2c_Address,
+                m_PinAttributes[pin].portBit,
+                state);
         default:
             status = FALSE;
             error = DNS_ERROR_INVALID_TYPE;
@@ -1108,6 +1126,11 @@ BOOL GalileoPinsClass::getPinState(ULONG pin, ULONG & state)
         case GPIO_EXP2:
             return PCAL9535ADevice::GetBitState(
                 m_ExpAttributes[EXP2].I2c_Address,
+                m_PinAttributes[pin].portBit,
+                state);
+        case GPIO_CY8:
+            return CY8C9540ADevice::GetBitState(
+                m_ExpAttributes[CY8].I2c_Address,
                 m_PinAttributes[pin].portBit,
                 state);
         default:
