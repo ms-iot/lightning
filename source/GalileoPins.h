@@ -11,6 +11,7 @@
 #include "GpioController.h"
 #include "PCAL9535ASuppport.h"
 #include "PCA9685Support.h"
+#include "CY8C9540ASupport.h"
 #include "ExpanderDefs.h"
 
 /// The class used to configure and use GPIO pins.
@@ -55,8 +56,8 @@ public:
     /// Struct for mux-specific attributes.
     /** This struct contains all the attributes needed to use a mux. */
     typedef struct {
-        UCHAR selectExp : 4;    ///< I/O Expander that drives the select signal
-        UCHAR selectBit : 4;    ///< Bit of I/O Expander that drives the select signal
+        UCHAR selectExp;        ///< I/O Expander that drives the select signal
+        UCHAR selectBit;        ///< Bit of I/O Expander that drives the select signal
     } MUX_ATTRIBUTES, *PMUX_ATTRIBUTES;
 
     /// Struct for I/O Expander-specific attributes.
@@ -64,6 +65,8 @@ public:
     typedef struct {
         UCHAR Exp_Type;         ///< I/O Expander chip type
         UCHAR I2c_Address;      ///< I2C address of the I/O expander
+        UCHAR HighSpeed;        ///< 0 - use standard speed, 1 - allow high speed
+        UCHAR padding;
     } EXP_ATTRIBUTES, *PEXP_ATTRIBUTES;
 
     /// Struct used to store function state for each pin.
@@ -109,6 +112,9 @@ public:
 
     /// Method to override auto-detection of board generation.
     BOOL setBoardGeneration(ULONG gen);
+
+    /// Method to get the board generation.
+    BOOL getBoardGeneration(ULONG & gen);
 
 private:
 
@@ -161,7 +167,7 @@ private:
     BOOL _setMux(ULONG mux, ULONG selection);
 
     /// Method to set the direction on an I/O Expander port pin.
-    BOOL _setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG directin);
+    BOOL _setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG directin, BOOL pullup);
 
     /// Method to set the state of an I/O Expander port pin.
     BOOL _setExpBitToState(ULONG expNo, ULONG bitNo, ULONG state);

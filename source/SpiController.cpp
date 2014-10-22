@@ -15,7 +15,8 @@ SPIControllerClass::SPIControllerClass()
     m_dataBits = 8;
 
     // Load values for the SPI clock generators.
-    spiSpeed12p5mhz = { 0x200000, 0 };  // 12.5 mhz for ADC
+    spiSpeed20mhz = { 0x666666, 1 };    // 20 mhz for Gen1 ADC
+    spiSpeed12p5mhz = { 0x200000, 0 };  // 12.5 mhz for Gen2 ADC
     spiSpeed8mhz = { 0x666666, 4 };
     spiSpeed4mhz = { 0x666666, 9 };
     spiSpeed2mhz = { 0x666666, 19 };
@@ -224,7 +225,7 @@ BOOL SPIControllerClass::setMode(ULONG mode)
 }
 
 /**
-This method sets one of the SPI clock rates we support: 1 khz - 12.5 mhz.
+This method sets one of the SPI clock rates we support: 1 khz - 20 mhz.
 \param[in] clockKhz Desired clock rate in Khz.
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
@@ -235,7 +236,11 @@ BOOL SPIControllerClass::_setClockRate(ULONG clockKhz)
     PSPI_BUS_SPEED pSpeed = &spiSpeed4mhz;
 
     // Round down to the closest clock rate we support.
-    if (clockKhz >= 12500)
+    if (clockKhz >= 20000)
+    {
+        pSpeed = &spiSpeed20mhz;
+    }
+    else if (clockKhz >= 12500)
     {
         pSpeed = &spiSpeed12p5mhz;
     }

@@ -190,6 +190,7 @@ private:
     } SPI_BUS_SPEED, *PSPI_BUS_SPEED;
 
     // Spi bus speed values.
+    SPI_BUS_SPEED spiSpeed20mhz;
     SPI_BUS_SPEED spiSpeed12p5mhz;
     SPI_BUS_SPEED spiSpeed8mhz;
     SPI_BUS_SPEED spiSpeed4mhz;

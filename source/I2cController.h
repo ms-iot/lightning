@@ -791,6 +791,7 @@ public:
         m_abort = FALSE;
         m_error = SUCCESS;
         m_isIncomplete = FALSE;
+        m_useHighSpeed = FALSE;
     }
 
     virtual ~I2cTransactionClass()
@@ -876,10 +877,16 @@ public:
         return (m_error != SUCCESS);
     }
 
-    /// Method to dermine if this transaction has been completed or not.
+    /// Method to determine if this transaction has been completed or not.
     inline BOOL isIncomplete()
     {
         return m_isIncomplete;
+    }
+
+    /// Method to signal high speed can be sued for this transaction.
+    inline void useHighSpeed()
+    {
+        m_useHighSpeed = TRUE;
     }
 
 private:
@@ -918,6 +925,9 @@ private:
 
     /// TRUE if one or more incompleted transfers exist on this transaction.
     BOOL m_isIncomplete;
+
+    /// TRUE to allow use of high speed for this transaction.
+    BOOL m_useHighSpeed;
 
     //
     // I2cTransactionClass private member functions.

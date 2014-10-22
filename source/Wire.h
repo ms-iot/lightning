@@ -223,7 +223,7 @@ public:
             _calculateReadBytesInBuffer();
         }
 
-        return 0;
+        return quantity;
     }
 
     /// Set the address of the I2C slave we are talking to.

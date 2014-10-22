@@ -675,7 +675,7 @@ inline BOOL LegacyGpioControllerClass::getCorePinDirection(ULONG portBit, ULONG 
 
         if (status)
         {
-            if (((readValue >> portBit) && 0x01) == 1)
+            if (((readValue >> portBit) & 0x01) == 1)
             {
                 mode = DIRECTION_IN;
             }
@@ -728,7 +728,7 @@ BOOL LegacyGpioControllerClass::getResumePinDirection(ULONG portBit, ULONG & mod
 
         if (status)
         {
-            if (((readValue >> portBit) && 0x01) == 1)
+            if (((readValue >> portBit) & 0x01) == 1)
             {
                 mode = DIRECTION_IN;
             }
