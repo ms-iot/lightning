@@ -1269,6 +1269,28 @@ BOOL GalileoPinsClass::setBoardGeneration(ULONG gen)
 }
 
 /**
+This method determines the board generation if it is not yet known.
+\param[out] gen The generation of the board we are currently running on.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL GalileoPinsClass::getBoardGeneration(ULONG & gen)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+
+    status = _verifyBoardGeneration();
+    if (!status) { error = GetLastError(); }
+
+    if (status)
+    {
+        gen = m_boardGeneration;
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
 Attempt to access an I2C slave at a specified address to determine if the slave
 is present or not.
 \param[in] i2cAdr The I2C address to probe.

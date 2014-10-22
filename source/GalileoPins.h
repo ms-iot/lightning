@@ -113,6 +113,9 @@ public:
     /// Method to override auto-detection of board generation.
     BOOL setBoardGeneration(ULONG gen);
 
+    /// Method to get the board generation.
+    BOOL getBoardGeneration(ULONG & gen);
+
 private:
 
     /// Pointer to the array of pin attributes.
