@@ -475,8 +475,8 @@ BOOL GalileoPinsClass::_setPinDigitalIo(ULONG pin)
         if (!status) { error = GetLastError(); }
     }
 
-    // If the pin was being used for PWM on a CY8C9540A I/O Expander chip, deselect the PWM function.
-    if (status && (m_PinFunctions[pin].currentFunction == FUNC_PWM) && (m_PwmChannels[pin].expander == CY8))
+    // If the pin is on a CY8C9540A I/O Expander chip, deselect the PWM function.
+    if (status && (m_PwmChannels[pin].expander == CY8))
     {
         ULONG i2cAdr = m_ExpAttributes[m_PinAttributes[pin].gpioType].I2c_Address;
         ULONG portBit = m_PwmChannels[pin].portBit;
@@ -523,22 +523,22 @@ BOOL GalileoPinsClass::_setPinPwm(ULONG pin)
     // Configure the pin for driving a PWM signal.
     if (status)
     {
-        if (m_PwmChannels[pin].expander != CY8)
+        if (m_PwmChannels[pin].expander == CY8)
         {
-            status = setPinMode(pin, DIRECTION_OUT, FALSE);
-            if (!status) { error = GetLastError(); }
-        }
-        else
-        {
+            // If PWM on this pin is from a CY8 I/O expander, configure the pin for PWM.
             ULONG i2cAdr = m_ExpAttributes[m_PwmChannels[pin].expander].I2c_Address;
             ULONG portBit = m_PwmChannels[pin].portBit;
             ULONG pwmChan = m_PwmChannels[pin].channel;
             status = CY8C9540ADevice::SetPortbitPwm(i2cAdr, portBit, pwmChan);
             if (!status) { error = GetLastError(); }
         }
+        else
+        {
+            // If from a non-CY8 PWM chip, just set the pin to be an output.
+            status = setPinMode(pin, DIRECTION_OUT, FALSE);
+            if (!status) { error = GetLastError(); }
+        }
     }
-
-    // If PWM on this pin is from a CY8 I/O expander, configure the pin for PWM.
 
     if (!status)
     {
