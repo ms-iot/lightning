@@ -21,6 +21,9 @@ void setup()
     deg = ::degrees(::radians(deg));
     Log("CHECK: %s | ::degrees() and ::radians()\n", (deg > 84.9 && deg < 85.1) ? "Pass" : "FAILED");
 
+    // Test binary.h inclusion from arduino-sdk
+    uint8_t byte = B10101010;
+
     // Call/test ...
     // next test here
 }
