@@ -51,8 +51,6 @@ const ULONG CY8C9540ADevice::CMD_WR_CONFIG     =    5;  // Command to write devi
 const ULONG CY8C9540ADevice::CMD_RD_CONFIG     =    6;  // Command to read device configuation.
 const ULONG CY8C9540ADevice::CMD_LD_DEFAULTS   =    7;  // Command to reconfigure with stored POR defaults.
 
-ULONG CY8C9540ADevice::m_chanFreqHz[PWM_CHAN_COUNT] = { 367, 367, 367, 367, 367, 367, 367, 367 };
-
 /**
 This method takes the actions needed to set a port bit of the I/O Expander chip to the desired state.
 \param[in] i2cAdr The I2C address of the chip.
@@ -726,7 +724,7 @@ BOOL CY8C9540ADevice::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCyc
     if (status)
     {
         // Calculate the pulse width value for the specified dutyCycle.
-        pulseWidth = ((dutyCycle * 255ULL) + 0x0FFFFFFFULL) / 0xFFFFFFFFULL;
+        pulseWidth = ((dutyCycle * ((ULONGLONG)((1<<PWM_BITS)-1))) + 0x7FFFFFFFULL) / 0xFFFFFFFFULL;
         pulseWidthData[0] = (UCHAR)pulseWidth;
     }
 

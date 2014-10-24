@@ -98,9 +98,6 @@ private:
         UCHAR   FAMILY : 4;     ///< Device Familey (2, 4 or 6).
     } ID_STATUS, *PID_STATUS;
 
-    /// Pointer to the array of PWM output frequncy in Hz for each channel.
-    static ULONG m_chanFreqHz[];
-
     /// Constructor.
     CY8C9540ADevice()
     {
