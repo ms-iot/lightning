@@ -86,6 +86,8 @@ public:
     typedef struct {
         UCHAR expander;         ///< I/O Expander that drives PWM for this pin
         UCHAR channel;          ///< PWM channel on the expander for PWM for this pin
+        UCHAR portBit;          ///< Port/bit of I/O expander associated with this PWM channel
+        UCHAR padding;
     } PWM_CHANNEL, *PPWM_CHANNEL;
 
     /// Enum of function lock actions.

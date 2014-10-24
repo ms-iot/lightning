@@ -150,26 +150,26 @@ Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM
 */
 const GalileoPinsClass::PWM_CHANNEL g_Gen2PwmChannels[] =
 {
-    { NO_X, 0 },        ///< D0
-    { NO_X, 0 },        ///< D1
-    { NO_X, 0 },        ///< D2
-    { PWM, LED1 },      ///< D3
-    { NO_X, 0 },         ///< D4
-    { PWM, LED3 },      ///< D5
-    { PWM, LED5 },      ///< D6
-    { NO_X, 0 },        ///< D7
-    { NO_X, 0 },        ///< D8
-    { PWM, LED7 },      ///< D9
-    { PWM, LED11 },     ///< D10
-    { PWM, LED9 },      ///< D11
-    { NO_X, 0 },        ///< D12
-    { NO_X, 0 },        ///< D13
-    { NO_X, 0 },        ///< A0
-    { NO_X, 0 },        ///< A1
-    { NO_X, 0 },        ///< A2
-    { NO_X, 0 },        ///< A3
-    { NO_X, 0 },        ///< A4
-    { NO_X, 0 }         ///< A5
+    { NO_X, 0, 0, 0 },          ///< D0
+    { NO_X, 0, 0, 0 },          ///< D1
+    { NO_X, 0, 0, 0 },          ///< D2
+    { PWM, LED1, LED1 , 0 },    ///< D3
+    { NO_X, 0, 0, 0 },          ///< D4
+    { PWM, LED3, LED3, 0 },     ///< D5
+    { PWM, LED5, LED5, 0 },     ///< D6
+    { NO_X, 0, 0, 0 },          ///< D7
+    { NO_X, 0, 0, 0 },          ///< D8
+    { PWM, LED7, LED7, 0 },     ///< D9
+    { PWM, LED11, LED11, 0 },   ///< D10
+    { PWM, LED9, LED9, 0 },     ///< D11
+    { NO_X, 0, 0, 0 },          ///< D12
+    { NO_X, 0, 0, 0 },          ///< D13
+    { NO_X, 0, 0, 0 },          ///< A0
+    { NO_X, 0, 0, 0 },          ///< A1
+    { NO_X, 0, 0, 0 },          ///< A2
+    { NO_X, 0, 0, 0 },          ///< A3
+    { NO_X, 0, 0, 0 },          ///< A4
+    { NO_X, 0, 0, 0 }           ///< A5
 };
 
 /// The global table of I/O Expander attributes for the Galileo board.
@@ -255,28 +255,27 @@ Galileo GPIO pin number, and specifies the chip and PWM channel used for that pi
 */
 const GalileoPinsClass::PWM_CHANNEL g_Gen1PwmChannels[] =
 {
-    { NO_X, 0 },        ///< D0
-    { NO_X, 0 },        ///< D1
-    { NO_X, 0 },        ///< D2
-    { CY8, 3 },         ///< D3
-    { NO_X, 0 },        ///< D4
-    { CY8, 5 },         ///< D5
-    { CY8, 6 },         ///< D6
-    { CY8, 0 },         ///< D7
-    { CY8, 2 },         ///< D8
-    { CY8, 1 },         ///< D9
-    { CY8, 7 },         ///< D10
-    { CY8, 4 },         ///< D11
-    { NO_X, 0 },        ///< D12
-    { NO_X, 0 },        ///< D13
-    { NO_X, 0 },        ///< A0
-    { NO_X, 0 },        ///< A1
-    { NO_X, 0 },        ///< A2
-    { NO_X, 0 },        ///< A3
-    { NO_X, 0 },        ///< A4
-    { NO_X, 0 }         ///< A5
+    { NO_X, 0, 0, 0 },        ///< D0
+    { NO_X, 0, 0, 0 },        ///< D1
+    { NO_X, 0, 0, 0 },        ///< D2
+    { CY8, 3, P0_2, 0 },      ///< D3
+    { NO_X, 0, 0, 0 },        ///< D4
+    { CY8, 5, P0_1, 0 },      ///< D5
+    { CY8, 6, P1_0, 0 },      ///< D6
+    { CY8, 0, P1_3, 0 },      ///< D7
+    { CY8, 2, P1_2, 0 },      ///< D8
+    { CY8, 1, P0_3, 0 },      ///< D9
+    { CY8, 7, P0_0, 0 },      ///< D10
+    { CY8, 4, P1_1, 0 },      ///< D11
+    { NO_X, 0, 0, 0 },        ///< D12
+    { NO_X, 0, 0, 0 },        ///< D13
+    { NO_X, 0, 0, 0 },        ///< A0
+    { NO_X, 0, 0, 0 },        ///< A1
+    { NO_X, 0, 0, 0 },        ///< A2
+    { NO_X, 0, 0, 0 },        ///< A3
+    { NO_X, 0, 0, 0 },        ///< A4
+    { NO_X, 0, 0, 0 }         ///< A5
 };
-
 
 /// The global table of Pin Function tracking structures.
 /**
@@ -476,6 +475,15 @@ BOOL GalileoPinsClass::_setPinDigitalIo(ULONG pin)
         if (!status) { error = GetLastError(); }
     }
 
+    // If the pin was being used for PWM on a CY8C9540A I/O Expander chip, deselect the PWM function.
+    if (status && (m_PinFunctions[pin].currentFunction == FUNC_PWM) && (m_PwmChannels[pin].expander == CY8))
+    {
+        ULONG i2cAdr = m_ExpAttributes[m_PinAttributes[pin].gpioType].I2c_Address;
+        ULONG portBit = m_PwmChannels[pin].portBit;
+        status = CY8C9540ADevice::SetPortbitDio(i2cAdr, portBit);
+        if (!status) { error = GetLastError(); }
+    }
+
     if (!status)
     {
         SetLastError(error);
@@ -512,12 +520,25 @@ BOOL GalileoPinsClass::_setPinPwm(ULONG pin)
         if (!status) { error = GetLastError(); }
     }
 
-    // Set the pin as an output.
+    // Configure the pin for driving a PWM signal.
     if (status)
     {
-        status = setPinMode(pin, DIRECTION_OUT, FALSE);
-        if (!status) { error = GetLastError(); }
+        if (m_PwmChannels[pin].expander != CY8)
+        {
+            status = setPinMode(pin, DIRECTION_OUT, FALSE);
+            if (!status) { error = GetLastError(); }
+        }
+        else
+        {
+            ULONG i2cAdr = m_ExpAttributes[m_PwmChannels[pin].expander].I2c_Address;
+            ULONG portBit = m_PwmChannels[pin].portBit;
+            ULONG pwmChan = m_PwmChannels[pin].channel;
+            status = CY8C9540ADevice::SetPortbitPwm(i2cAdr, portBit, pwmChan);
+            if (!status) { error = GetLastError(); }
+        }
     }
+
+    // If PWM on this pin is from a CY8 I/O expander, configure the pin for PWM.
 
     if (!status)
     {
@@ -1177,6 +1198,10 @@ BOOL GalileoPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
     {
     case PCA9685:
         status = PCA9685Device::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
+        if (!status) { error = GetLastError(); }
+        break;
+    case CY8C9540A:
+        status = CY8C9540ADevice::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
         if (!status) { error = GetLastError(); }
         break;
     default:
