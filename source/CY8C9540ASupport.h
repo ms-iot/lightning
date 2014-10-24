@@ -23,9 +23,25 @@ public:
     /// Get the direction of a pin on the I/O Expander.
     static BOOL GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direction);
 
+    /// Configure a port bit as a PWM output.
+    static BOOL SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmChan);
+
+    /// Configure a port bit for Digital I/O use.
+    static BOOL SetPortbitDio(ULONG i2cAdr, ULONG portBit);
+
+    /// Set the PWM pulse width.
+    static BOOL SetPwmDutyCycle(ULONG i2cAdr, ULONG chan, ULONG pulseWidth);
+
+    /// Method to get the resolution of this PWM chip.
+    static  ULONG GetResolution()
+    {
+        return PWM_BITS;
+    }
+
 private:
-    static const ULONG PWM_BITS;            ///< Number of bits of resolution this PWM chip has
-    static const ULONG PORT_COUNT;          ///< Number of ports supported by this chip.
+    static const ULONG PWM_BITS;            ///< Number of bits of resolution this PWM chip has.
+    static const ULONG PWM_CHAN_COUNT;      ///< Number of PWM channels on this chip.
+    static const ULONG PORT_COUNT;          ///< Number of I/O ports supported by this chip.
 
     static const ULONG IN_BASE_ADR;         ///< Base address of Input Port registers.
     static const ULONG OUT_BASE_ADR;        ///< Base address of Output Port registers.
@@ -82,6 +98,9 @@ private:
         UCHAR   FAMILY : 4;     ///< Device Familey (2, 4 or 6).
     } ID_STATUS, *PID_STATUS;
 
+    /// Pointer to the array of PWM output frequncy in Hz for each channel.
+    static ULONG m_chanFreqHz[];
+
     /// Constructor.
     CY8C9540ADevice()
     {
@@ -96,6 +115,9 @@ private:
     virtual ~CY8C9540ADevice()
     {
     }
+
+    /// Configure the PWM frequency on a channel.
+    static BOOL _configurePwmChannelFrequency(ULONG i2cAdr, ULONG chan);
 
 };
 

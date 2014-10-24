@@ -7,7 +7,8 @@
 #include "I2cController.h"
 
 
-const ULONG CY8C9540ADevice::PWM_BITS          =    8;  // This PWM chip has 8 bits of resolution
+const ULONG CY8C9540ADevice::PWM_BITS          =    8;  // This PWM chip has 8 bits of resolution.
+const ULONG CY8C9540ADevice::PWM_CHAN_COUNT    =    8;  // This chip has 8 PWM channels.
 const ULONG CY8C9540ADevice::PORT_COUNT        =    6;  // Number of ports supported by this chip.
 
 const ULONG CY8C9540ADevice::IN_BASE_ADR       = 0x00;  // Base address of Input Port registers.
@@ -49,6 +50,8 @@ const ULONG CY8C9540ADevice::CMD_RD_EE_DFLTS   =    4;  // Command to read EEPRO
 const ULONG CY8C9540ADevice::CMD_WR_CONFIG     =    5;  // Command to write device configuration.
 const ULONG CY8C9540ADevice::CMD_RD_CONFIG     =    6;  // Command to read device configuation.
 const ULONG CY8C9540ADevice::CMD_LD_DEFAULTS   =    7;  // Command to reconfigure with stored POR defaults.
+
+ULONG CY8C9540ADevice::m_chanFreqHz[PWM_CHAN_COUNT] = { 367, 367, 367, 367, 367, 367, 367, 367 };
 
 /**
 This method takes the actions needed to set a port bit of the I/O Expander chip to the desired state.
@@ -289,24 +292,14 @@ BOOL CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG directi
         if (!status) { error = GetLastError(); }
     }
 
-    if (status)
-    {
-        // Perform the I2C transfers queueud above.
-        status = transaction.execute();
-        if (!status) { error = GetLastError(); }
-    }
-
     //
     // Set the desired direction for the bit in question.
     //
 
     if (status)
     {
-        // Prepare to re-use the transaction object.
-        transaction.reset();
-
         // Queue a write of the port direction register address.
-        status = transaction.queueWrite(directionAdr, sizeof(directionAdr));
+        status = transaction.queueWrite(directionAdr, sizeof(directionAdr), TRUE);
         if (!status) { error = GetLastError(); }
     }
 
@@ -350,22 +343,12 @@ BOOL CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG directi
         if (!status) { error = GetLastError(); }
     }
 
-    if (status)
-    {
-        // Perform the I2C transfers specified above.
-        status = transaction.execute();
-        if (!status) { error = GetLastError(); }
-    }
-
     //
     // Select the drive type.
     //
     
     if (status)
     {
-        // Prepare to re-use the transaction object.
-        transaction.reset();
-
         // Determine what drive type is needed.
         if (direction == DIRECTION_OUT)
         {
@@ -381,7 +364,7 @@ BOOL CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG directi
         }
 
         // Queue a write of the pin drive register address.
-        status = transaction.queueWrite(driveAdr, sizeof(driveAdr));
+        status = transaction.queueWrite(driveAdr, sizeof(driveAdr), TRUE);
         if (!status) { error = GetLastError(); }
     }
 
@@ -425,15 +408,14 @@ BOOL CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG directi
     }
 
     //
-    // If the pin is an input with a pull-up
+    // If the pin is an input with a pull-up, set the pin on the output port high.
+    //
+
     if (status && (direction != DIRECTION_OUT) && pullup)
     {
-        // Prepare to re-use the transaction object.
-        transaction.reset();
-
         // Queue a write of the port output register address.
-        outAdr[0] = (UCHAR) (OUT_BASE_ADR + port);
-        status = transaction.queueWrite(outAdr, sizeof(outAdr));
+        outAdr[0] = (UCHAR)(OUT_BASE_ADR + port);
+        status = transaction.queueWrite(outAdr, sizeof(outAdr), TRUE);
         if (!status) { error = GetLastError(); }
 
         if (status)
@@ -467,13 +449,15 @@ BOOL CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG directi
             status = transaction.queueWrite(outData, sizeof(outData));
             if (!status) { error = GetLastError(); }
         }
+    }
 
-        if (status)
-        {
-            // Perform the I2C transfers specified above.
-            status = transaction.execute();
-            if (!status) { error = GetLastError(); }
-        }
+    //
+    //  Perform all the I2C transfers specified above.
+    //
+    if (status)
+    {
+        status = transaction.execute();
+        if (!status) { error = GetLastError(); }
     }
 
     if (!status) { SetLastError(error); }
@@ -489,3 +473,360 @@ BOOL CY8C9540ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direc
     if (!status) { SetLastError(error); }
     return status;
 }
+
+/**
+\param[in] i2cAdr The I2C address of the PWM chip.
+\param[in] portBit The number of the port bit to configure as a PWM output.
+\param[in] pwmChan The PWM channel associated with the port bit.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL CY8C9540ADevice::SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmChan)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    I2cTransactionClass transaction;
+    ULONG port;                                     // Number of the port we are modifying
+    ULONG bit;                                      // Number of the bit to modify within the port
+    UCHAR portSelectAdr[1] = { PORT_SELECT_ADR };   // Address of Port Select register
+    UCHAR portSelectData[1] = { 0 };                // Data buffer for writing to Port Select register
+    UCHAR selectPwmAdr[1] = { SEL_PWM_ADR };        // Address of Select PWM register
+    UCHAR selectPwmData[1] = { 0 };                 // Data buffer for writing Select PWM register
+
+
+    // Calculate the number of the port and the bit we are dealing with.
+    port = portBit >> 3;
+    bit = portBit & 0x07;
+
+    if (port >= PORT_COUNT)
+    {
+        status = FALSE;
+        error = ERROR_INVALID_ADDRESS;
+    }
+
+    if (status)
+    {
+        // Set the I2C address of the I/O Expander we want to talk to.
+        status = transaction.setAddress(i2cAdr);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Set the expander bit to be an output with strong drive.
+        status = SetBitDirection(i2cAdr, portBit, DIRECTION_OUT, FALSE);
+        if (!status) { error = GetLastError(); }
+    }
+
+    // Select PWM to output on the pin.
+    if (status)
+    {
+        // Queue a write of the port select register address.
+        status = transaction.queueWrite(portSelectAdr, sizeof(portSelectAdr));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write of the port select data.
+        portSelectData[0] = (UCHAR)port;
+        status = transaction.queueWrite(portSelectData, sizeof(portSelectData));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write of the Select PWM register address.
+        status = transaction.queueWrite(selectPwmAdr, sizeof(selectPwmAdr), TRUE);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a read of the Select PWM register.
+        status = transaction.queueRead(selectPwmData, sizeof(selectPwmData));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Register a callback to set the Select PWM bit for the correct port bit.
+        status = transaction.queueCallback([&selectPwmData, bit]()
+        {
+            selectPwmData[0] = selectPwmData[0] | (0x01 << bit);
+            return TRUE;
+        }
+        );
+    }
+
+    if (status)
+    {
+        // Queue a write of the Select PWM register address.
+        status = transaction.queueWrite(selectPwmAdr, sizeof(selectPwmAdr), TRUE);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write to send the modified value back to the Select PWM register.
+        status = transaction.queueWrite(selectPwmData, sizeof(selectPwmData));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        //  Perform the I2C transfers specified above.
+        status = transaction.execute();
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Set the expander port bit high.
+        status = SetBitState(i2cAdr, portBit, 1);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Set the PWM frequency.
+        status = _configurePwmChannelFrequency(i2cAdr, pwmChan);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+\param[in] i2cAdr The I2C address of the PWM chip.
+\param[in] portBit The number of the port bit to configure for Digital I/O.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL CY8C9540ADevice::SetPortbitDio(ULONG i2cAdr, ULONG portBit)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    I2cTransactionClass transaction;
+    ULONG port;                                     // Number of the port we are modifying
+    ULONG bit;                                      // Number of the bit to modify within the port
+    UCHAR portSelectAdr[1] = { PORT_SELECT_ADR };   // Address of Port Select register
+    UCHAR portSelectData[1] = { 0 };                // Data buffer for writing to Port Select register
+    UCHAR selectPwmAdr[1] = { SEL_PWM_ADR };        // Address of Select PWM register
+    UCHAR selectPwmData[1] = { 0 };                 // Data buffer for writing Select PWM register
+
+
+    // Calculate the number of the port and the bit we are dealing with.
+    port = portBit >> 3;
+    bit = portBit & 0x07;
+
+    if (port >= PORT_COUNT)
+    {
+        status = FALSE;
+        error = ERROR_INVALID_ADDRESS;
+    }
+
+    if (status)
+    {
+        // Set the I2C address of the I/O Expander we want to talk to.
+        status = transaction.setAddress(i2cAdr);
+        if (!status) { error = GetLastError(); }
+    }
+
+    // De-select PWM for the pin.
+    if (status)
+    {
+        // Queue a write of the port select register address.
+        status = transaction.queueWrite(portSelectAdr, sizeof(portSelectAdr));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write of the port select data.
+        portSelectData[0] = (UCHAR)port;
+        status = transaction.queueWrite(portSelectData, sizeof(portSelectData));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write of the Select PWM register address.
+        status = transaction.queueWrite(selectPwmAdr, sizeof(selectPwmAdr), TRUE);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a read of the Select PWM register.
+        status = transaction.queueRead(selectPwmData, sizeof(selectPwmData));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Register a callback to clear the Select PWM bit for the correct port bit.
+        status = transaction.queueCallback([&selectPwmData, bit]()
+        {
+            selectPwmData[0] = selectPwmData[0] & ~(0x01 << bit);
+            return TRUE;
+        }
+        );
+    }
+
+    if (status)
+    {
+        // Queue a write of the Select PWM register address.
+        status = transaction.queueWrite(selectPwmAdr, sizeof(selectPwmAdr), TRUE);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write to send the modified value back to the Select PWM register.
+        status = transaction.queueWrite(selectPwmData, sizeof(selectPwmData));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        //  Perform the I2C transfers specified above.
+        status = transaction.execute();
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+Set the width of the positive pulses on one of the PWM channels.
+\param[in] i2cAdr The I2C address of the PWM chip.
+\param[in] channel The channel on the PWM chip for which to set the pulse width.
+\param[in] dutyCycle The desired duty-cycle of the positive pulses (0-0xFFFFFFFF for 0-100%).
+\return TRUE success.FALSE failure, GetLastError() provides error code.
+*/
+BOOL CY8C9540ADevice::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCycle)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    I2cTransactionClass transaction;
+    ULONGLONG pulseWidth = 0;
+    UCHAR chanSelectAdr[1] = { PWM_SELECT_ADR };    // Address of PWM Channel Select register
+    UCHAR chanSelectData[1] = { 0 };                // Data buffer for writing to Channel Select register
+    UCHAR pulseWidthAdr[1] = { PULSE_WIDTH_ADR };   // Address of PWM Pulsewidth register
+    UCHAR pulseWidthData[1] = { 0 };                // Data buffer for writing Select PWM register
+
+
+    if (channel >= PWM_CHAN_COUNT)
+    {
+        status = FALSE;
+        error = ERROR_INVALID_ADDRESS;
+    }
+
+    if (status)
+    {
+        // Calculate the pulse width value for the specified dutyCycle.
+        pulseWidth = ((dutyCycle * 255ULL) + 0x0FFFFFFFULL) / 0xFFFFFFFFULL;
+        pulseWidthData[0] = (UCHAR)pulseWidth;
+    }
+
+    if (status)
+    {
+        // Set the I2C address of the I/O Expander we want to talk to.
+        status = transaction.setAddress(i2cAdr);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write of the PWM Select register address.
+        status = transaction.queueWrite(chanSelectAdr, sizeof(chanSelectAdr));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write of the PWM channel number data.
+        chanSelectData[0] = (UCHAR)channel;
+        status = transaction.queueWrite(chanSelectData, sizeof(chanSelectData));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write of the PWM Period register address.
+        status = transaction.queueWrite(pulseWidthAdr, sizeof(pulseWidthAdr), TRUE);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write of the PWM Period data.
+        status = transaction.queueWrite(pulseWidthData, sizeof(pulseWidthData));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        //  Perform the I2C transfers specified above.
+        status = transaction.execute();
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+This method gets the desired frequency from the array of frequencies by channel
+number.  The only frequency currently supported i 367 hz.
+\param[in] i2cAdr The I2C address of the PWM chip.
+\param[in] channel The channel on the PWM chip for which to set the frequencey.
+\return TRUE success.FALSE failure, GetLastError() provides error code.
+*/
+BOOL CY8C9540ADevice::_configurePwmChannelFrequency(ULONG i2cAdr, ULONG channel)
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    I2cTransactionClass transaction;
+    ULONGLONG pulseWidth = 0;
+    UCHAR pwmRegBaseAdr[1] = { PWM_SELECT_ADR };    // Address of PWM Channel Select register
+    UCHAR pwmRegData[3] = { 0, PWM_CLK_94K, 0xFF }; // Data buffer for writing to PWM registers
+
+
+    if (channel >= PWM_CHAN_COUNT)
+    {
+        status = FALSE;
+        error = ERROR_INVALID_ADDRESS;
+    }
+
+    if (status)
+    {
+        // Put channel number in PWM reg data so it will land in the PWM Select register.
+        pwmRegData[0] = (UCHAR)channel;
+
+        // Set the I2C address of the I/O Expander we want to talk to.
+        status = transaction.setAddress(i2cAdr);
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        // Queue a write of the PWM register data.
+        status = transaction.queueWrite(pwmRegData, sizeof(pwmRegData));
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (status)
+    {
+        //  Perform the I2C transfer specified above.
+        status = transaction.execute();
+        if (!status) { error = GetLastError(); }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+
+
