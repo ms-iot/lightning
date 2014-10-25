@@ -1,11 +1,15 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
-// Licensed under the BSD 2-Clause License.  
-// See License.txt in the project root for license information.
+/** \file hardwareserial.h
+ * Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
+ * Licensed under the BSD 2-Clause License.
+ * See License.txt in the project root for license information.
+ */
 
 #pragma once
 
-// Application indicates they want network serial instead of hardware serial.
-// Some libraries will directly include hardware serial, so we switch here instead of in arduino.h
+/// /brief Switch for network serial instead of hardware serial.
+/// /details When the application indicates it wants network serial
+/// instead of hardware serial. Some libraries will directly include
+/// hardware serial, so we switch here instead of in arduino.h
 #ifdef USE_NETWORKSERIAL
 #include "NetworkSerial.h"
 #else
@@ -15,17 +19,13 @@
 
 #include "Stream.h"
 
-/// <summary>
-///   Used for communication between the Arduino board and a computer
-///   or other devices.
-/// </summary>
-/// <remarks>
-///   All Arduino boards have at least one serial port (also
-///   known as a UART or USART): Serial. It communicates on digital pins 0
-///   (RX) and 1 (TX) as well as with the computer via USB. Thus, if you use
-///   these functions, you cannot also use pins 0 and 1 for digital input or
-///   output.
-/// </remarks>
+/// \brief Used for communication between the Arduino board and a computer
+/// or other devices.
+/// \details
+///   All Arduino boards have at least one serial port (also known as a UART
+///   or USART): Serial. It communicates on digital pins 0 (RX) and 1 (TX)
+///   as well as with the computer via USB. Thus, if you use these functions,
+///   you cannot also use pins 0 and 1 for digital input or output.
 class HardwareSerial : public Stream
 {
 private:
@@ -70,173 +70,114 @@ public:
 
     static DCB dcbArray[24];
 
+    /// \brief Hardware serial constructor
+    /// \param [in] [comPort] Specify which communication port to
+    /// send HardwareSerial transmissions (defaults to COM1)
     HardwareSerial(const std::wstring &comPort = L"\\\\.\\COM1");
 
     virtual ~HardwareSerial();
 
-    // Implementation of Arduino HardwareSerial::operator bool
-    /// <summary>
-    ///   Indicates if the specified Serial port is ready.
-    /// </summary>
-    /// <returns>
-    ///   boolean : returns true if the specified serial port is available.
-    /// </returns>
+    /// \brief Indicates if the specified Serial port is ready.
+    /// \return True if the specified serial port is available.
+    /// \see <a href="http://arduino.cc/en/Serial/IfSerial" target="_blank">origin: Arduino::Serial::available</a>
     explicit operator bool(void);
 
-
-    // Implementation of Arduino HardwareSerial::available
-    /// <summary>
-    ///   Get the number of bytes (characters) available for reading from
-    ///   the serial port.
-    /// </summary>
-    /// <remarks>
+    /// \brief Get the number of bytes (characters) available for reading
+    /// from the serial port.
+    /// \details
     ///   This is data that's already arrived and stored in the serial
     ///   receive buffer (which holds 64 bytes).
-    /// </remarks>
-    /// <returns>
-    ///   int : the number of bytes available to read
-    /// </returns>
+    /// \return The number of bytes available to read
+    /// \see <a href="http://arduino.cc/en/Serial/Available" target="_blank">origin: Arduino::Serial::available</a>
     virtual int available(void);
 
-
-    // Implementation of Arduino HardwareSerial::begin
-    /// <summary>
-    ///   Sets the data rate in bits per second (baud) for serial data transmission.
-    /// </summary>
-    /// <remarks>
+    /// \brief Sets the data rate in bits per second (baud) for serial data transmission.
+    /// \details
     ///   For communicating with the computer, use one of these rates: 300,
     ///   600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600,
     ///   or 115200. You can, however, specify other rates - for example,
     ///   to communicate over pins 0 and 1 with a component that requires a
     ///   particular baud rate.
-    /// </remarks>
-    /// <param name="speed">
-    ///   long : in bits per second (baud)
-    /// </param>
-    /// <param name="[config]">
-    ///   SerialConfig : sets data, parity, and stop bits.
-    ///   Valid values are:
-    ///   <list type="bullet">
-    ///     <item><description>SERIAL_5N1</description></item>
-    ///     <item><description>SERIAL_6N1</description></item>
-    ///     <item><description>SERIAL_7N1</description></item>
-    ///     <item><description>SERIAL_8N1 (the default)</description></item>
-    ///     <item><description>SERIAL_5N2</description></item>
-    ///     <item><description>SERIAL_6N2</description></item>
-    ///     <item><description>SERIAL_7N2</description></item>
-    ///     <item><description>SERIAL_8N2</description></item>
-    ///     <item><description>SERIAL_5E1</description></item>
-    ///     <item><description>SERIAL_6E1</description></item>
-    ///     <item><description>SERIAL_7E1</description></item>
-    ///     <item><description>SERIAL_8E1</description></item>
-    ///     <item><description>SERIAL_5E2</description></item>
-    ///     <item><description>SERIAL_6E2</description></item>
-    ///     <item><description>SERIAL_7E2</description></item>
-    ///     <item><description>SERIAL_8E2</description></item>
-    ///     <item><description>SERIAL_5O1</description></item>
-    ///     <item><description>SERIAL_6O1</description></item>
-    ///     <item><description>SERIAL_7O1</description></item>
-    ///     <item><description>SERIAL_8O1</description></item>
-    ///     <item><description>SERIAL_5O2</description></item>
-    ///     <item><description>SERIAL_6O2</description></item>
-    ///     <item><description>SERIAL_7O2</description></item>
-    ///     <item><description>SERIAL_8O2</description></item>
-    ///   </list>
-    /// </param>
-    /// <returns>
-    ///   nothing
-    /// </returns>
+    /// \param [in] speed In bits per second (baud)
+    /// \param [in] config Sets data, parity, and stop bits
+    /// \n Valid values are:
+    /// \arg SERIAL_5N1
+    /// \arg SERIAL_6N1
+    /// \arg SERIAL_7N1
+    /// \arg SERIAL_8N1 (the default)
+    /// \arg SERIAL_5N2
+    /// \arg SERIAL_6N2
+    /// \arg SERIAL_7N2
+    /// \arg SERIAL_8N2
+    /// \arg SERIAL_5E1
+    /// \arg SERIAL_6E1
+    /// \arg SERIAL_7E1
+    /// \arg SERIAL_8E1
+    /// \arg SERIAL_5E2
+    /// \arg SERIAL_6E2
+    /// \arg SERIAL_7E2
+    /// \arg SERIAL_8E2
+    /// \arg SERIAL_5O1
+    /// \arg SERIAL_6O1
+    /// \arg SERIAL_7O1
+    /// \arg SERIAL_8O1
+    /// \arg SERIAL_5O2
+    /// \arg SERIAL_6O2
+    /// \arg SERIAL_7O2
+    /// \arg SERIAL_8O2
+    /// \see <a href="http://arduino.cc/en/Serial/Begin" target="_blank">origin: Arduino::Serial::begin</a>
     void begin(unsigned long baud, uint8_t config = SERIAL_8N1);
 
-
-    // Implementation of Arduino HardwareSerial::end
-    /// <summary>
-    ///   Disables serial communication, allowing the RX and TX pins to be
-    ///   used for general input and output.
-    /// </summary>
-    /// <remarks>
+    /// \brief Disables serial communication, allowing the RX and TX pins to be
+    /// used for general input and output.
+    /// \details
     ///    To re-enable serial communication, call Serial.begin().
-    /// </remarks>
-    /// <returns>
-    ///   nothing
-    /// </returns>
+    /// \see <a href="http://arduino.cc/en/Serial/End" target="_blank">origin: Arduino::Serial::end</a>
     void end(void);
 
-    // Implementation of Arduino HardwareSerial::flush
-    /// <summary>
-    ///   Waits for the transmission of outgoing serial data to complete.
-    /// </summary>
-    /// <remarks>
-    ///   Prior to Arduino 1.0, this instead removed any buffered
-    ///   incoming serial data.
-    /// </remarks>
-    /// <returns>
-    ///   nothing
-    /// </returns>
+    /// \brief Waits for the transmission of outgoing serial data to complete.
+    /// \see <a href="http://arduino.cc/en/Serial/Flush" target="_blank">origin: Arduino::Serial::flush</a>
     virtual void flush(void);
 
-    // Implementation of Arduino HardwareSerial::peek
-    /// <summary>
-    ///   Returns the next byte (character) of incoming serial data
+    /// \brief View the next byte
+    /// \details Returns the next byte (character) of incoming serial data
     ///   without removing it from the internal serial buffer.
-    /// </summary>
-    /// <remarks>
+    /// \note
     ///   Successive calls to peek() will return the same character;
     ///   the character from the next call to read().
-    /// </remarks>
-    /// <returns>
-    ///   int : the first byte of incoming serial data available (or -1
+    /// \return The first byte of incoming serial data available (or -1
     ///   if no data is available)
-    /// </returns>
+    /// \see <a href="http://arduino.cc/en/Serial/Peek" target="_blank">origin: Arduino::Serial::peek</a>
     virtual int peek(void);
 
-    // Implementation of Arduino HardwareSerial::read
-    /// <summary>
-    ///   Reads incoming serial data.
-    /// </summary>
-    /// <returns>
-    ///   int : the first byte of incoming serial data available (or -1
+    /// \brief Reads incoming serial data.
+    /// \return The first byte of incoming serial data available (or -1
     ///   if no data is available)
-    /// </returns>
+    /// \see <a href="http://arduino.cc/en/Serial/Read" target="_blank">origin: Arduino::Serial::read</a>
     virtual int read(void);
 
-    // Implementation of Arduino Stream::setTimeout
-    /// <summary>
-    ///   Sets the maximum milliseconds to wait for serial data when using
-    ///   Serial.parseFloat(), Serial.parseInt(), Serial.readBytesUntil()
-    ///   or Serial.readBytes()
-    /// </summary>
-    /// <remarks>
+    /// \details Sets the maximum milliseconds to wait for serial data
+    /// \param [in] milliseconds Timeout duration in milliseconds
+    /// \note
     ///   Defaults to 1000 milliseconds.
-    /// </remarks>
-    /// <param name="milliseconds">
-    ///   unsigned long : timeout duration in milliseconds
-    /// </param>
-    /// <returns>
-    ///   nothing
-    /// </returns>
+    /// \see Serial::parseFloat
+    /// \see Serial::parseInt
+    /// \see Serial::readBytes
+    /// \see Serial::readBytesUntil
+    /// \see <a href="http://arduino.cc/en/Serial/SetTimeout" target="_blank">origin: Arduino::Serial::setTimeout</a>
     virtual void setTimeout(unsigned long timeout);
 
-
-    // Implementation of Arduino HardwareSerial::write
-    /// <summary>
-    ///   Writes binary data to the serial port.
-    /// </summary>
-    /// <remarks>
+    /// \brief Writes binary data to the serial port.
+    /// \details
     ///   This data is sent as a byte or series of bytes; to send the
-    ///   characters representing the digits of a number <see cref="HardwareSerial::print" />.
-    /// </remarks>
-    /// <param name="buffer">
-    ///   uint8_t * : an array to send as a series of bytes
-    /// </param>
-    /// <param name="length">
-    ///   size_t : the length of the buffer
-    /// </param>
-    /// <returns>
-    ///   size_t : returns the number of bytes written
-    /// </returns>
-    virtual size_t write(uint8_t c);
+    ///   characters representing the digits of a number
+    /// \param [in] buffer An array to send as a series of bytes
+    /// \param [in] length The length of the buffer
+    /// \return The number of bytes written
+    /// \see HardwareSerial::print
+    /// \see <a href="http://arduino.cc/en/Serial/Write" target="_blank">origin: Arduino::Serial::write</a>
     virtual size_t write(const uint8_t *buffer, size_t size);
+    virtual size_t write(uint8_t c);
 
     inline size_t write(char c)
      {
@@ -283,6 +224,11 @@ public:
     }
 };
 
-extern HardwareSerial Serial;
-extern HardwareSerial Serial1;
+extern HardwareSerial Serial;    ///< This variable will provide global access to
+                                 /// this pseudo-static class, and will be instantiated
+                                 /// in the .cpp file.
+
+extern HardwareSerial Serial1;   ///< This variable will provide global access to
+                                 /// this pseudo-static class, and will be instantiated
+                                 /// in the .cpp file.
 #endif

@@ -1,6 +1,8 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
-// Licensed under the BSD 2-Clause License.  
-// See License.txt in the project root for license information.
+/** \file eeprom.h
+ * Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
+ * Licensed under the BSD 2-Clause License.  
+ * See License.txt in the project root for license information.
+ */
 
 #ifndef EEPROM_H
 #define EEPROM_H
@@ -17,20 +19,22 @@ class EEPROMClass
 {
   public:
     /// \brief Reads a byte from the EEPROM.
-    /// \param [in] address The location to read from, starting from 0 (int)
-    /// \returns the value stored in that location (byte)
+    /// \param [in] address The location to read from, starting from 0
+    /// \returns the value stored in that location
     /// \note Locations that have never been written to have the value of 255.
+    /// \see <a href="http://arduino.cc/en/Reference/EEPROMRead" target="_blank">origin: Arduino::EEPROM::read</a>
     uint8_t
     read (
         const int address
     ) const;
 
     /// \brief Write a byte to the EEPROM.
-    /// \param [in] address The location to write to, starting from 0 (int)
-    /// \param [in] value The value to write, from 0 to 255 (byte)
+    /// \param [in] address The location to write to, starting from 0
+    /// \param [in] value The value to write, from 0 to 255
     /// \note An EEPROM write takes 3.3 ms to complete. The EEPROM memory has
     /// a specified life of 100,000 write/erase cycles, so you may need to be
     /// careful about how often you write to it.
+    /// \see <a href="http://arduino.cc/en/Reference/EEPROMWrite" target="_blank">origin: Arduino::EEPROM::write</a>
     void
     write (
         const int address,

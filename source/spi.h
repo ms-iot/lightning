@@ -1,23 +1,26 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
-// Licensed under the BSD 2-Clause License.  
-// See License.txt in the project root for license information.
+/** \file spi.h
+ * Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
+ * Licensed under the BSD 2-Clause License.
+ * See License.txt in the project root for license information.
+ */
 
 #ifndef _WINDOWS_SPI_H_
 #define _WINDOWS_SPI_H_
 
 #include "arduino.h"
 
-// Define SPI modes.  Different modes have different clock
-// polarities and/or clock edge for bit shift vs capture.
-#define SPI_MODE0    0  // Clock sits low, capture on rising edge
-#define SPI_MODE1    1  // Clock sits low, shift on rising edge
-#define SPI_MODE2    2  // Clock sites high, capture on falling edge
-#define SPI_MODE3    3  // Clock sits high, shift on falling edge
+/// \brief Define SPI modes
+/// \details Different modes have different clock polarities and/or
+/// clock edge for bit shift vs capture.
+#define SPI_MODE0    0  ///< Clock sits low, capture on rising edge
+#define SPI_MODE1    1  ///< Clock sits low, shift on rising edge
+#define SPI_MODE2    2  ///< Clock sits high, capture on falling edge
+#define SPI_MODE3    3  ///< Clock sits high, shift on falling edge
 
 // Define the Arduino pin numbers for SPI functions.
-#define SPI1_MOSI 11
-#define SPI1_MISO 12
-#define SPI1_SCK 13
+#define SPI1_MOSI 11  ///< (M)aster (O)ut (S)lave (I)n
+#define SPI1_MISO 12  ///< (M)aster (I)n (S)lave (O)ut
+#define SPI1_SCK 13  ///< (S)erial (C)loc(K)
 
 // Define the externally accessible SPI bus characteristics.
 #define SPI1_SPEED 1000000UL  // Default speed is 1 Mhz
@@ -41,6 +44,12 @@
 #define LSBFIRST        0x00
 #define MSBFIRST        0x01
 
+/// \brief Serial Peripheral Interface communication class
+/// \details Serial Peripheral Interface (SPI) is a synchronous
+/// serial data protocol used by microcontrollers for communicating
+/// with one or more peripheral devices quickly over short distances.
+/// It can also be used for communication between two microcontrollers.
+/// \see <a href="http://arduino.cc/en/Reference/SPI" target="_blank">origin: Arduino::SPI</a>
 class SPIClass
 {
 public:
@@ -51,7 +60,15 @@ public:
 		this->end();
 	}
 
-	void begin()
+    /// \brief Initializes the SPI bus
+    /// \details Sets SCK, MOSI, and SS to outputs, pulling SCK
+    /// and MOSI low, and SS high.
+    /// \see SPI::end
+    /// \see SPI::setClockDivider
+    /// \see SPI::setDataMode
+    /// \see SPI::setBitOrder
+    /// \see <a href="http://arduino.cc/en/Reference/SPIBegin" target="_blank">origin: Arduino::SPI::begin</a>
+    void begin()
 	{
 		SPI_CONTROLLER_CONFIG cfg;
 
@@ -99,7 +116,10 @@ public:
 		}
     }
 
-	void end()
+    /// \brief Disables the SPI bus (leaving pin modes unchanged)
+    /// \see SPI::begin
+    /// \see <a href="http://arduino.cc/en/Reference/SPIEnd" target="_blank">origin: Arduino::SPI::end</a>
+    void end()
 	{
 		if (this->spi != nullptr)
 		{
@@ -123,9 +143,17 @@ public:
 		}
 	}
 
-	// sets the specified mode, assuming 8-bit data length
-	// mode should be SPI_MODE0 ... SPI_MODE3
-	void setDataMode(int mode)
+	/// \brief Sets the SPI data mode: that is, clock polarity and phase
+    /// \param [in] mode
+    /// \n Valid values:
+    /// \arg SPI_MODE0 -> CLKP:0 PH:0
+    /// \arg SPI_MODE1 -> CLKP:0 PH:1
+    /// \arg SPI_MODE2 -> CLKP:1 PH:0
+    /// \arg SPI_MODE3 -> CLKP:1 PH:1
+    /// \see SPI::setClockDivider
+    /// \see SPI::setBitOrder
+    /// \see <a href="http://arduino.cc/en/Reference/SPISetDataMode" target="_blank">origin: Arduino::SPI::setDataMode</a>
+    void setDataMode(int mode)
 	{
 		SPI_CONTROLLER_CONFIG cfg;
 
@@ -143,7 +171,20 @@ public:
 		}
 	}
 
-	void setClockDivider(int clockDiv)
+    /// \brief Sets the SPI clock divider relative to the system clock
+    /// \param [in] divider
+    /// \n Valid values:
+    /// \arg SPI_CLOCK_DIV2
+    /// \arg SPI_CLOCK_DIV4
+    /// \arg SPI_CLOCK_DIV8
+    /// \arg SPI_CLOCK_DIV16
+    /// \arg SPI_CLOCK_DIV32
+    /// \arg SPI_CLOCK_DIV64
+    /// \arg SPI_CLOCK_DIV128
+    /// \see SPI::setDataMode
+    /// \see SPI::setBitOrder
+    /// \see <a href="http://arduino.cc/en/Reference/SPISetClockDivider" target="_blank">origin: Arduino::SPI::setClockDivider</a>
+    void setClockDivider(int clockDiv)
 	{
 		ULONG div = 0;
 		SPI_CONTROLLER_CONFIG cfg;
@@ -186,8 +227,11 @@ public:
 		return retVal;
 	}
 
-	// Transfer one byte over the SPI in each direction (send one, receive one).
-	unsigned char transfer(unsigned char val)
+    /// \brief Transfers one byte over the SPI bus, both sending and receiving.
+    /// \param [in] val The byte to send out over the bus
+    /// \return The byte read from the bus
+    /// \see <a href="http://arduino.cc/en/Reference/SPITransfer" target="_blank">origin: Arduino::SPI::transfer</a>
+    unsigned char transfer(unsigned char val)
 	{
         unsigned char ret;
         unsigned char writeVal;
@@ -220,9 +264,14 @@ public:
 		return spi;
 	}
     
-    // Set the write and read bit order.
-	// The default bit order is MSBit first.
-	void setBitOrder(int bitOrder)
+    /// \brief Sets the order of the bits shifted out of and into the SPI bus
+	/// \details either LSBFIRST (least-significant bit first) or MSBFIRST (most-significant bit first)
+    /// \param [in] order LSBFIRST or MSBFIRST
+    /// \note MSBFIRST, unless specified otherwise
+    /// \see SPI::setClockDivider
+    /// \see SPI::setDataMode
+    /// \see <a href="http://arduino.cc/en/Reference/SPISetBitOrder" target="_blank">origin: Arduino::SPI::setBitOrder</a>
+    void setBitOrder(int bitOrder)
 	{
 		if (bitOrder == LSBFIRST)
 		{

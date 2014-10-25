@@ -1,6 +1,8 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
-// Licensed under the BSD 2-Clause License.  
-// See License.txt in the project root for license information.
+/** \file arduino.h
+ * Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
+ * Licensed under the BSD 2-Clause License.  
+ * See License.txt in the project root for license information.
+ */
 
 #ifndef _WINDOWS_ARDUINO_H_
 #define _WINDOWS_ARDUINO_H_
@@ -88,8 +90,8 @@
 
 #define PI              M_PI
 #define HALF_PI         M_PI_2
-#define TAU             (M_PI * 2.0f)
-#define TWO_PI          TAU
+#define TWO_PI          (M_PI * 2.0f)
+#define TAU             TWO_PI
 
 #define boolean bool
 typedef uint8_t byte;
@@ -103,9 +105,10 @@ enum ReferenceVoltage : uint8_t {
     EXTERNAL = 1, ///< Pinout exists, but not supported by Galileo hardware
 };
 
-//
-// Printf like function to log to stdout and if a debugger is attached to the debugger output.
-//
+/// \brief Writes the C string pointed by format to the debugger console and standard output
+/// \params [in] format If format includes format specifiers (subsequences beginning with %),
+/// the additional arguments following format are formatted and inserted in the resulting
+/// string replacing their respective specifiers.
 inline int Log(const char *format, ...)
 {
     va_list args;
@@ -158,19 +161,76 @@ inline int Log(const wchar_t *format, ...)
     return len;
 }
 
-// Arduino math definitions
+/// \brief Computes the absolute value of a number.
+/// \param [in] x The number
+/// \see <a href="http://arduino.cc/en/Reference/Abs" target="_blank">origin: Arduino::abs</a>
 #define abs(x) ((x)>0?(x):-(x))
+
+/// \brief Constrains a number to be within a range.
+/// \param [in] amt The number to constrain, all data types
+/// \param [in] low The lower end of the range, all data types
+/// \param [in] high The upper end of the range, all data types
+/// \see <a href="http://arduino.cc/en/Reference/Constrain" target="_blank">origin: Arduino::constrain</a>
 #define constrain(amt,low,high) do {amt=((amt)<(low)?(low):((amt)>(high)?(high):(amt)));} while (0)
+
+/// \brief Computes the square of a number.
+/// \param [in] x The number
 #define sq(x) ((x)*(x))
+
+/// \brief Re-maps a number from one range to another.
+/// \param [in] x The number to map
+/// \param [in] in_min The lower bound of the value's current range
+/// \param [in] in_max The upper bound of the value's current range
+/// \param [in] out_min The lower bound of the value's target range
+/// \param [in] out_max The upper bound of the value's target range
+/// \see ::constrain
+/// \see <a href="http://arduino.cc/en/Reference/Map" target="_blank">origin: Arduino::map</a>
 inline long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// Function prototypes.
+/// \brief Configures the specified pin to behave either as an input or an output.
+/// \details it is possible to enable the internal pullup resistors with the mode
+/// INPUT_PULLUP. Additionally, the INPUT mode explicitly disables the internal pullups. 
+/// \param [in] pin The number of the pin whose mode you wish to set
+/// \param [in] mode INPUT, OUTPUT, or INPUT_PULLUP
+/// \see ::digitalWrite
+/// \see ::digitalRead
+/// \see <a href="http://arduino.cc/en/Reference/PinMode" target="_blank">origin: Arduino::pinMode</a>
 inline void pinMode(unsigned int pin, unsigned int mode);
+
+/// \brief Performs a tone operation.
+/// \details This will start a PWM wave on the designated pin of the
+/// inputted frequency with 50% duty cycle
+/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+/// \param [in] frequency - in Hertz
+/// \see ::noTone
+/// \see ::analogWrite
+/// \see <a href="http://arduino.cc/en/Reference/Tone" target="_blank">origin: Arduino::tone</a>
 inline void tone(int pin, unsigned int frequency);
+
+/// \brief Performs a tone operation.
+/// \details This will start a PWM wave on the designated pin of the
+/// inputted frequency with 50% duty cycle and set up a timer to trigger
+/// a callback after the inputted duration
+/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+/// \param [in] frequency - in Hertz
+/// \param [in] duration - in milliseconds
+/// \see ::noTone
+/// \see ::analogWrite
+/// \see <a href="http://arduino.cc/en/Reference/Tone" target="_blank">origin: Arduino::tone</a>
 inline void tone(int pin, unsigned int frequency, unsigned long duration);
+
+/// \brief Performs a noTone operation.
+/// \details This will stop a PWM wave on the designated pin if there is
+/// a tone running on it
+/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+/// \see ::tone
+/// \see <a href="http://arduino.cc/en/Reference/NoTone" target="_blank">origin: Arduino::noTone</a>
 static void noTone(int pin);
 
 // Internal functions (call at your own risk)
@@ -198,10 +258,15 @@ typedef struct {   // Comment format: Initialized value - Description
     BOOL pinInitialized : 1;	// FALSE - TRUE or FALSE
 } PIN_DATA, *PPIN_DATA;
 
-//
-// Pauses the program for the amount of time (in microseconds) 
-// specified as parameter.
-//
+/// \brief Pauses the program for the amount of time (in microseconds) 
+/// specified as parameter.
+/// \details There are a thousand microseconds in a millisecond, and
+/// \param [in] us The number of microseconds to pause
+/// a million microseconds in a second.
+/// \see ::millis
+/// \see ::micros
+/// \see ::delay
+/// \see <a href="http://arduino.cc/en/Reference/DelayMicroseconds" target="_blank">origin: Arduino::delayMicroseconds</a>
 inline void delayMicroseconds(unsigned int us)
 {
     LARGE_INTEGER us64;
@@ -209,24 +274,40 @@ inline void delayMicroseconds(unsigned int us)
     _WindowsTime.delayMicroseconds(us64);
 }
 
-//
-// Pauses the program for the amount of time (in miliseconds) 
-// specified as parameter.
-//
+/// \brief Pauses the program for the amount of time (in miliseconds) 
+/// specified as parameter.
+/// \details There are 1000 milliseconds in a second.
+/// \param [in] ms The number of milliseconds to pause
+/// \note The windows timer ticks every 16ms, for shorter precise
+/// delays use delayMicroseconds()
+/// \see ::millis
+/// \see ::micros
+/// \see ::delayMicroseconds
+/// \see <a href="http://arduino.cc/en/Reference/Delay" target="_blank">origin: Arduino::delay</a>
 inline void delay(unsigned long ms)
 {
     _WindowsTime.delay(ms);
 }
 
-// Returns the number of milliseconds since the currently running program started. 
-// This number will overflow (go back to zero), after approximately 50 days.
+/// \brief Retrieves the number of milliseconds since the currently running program started.
+/// \returns Number of milliseconds since the program started.
+/// \warning This number will overflow (go back to zero), after approximately 50 days.
+/// \see ::micros
+/// \see ::delay
+/// \see ::delayMicroseconds
+/// \see <a href="http://arduino.cc/en/Reference/Millis" target="_blank">origin: Arduino::millis</a>
 inline unsigned long millis(void)
 {
     return _WindowsTime.millis();
 }
 
-// Returns the number of microseconds since the currently running program started. 
-// This number will overflow (go back to zero), after approximately 70 minutes.
+/// \brief Retrieves the number of microseconds since the currently running program started. 
+/// \returns Number of microseconds since the program started.
+/// \warning This number will overflow (go back to zero), after approximately 70 minutes.
+/// \see ::millis
+/// \see ::delay
+/// \see ::delayMicroseconds
+/// \see <a href="http://arduino.cc/en/Reference/Micros" target="_blank">origin: Arduino::micros</a>
 inline unsigned long micros(void)
 {
     return _WindowsTime.micros();
@@ -268,7 +349,6 @@ const int _GalileoMuxMap[NUM_ARDUINO_PINS] = {
     MAKELONG(GPORT0_BIT5, DEFAULT_MUX),             // IO18 - A4_MUX: 0=Analog, 1=GPIO
     MAKELONG(GPORT0_BIT4, DEFAULT_MUX)              // IO19 - A5_MUX: 0=Analaog, 1=GPIO
 };
-
 
 const ULONG _ArduinoToGalileoPinMap[NUM_ARDUINO_PINS] =
 {
@@ -395,7 +475,7 @@ const uint8_t _PwmMuxFunction[NUM_ARDUINO_PINS]
 // This table maps PWM pin numbers to I/O Expander pins.
 const uint8_t _PwmPinMap[NUM_ARDUINO_PINS]
 {
-    0,							// Pin 0 - No PWM
+        0,							// Pin 0 - No PWM
         0,							// Pin 1 - No PWM
         0,							// Pin 2 - No PWM
         GPORT0_BIT2_PWM3,			// Pin 3 - PWM 3
@@ -660,20 +740,24 @@ inline void _ValidatePinOkToChange(int pin)
     }
 }
 
-//
-// Set the digital pin (IO0 - IO13) to the specified state.
-// If the analog pins (A0-A5) are configured as digital IOs,
-// also sets the state of these pins.
-// A0-A5 are mapped to 14-19
-// 
-// Examples:
-//
-//  // set IO4 high.
-//  digitalWrite(4, 1);
-//  
-//  // set A1 low
-//  digitalWrite(15, 0);
-//
+/// \brief Write a HIGH or a LOW value to a digital pin.
+/// \details If the pin has been configured as an OUTPUT with pinMode(),
+/// its voltage will be set to the corresponding value: 5V (or 3.3V
+/// depending on the jumper setting) for HIGH, 0V (ground) for LOW. If
+/// the pin is configured as an INPUT, digitalWrite() will enable(HIGH)
+/// or disable(LOW) the internal pullup on the input pin. It is recommended
+/// to set the pinMode() to INPUT_PULLUP to enable the internal pull-up
+/// resistor.
+/// \param [in] pin The pin number
+/// \param [in] state HIGH or LOW
+/// \note If you do not set the pinMode() to OUTPUT, and connect an LED
+/// to a pin, when calling digitalWrite(HIGH), the LED may appear dim.
+/// Without explicitly setting pinMode(), digitalWrite() will have enabled
+/// the internal pull-up resistor, which acts like a large current-limiting
+/// resistor.
+/// \see ::pinMode
+/// \see ::digitalRead
+/// \see <a href="http://arduino.cc/en/Reference/DigitalWrite" target="_blank">origin: Arduino::digitalWrite</a>
 inline void digitalWrite(unsigned int pin, unsigned int state)
 {
     _ValidateArduinoPinNumber(pin);
@@ -700,19 +784,17 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
     }
 }
 
-//
-// Reads the value from the digital pin (IO0 - IO13).
-// A0-A5 are mapped to 14-19
-//
-// Return Value:
-//
-// 1 for HIGH, 0 for LOW, or -1 for error
-// 
-// Example:
-//
-//  // read IO4.
-//  int val = digitalRead(4);
-//
+/// \brief Reads the value from a specified digital pin,
+/// either HIGH or LOW.
+/// \param [in] pin The number of the digital pin you want to read
+/// \returns HIGH or LOW
+/// \note If the pin isn't connected to anything, digitalRead()
+/// can return either HIGH or LOW (and this can change randomly).
+/// \note The analog input pins can be used as digital pins,
+/// referred to as A0, A1, etc.
+/// \see ::pinMode
+/// \see ::digitalWrite
+/// \see <a href="http://arduino.cc/en/Reference/DigitalRead" target="_blank">origin: Arduino::digitalRead</a>
 inline int digitalRead(int pin)
 {
     _ValidateArduinoPinNumber(pin);
@@ -730,15 +812,6 @@ inline int digitalRead(int pin)
     return (int) ret;
 }
 
-//
-// Configures the specified pin to behave either as an input
-// or an output (IO0 - IO13).  A0-A5 are mapped to 14-19
-// 
-// Example:
-//
-//  // Set IO4 as input.
-//  pinMode(4, INPUT);
-//
 inline void pinMode(unsigned int pin, unsigned int mode)
 {
     _ValidateArduinoPinNumber(pin);
@@ -1174,7 +1247,10 @@ inline void ArduinoInit()
 /// \brief Reads the value from the specified analog pin.
 /// \param [in] pin should be the analog pin number (A0-A5)
 /// \returns The numerator of a ratio of input voltage over
-/// reference voltage, which is represented as 2^analogReadResolution(x).
+/// reference voltage, which is represented as (2^analogReadResolution(x) - 1).
+/// \see ::analogReference
+/// \see ::analogReadResolution
+/// \see <a href="http://arduino.cc/en/Reference/AnalogRead" target="_blank">origin: Arduino::analogRead</a>
 inline uint32_t analogRead(int32_t pin)
 {
     return _ArduinoStatic.analogRead(pin);
@@ -1184,12 +1260,15 @@ inline uint32_t analogRead(int32_t pin)
 /// \param [in] pin The Arduino GPIO pin on which to generate
 /// the pulse train. Pins 3, 5, 6, 7, 8, 9, 10, or 11 are valid.
 /// \param [in] value The analong value, which translates to the
-/// duty cycle of the pulse train. Range: 0-2^analogWriteResolution(x)
+/// duty cycle of the pulse train. Range: 0-(2^analogWriteResolution(x) - 1)
 /// - 0 - 0% duty cycle (no pulses are generated, output is LOW)
 /// - 2^analogWriteResolution(x) - 100% duty cycle (pulse train is HIGH
 /// continuously)
 /// \note A pulse frequency of 100hz is requested, which will actually get 
 /// us about 92 hz (with clock granularity), or 92 pulses per second.
+/// \see ::analogRead
+/// \see ::analogWriteResolution
+/// \see <a href="http://arduino.cc/en/Reference/AnalogWrite" target="_blank">origin: Arduino::analogWrite</a>
 inline void analogWrite(const uint8_t pin, const uint32_t value)
 {
     return _ArduinoStatic.analogWrite(pin, value);
@@ -1206,6 +1285,8 @@ inline void analogWrite(const uint8_t pin, const uint32_t value)
 /// \warning Unlike Arduino, if you set the analogReadResolution() value to a
 /// value lower or higher than your board's capabilities, your input will be
 /// scaled as accurately as possible.
+/// \see ::analogRead
+/// \see <a href="http://arduino.cc/en/Reference/AnalogReadResolution" target="_blank">origin: Arduino::analogReadResolution</a>
 inline void analogReadResolution(const uint8_t resolution)
 {
     return _ArduinoStatic.analogReadResolution(resolution);
@@ -1227,6 +1308,10 @@ inline void analogReadResolution(const uint8_t resolution)
 /// \warning Unlike Arduino, if you set the analogWriteResolution() value to a
 /// value lower or higher than your board's capabilities, your input will be
 /// scaled as accurately as possible.
+/// \see ::analogWrite
+/// \see ::analogRead
+/// \see ::map
+/// \see <a href="http://arduino.cc/en/Reference/AnalogWriteResolution" target="_blank">origin: Arduino::analogWriteResolution</a>
 inline void analogWriteResolution(const uint8_t resolution)
 {
     return _ArduinoStatic.analogWriteResolution(resolution);
@@ -1247,11 +1332,32 @@ inline void analogWriteResolution(const uint8_t resolution)
 /// \exception _arduino_fatal_error This error is thrown when any reference
 /// voltage other than DEFAULT is used.
 /// \see ReferenceVoltage
+/// \see ::analogRead
+/// \see <a href="http://arduino.cc/en/Reference/AnalogReference" target="_blank">origin: Arduino::analogReference</a>
 inline void analogReference(const uint8_t reference_voltage)
 {
     return _ArduinoStatic.analogReference(reference_voltage);
 }
 
+/// \brief Shifts in a byte of data one bit at a time.
+/// \details Starts from either the most (i.e. the leftmost) or least
+/// (rightmost) significant bit. For each bit, the clock pin is pulled
+/// high, the next bit is read from the data line, and then the clock
+/// pin is taken low.
+/// \param [in] data_pin_ The pin on which to input each bit
+/// \param [in] clock_pin_ The pin to toggle to signal a read from dataPin
+/// \param [in] bit_order_ Which order to shift in the bits; either MSBFIRST
+/// or LSBFIRST (Most Significant Bit First, or, Least Significant Bit First)
+/// \returns the byte value read
+/// \note If you're interfacing with a device that's clocked
+/// by rising edges, you'll need to make sure that the clock pin is low
+/// before the first call to shiftIn(), e.g. with a call to
+/// digitalWrite(clockPin, LOW).
+/// \note This is a software implementation; The SPI library uses the
+/// hardware implementation, which is faster but only works on specific
+/// pins.
+/// \see ::shiftOut
+/// \see <a href="http://arduino.cc/en/Reference/ShiftIn" target="_blank">origin: Arduino::shiftIn</a>
 inline uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_)
 {
     uint8_t buffer(0);
@@ -1272,6 +1378,20 @@ inline uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_
     return buffer;
 }
 
+/// \brief Shifts out a byte of data one bit at a time.
+/// \details Starts from either the most (i.e. the leftmost) or least
+/// (rightmost) significant bit. Each bit is written in turn to a data pin,
+/// after which a clock pin is pulsed (taken high, then low) to indicate
+/// that the bit is available.
+/// \param [in] data_pin_ The pin on which to output each bit
+/// \param [in] clock_pin_ The pin to toggle once the dataPin has been set to the correct value
+/// \param [in] bit_order_ Which order to shift out the bits; either MSBFIRST or LSBFIRST
+/// \param [in] byte_ The data to shift out
+/// \note If you're interfacing with a device that's clocked by rising edges,
+/// you'll need to make sure that the clock pin is low before the call to
+/// shiftOut(), e.g. with a call to digitalWrite(clockPin, LOW).
+/// \see shiftIn
+/// \see <a href="http://arduino.cc/en/Reference/ShiftOut" target="_blank">origin: Arduino::shiftOut</a>
 inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, uint8_t byte_)
 {
     for (uint8_t loop_count = 0, bit_mask = 0; loop_count < 8; ++loop_count) {
@@ -1293,41 +1413,16 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
 // Tone function calls
 __declspec (selectany) ArduinoStatic::TonePinMap ArduinoStatic::tpMap;
 
-///
-/// \brief Performs a tone operation.
-/// \details This will start a PWM wave on the designated pin of the
-/// inputted frequency with 50% duty cycle
-/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
-///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
-/// \param [in] frequency - in Hertz
-///
 inline void tone(int pin, unsigned int frequency)
 {
     _ArduinoStatic.tone(pin, frequency);
 }
 
-///
-/// \brief Performs a tone operation.
-/// \details This will start a PWM wave on the designated pin of the
-/// inputted frequency with 50% duty cycle and set up a timer to trigger
-/// a callback after the inputted duration
-/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
-///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
-/// \param [in] frequency - in Hertz
-/// \param [in] duration - in milliseconds
-///
 inline void tone(int pin, unsigned int frequency, unsigned long duration)
 {
     _ArduinoStatic.tone(pin, frequency, duration);
 }
 
-///
-/// \brief Performs a noTone operation.
-/// \details This will stop a PWM wave on the designated pin if there is
-/// a tone running on it
-/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
-///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
-///
 static void noTone(int pin)
 {
     auto result = _ArduinoStatic.tpMap.find(pin);
@@ -1421,9 +1516,20 @@ inline int RunArduinoSketch()
     return ret;
 }
 
-//
-// Initialize pseudo random number generator with seed
-//
+/// \brief Initialize pseudo random number generator.
+/// \details Causes the generator to start at an
+/// arbitrary point in its random sequence. This
+/// sequence, while very long, is always the same.
+/// \note If it is important for a sequence of values generated
+/// by random() to differ, on subsequent executions of a sketch,
+/// use randomSeed() to initialize the random number generator
+/// with a fairly random input, such as analogRead() on an
+/// unconnected pin. Conversely, it can occasionally be useful
+/// to use pseudo - random sequences that repeat exactly. This
+/// can be accomplished by calling randomSeed() with a fixed
+/// number, before starting the random sequence.
+/// \see ::random
+/// \see <a href="http://arduino.cc/en/Reference/RandomSeed" target="_blank">origin: Arduino::randomSeed</a>
 inline void randomSeed(unsigned int seed)
 {
     if (seed != 0) {
@@ -1431,9 +1537,11 @@ inline void randomSeed(unsigned int seed)
     }
 }
 
-//
-// Generate pseudo random number with upper bound max
-//
+/// \brief Generate pseudo random number with upper bound max
+/// \param [in] max Upper bound of the random value, exclusive
+/// \returns The pseudo random number
+/// \see ::randomSeed
+/// \see <a href="http://arduino.cc/en/Reference/Random" target="_blank">origin: Arduino::random</a>
 inline long random(long max)
 {
     if (max == 0) {
@@ -1442,9 +1550,12 @@ inline long random(long max)
     return _WindowsRandom.Next() % max;
 }
 
-//
-// Generate pseudo random number in the range min - max
-//
+/// \brief Generate pseudo random number in the range min - max
+/// \param [in] min Lower bound of the random value, inclusive
+/// \param [in] max Upper bound of the random value, exclusive
+/// \returns The pseudo random number
+/// \see ::randomSeed
+/// \see <a href="http://arduino.cc/en/Reference/Random" target="_blank">origin: Arduino::random</a>
 inline long random(long min, long max)
 {
     if (min >= max) {
@@ -1457,22 +1568,81 @@ inline long random(long min, long max)
 inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 #define word(x, y) makeWord(x, y)
 
-// Bits and Bytes
+/// \brief Extracts the low-order (rightmost) byte of a variable
+/// \param [in] x A value of any type
+/// \return The low-order byte
+/// \see ::highByte
+/// \see <a href="http://arduino.cc/en/Reference/LowByte" target="_blank">origin: Arduino::lowByte</a>
 #define lowByte(w) ((uint8_t) ((w) & 0xff))
+
+/// \brief Extracts the high-order (leftmost) byte of a word
+/// (or the second lowest byte of a larger data type)
+/// \param [in] x A value of any type
+/// \return The high-order byte
+/// \see ::lowByte
+/// \see <a href="http://arduino.cc/en/Reference/HighByte" target="_blank">origin: Arduino::highByte</a>
 #define highByte(w) ((uint8_t) ((w) >> 8))
 
+/// \brief Reads a bit of a number
+/// \param [in] x The number from which to read
+/// \param [in] n Which bit to read, starting at 0 for the
+/// least-significant (rightmost) bit
+/// \return The value of the specified bit (0 or 1)
+/// \see ::bit
+/// \see ::bitWrite
+/// \see ::bitSet
+/// \see ::bitClear
+/// \see <a href="http://arduino.cc/en/Reference/BitRead" target="_blank">origin: Arduino::bitRead</a>
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
+
+/// \brief Sets (writes a 1 to) a bit of a numeric variable
+/// \param [in] x The numeric variable whose bit to set
+/// \param [in] n Which bit to set, starting at 0 for the
+/// least-significant (rightmost) bit
+/// \see ::bit
+/// \see ::bitRead
+/// \see ::bitWrite
+/// \see ::bitClear
+/// \see <a href="http://arduino.cc/en/Reference/BitSet" target="_blank">origin: Arduino::bitSet</a>
 #define bitSet(value, bit) ((value) |= (1UL << (bit)))
+
+/// \brief Clears (writes a 0 to) a bit of a numeric variable
+/// \param [in] x The numeric variable whose bit to clear
+/// \param [in] n Which bit to clear, starting at 0 for the
+/// least-significant (rightmost) bit
+/// \see ::bit
+/// \see ::bitRead
+/// \see ::bitWrite
+/// \see ::bitSet
+/// \see <a href="http://arduino.cc/en/Reference/BitClear" target="_blank">origin: Arduino::bitClear</a>
 #define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
+
+/// \brief Sets (writes a 1 to) a bit of a numeric variable
+/// \param [in] x The numeric variable whose bit to set
+/// \param [in] n Which bit to set, starting at 0 for the
+/// least-significant (rightmost) bit
+/// \param [in] b The value to write to the bit (0 or 1)
+/// \see ::bit
+/// \see ::bitRead
+/// \see ::bitSet
+/// \see ::bitClear
+/// \see <a href="http://arduino.cc/en/Reference/BitWrite" target="_blank">origin: Arduino::bitWrite</a>
 #define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
+
+/// \brief Computes the value of the specified bit (bit 0 is 1, bit 1 is 2, bit 2 is 4, etc.)
+/// \param [in] n the bit whose value to compute
+/// \see ::bitRead
+/// \see ::bitWrite
+/// \see ::bitSet
+/// \see ::bitClear
+/// \see <a href="http://arduino.cc/en/Reference/Bit" target="_blank">origin: Arduino::bit</a>
+#define bit(b) (1UL << (b))
 
 // Interrupt enable/disable stubs
 #define cli()
 #define sei()
 
-#define bit(b) (1UL << (b))
 #define __attribute__(x)
-
 
 // Other utility Macros
 // Turn passed in value into a string
@@ -1480,8 +1650,16 @@ inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 // Turn passed in macro into a string
 #define STRINGIFY_MACRO(x) STRINGIFY(x)
 
+/// \brief Convert degrees to radians
+/// \param [in] deg An angle in degrees
+/// \return The number of radians equivalent to the degrees provided
+/// \see ::degrees
 inline float radians(float deg) { return deg * 180.0f / static_cast<float>(PI); }
+
+/// \brief Convert radians to degrees
+/// \param [in] rad An angle in radians
+/// \return The number of degrees equivalent to the radians provided
+/// \see ::radians
 inline float degrees(float rad) { return rad * static_cast<float>(PI) / 180.0f; }
 
-#include "Wire.h"
 #endif // _WINDOWS_ARDUINO_H_
