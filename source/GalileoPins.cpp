@@ -478,7 +478,7 @@ BOOL GalileoPinsClass::_setPinDigitalIo(ULONG pin)
     // If the pin is on a CY8C9540A I/O Expander chip, deselect the PWM function.
     if (status && (m_PwmChannels[pin].expander == CY8))
     {
-        ULONG i2cAdr = m_ExpAttributes[m_PinAttributes[pin].gpioType].I2c_Address;
+        ULONG i2cAdr = m_ExpAttributes[m_PwmChannels[pin].expander].I2c_Address;
         ULONG portBit = m_PwmChannels[pin].portBit;
         status = CY8C9540ADevice::SetPortbitDio(i2cAdr, portBit);
         if (!status) { error = GetLastError(); }
