@@ -398,13 +398,6 @@ BOOL CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG directi
         if (!status) { error = GetLastError(); }
     }
 
-    if (status)
-    {
-        // Perform the I2C transfers specified above.
-        status = transaction.execute();
-        if (!status) { error = GetLastError(); }
-    }
-
     //
     // If the pin is an input with a pull-up, set the pin on the output port high.
     //
