@@ -25,6 +25,7 @@ SPIControllerClass::SPIControllerClass()
     spiSpeed250khz = { 0x200000, 49 };
     spiSpeed125khz = { 0x100000, 49 };
     spiSpeed50khz = { 0x100000, 124 };
+    spiSpeed31k25hz = { 0x28f5C, 31 };  // 31.25 khz for MIDI
     spiSpeed25khz = { 0x80000, 124 };
     spiSpeed10khz = { 0x20000, 77 };
     spiSpeed5khz = { 0x20000, 154 };
@@ -275,6 +276,10 @@ BOOL SPIControllerClass::_setClockRate(ULONG clockKhz)
     else if (clockKhz >= 50)
     {
         pSpeed = &spiSpeed50khz;
+    }
+    else if (clockKhz >= 31)
+    {
+        pSpeed = &spiSpeed31k25hz;
     }
     else if (clockKhz >= 25)
     {

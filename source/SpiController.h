@@ -200,6 +200,7 @@ private:
     SPI_BUS_SPEED spiSpeed250khz;
     SPI_BUS_SPEED spiSpeed125khz;
     SPI_BUS_SPEED spiSpeed50khz;
+    SPI_BUS_SPEED spiSpeed31k25hz;
     SPI_BUS_SPEED spiSpeed25khz;
     SPI_BUS_SPEED spiSpeed10khz;
     SPI_BUS_SPEED spiSpeed5khz;
