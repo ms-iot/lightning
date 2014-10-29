@@ -6,6 +6,7 @@
 #define MAX_PULSE_WIDTH 2400
 #define DEFAULT_PULSE_WIDTH 1500
 #define REFRESH_INTERVAL 20000 // 20 ms
+#define MAX_SERVOS 12
 
 class Servo
 {
