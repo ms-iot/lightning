@@ -1,6 +1,8 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
-// Licensed under the BSD 2-Clause License.  
-// See License.txt in the project root for license information.
+/** \file wire.h
+ * Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
+ * Licensed under the BSD 2-Clause License.
+ * See License.txt in the project root for license information.
+ */
 
 #ifndef TWO_WIRE_H
 #define TWO_WIRE_H
@@ -57,6 +59,9 @@ public:
         }
     }
 
+    /// \brief Initiate the Wire library and join the I2C bus as a master or slave.
+    /// \note The Galileo cannot operate in slave mode
+    /// \see <a href="http://arduino.cc/en/Reference/WireBegin" target="_blank">origin: Arduino::Wire::begin</a>
     void begin()
     {
         if (this->i2c != nullptr)
@@ -74,10 +79,13 @@ public:
         EnableI2C(true);
     }
 
-    // slave mode not supported
-    // void begin(uint8_t);
-    // void begin(int);
-
+    /// \brief Begin a transmission to the I2C slave device with the given address.
+    /// \param [in] slaveAddress The 7-bit device address where the data should be sent
+    /// \note  Subsequently, queue bytes for transmission with the write() function
+    /// and transmit them by calling endTransmission().
+    /// \see Wire::write
+    /// \see Wire::endTransmission
+    /// \see <a href="http://arduino.cc/en/Reference/WireBeginTransmission" target="_blank">origin: Arduino::Wire::beginTransmission</a>
     void beginTransmission(int slaveAddress)
     {
         _UpdateConnection(static_cast<ULONG>(slaveAddress));
@@ -86,11 +94,24 @@ public:
         this->writeBuf.clear();
     }
 
-    int endTransmission(void)
-    {
-        return this->endTransmission(1);
-    }
-
+    /// \brief Ends a transmission to a slave device
+    /// \details Ends a transmission started by beginTransmission() and transmits
+    /// the bytes that were queued by write().
+    /// \param [in] [sendStop] TRUE or FALSE (default is true)
+    /// \n If true, endTransmission() sends a stop message after transmission, releasing
+    /// the I2C bus. If false, endTransmission() sends a restart message after transmission.
+    /// The bus will not be released, which prevents another master device from transmitting
+    /// between messages.This allows one master device to send multiple transmissions while
+    /// in control.
+    /// \return The status of the transmission
+    /// \arg 0 - success
+    /// \arg 1 - data too long to fit in transmit buffer
+    /// \arg 2 - received NACK on transmit of address
+    /// \arg 3 - received NACK on transmit of data
+    /// \arg 4 - other error
+    /// \see Wire::beginTransmission
+    /// \see Wire::write
+    /// \see <a href="http://arduino.cc/en/Reference/WireEndTransmission" target="_blank">origin: Arduino::Wire::endTransmission</a>
     int endTransmission(int sendStop)
     {
         DWORD bytesWritten = 0;
@@ -114,11 +135,23 @@ public:
         return SUCCESS;
     }
 
-    int requestFrom(int address, int quantity)
+    int endTransmission(void)
     {
-        return this->requestFrom(address, quantity, 1);
+        return this->endTransmission(1);
     }
 
+    /// \brief Used to request bytes from a slave device
+    /// \note The bytes may then be retrieved with the available()
+    /// and read() functions.
+    /// \param [in] address The 7-bit address of the device to request bytes from 
+    /// \param [in] quantity The number of bytes to request
+    /// \param [in] sendStop True will send a stop message after the request,
+    /// releasing the bus. false will continually send a restart after the request,
+    /// keeping the connection active.
+    /// \return The number of bytes returned from the slave device
+    /// \see Wire::available
+    /// \see Wire::read
+    /// \see <a href="http://arduino.cc/en/Reference/WireRequestFrom" target="_blank">origin: Arduino::Wire::requestFrom</a>
     int requestFrom(int address, int quantity, int sendStop)
     {
         DWORD bytesReturned;
@@ -177,9 +210,9 @@ public:
         return bytesReturned;
     }
 
-    bool getI2cHasBeenEnabled()
+    int requestFrom(int address, int quantity)
     {
-        return i2cHasBeenEnabled;
+        return this->requestFrom(address, quantity, 1);
     }
 
     void setI2cHasBeenEnabled(bool enable)
@@ -187,36 +220,50 @@ public:
         i2cHasBeenEnabled = enable;
     }
 
-    void onReceive(void(*)(int))
+    bool getI2cHasBeenEnabled()
+    {
+        return i2cHasBeenEnabled;
+    }
+
+    /// \brief Registers a function to be called when a slave device receives a transmission
+    /// \param [in] handler The function to be called when the slave receives data;
+    /// should take a single int parameter (the number of bytes read from the master)
+    /// and return nothing
+    /// \see Wire::onRequest
+    /// \see <a href="http://arduino.cc/en/Reference/WireOnReceive" target="_blank">origin: Arduino::Wire::onReceive</a>
+    void onReceive(void(*handler)(int))
     {
         Log("FEATURE UNAVAILABLE: Galileo cannot act as I2C slave device!");
     }
     
-    void onRequest(void(*)(void))
+    /// \brief Register a function to be called when a master requests data
+    /// \param [in] handler The function to be called, takes no parameters and returns nothing
+    /// \see Wire::onReceive
+    /// \see <a href="http://arduino.cc/en/Reference/WireOnRequest" target="_blank">origin: Arduino::Wire::onRequest</a>
+    void onRequest(void(*handler)(void))
     {
         Log("FEATURE UNAVAILABLE: Galileo cannot act as I2C slave device!");
     }
 
-    virtual size_t write(uint8_t data)
-    {
-        this->writeBuf.push_back(data);
-        return 1;
-    }
-
-    virtual size_t write(const uint8_t *data, size_t cbData)
-    {
-        buffer_t::iterator end = this->writeBuf.end();
-        this->writeBuf.resize(this->writeBuf.size() + cbData);
-        std::copy_n(data, cbData, end);
-
-        return cbData;
-    }
-
+    /// \brief Returns the number of bytes available for retrieval with read()
+    /// \details This should be called on a master device after a call to
+    /// requestFrom() or on a slave inside the onReceive() handler.
+    /// \return The number of bytes available for reading.
+    /// \see Wire::read
+    /// \see Stream::available
+    /// \see <a href="http://arduino.cc/en/Reference/WireAvailable" target="_blank">origin: Arduino::Wire::available</a>
     virtual int available(void)
     {
         return this->readBuf.end() - this->readIndex;
     }
 
+    /// \brief Reads a byte that was transmitted on the I2C bus
+    /// \return The next byte received
+    /// \see Wire::write
+    /// \see Wire::available
+    /// \see Wire::requestFrom
+    /// \see Stream::read
+    /// \see <a href="http://arduino.cc/en/Reference/WireRead" target="_blank">origin: Arduino::Wire::read</a>
     virtual int read(void)
     {
         int data = -1;
@@ -244,6 +291,26 @@ public:
     virtual void flush(void)
     {
 
+    }
+
+    /// \brief Writes data on the I2C bus
+    /// \param [in] data An array of data to send as bytes
+    /// \param [in] cbData The number of bytes to transmit
+    /// \return The number of bytes written
+    /// \see <a href="http://arduino.cc/en/Reference/WireWrite" target="_blank">origin: Arduino::Wire::write</a>
+    virtual size_t write(const uint8_t *data, size_t cbData)
+    {
+        buffer_t::iterator end = this->writeBuf.end();
+        this->writeBuf.resize(this->writeBuf.size() + cbData);
+        std::copy_n(data, cbData, end);
+
+        return cbData;
+    }
+
+    virtual size_t write(uint8_t data)
+    {
+        this->writeBuf.push_back(data);
+        return 1;
     }
 
     inline size_t write(unsigned long n) { return write((uint8_t)n); }
