@@ -5,6 +5,7 @@
 #ifndef _ARDUINO_COMMON_H_
 #define _ARDUINO_COMMON_H_
 
+#include <cstdint>
 
 const UCHAR LOW = 0x00;
 const UCHAR HIGH = 0x01;
@@ -23,6 +24,12 @@ const UCHAR LSBFIRST = 0x00;
 const UCHAR MSBFIRST = 0x01;
 
 const UCHAR NUM_ARDUINO_PINS = 20;
+
+const UCHAR CHANGE = 0x01;
+const UCHAR FALLING = 0x02;
+const UCHAR RISING = 0x03;
+
+const uint16_t PWM_MAX_DUTYCYCLE = 0xffff;
 
 // Pin name to number mapping.
 const UCHAR D0 = 0;

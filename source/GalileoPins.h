@@ -9,7 +9,7 @@
 
 #include "ArduinoCommon.h"
 #include "GpioController.h"
-#include "PCAL9535ASuppport.h"
+#include "PCAL9535ASupport.h"
 #include "PCA9685Support.h"
 #include "CY8C9540ASupport.h"
 #include "ExpanderDefs.h"

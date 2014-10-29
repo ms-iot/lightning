@@ -8,3 +8,22 @@ char* dtostrf(double value, char width, uint8_t precision, char* buffer)
 	return buffer;
 }
 
+
+void tone(int pin, unsigned int frequency)
+{
+    UNREFERENCED_PARAMETER(pin);
+    UNREFERENCED_PARAMETER(frequency);
+
+}
+
+void tone(int pin, unsigned int frequency, unsigned long duration)
+{
+    UNREFERENCED_PARAMETER(pin);
+    UNREFERENCED_PARAMETER(frequency);
+    UNREFERENCED_PARAMETER(duration);
+}
+
+void noTone(int pin)
+{
+    UNREFERENCED_PARAMETER(pin);
+}
