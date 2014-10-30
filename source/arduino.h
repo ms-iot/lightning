@@ -6,8 +6,17 @@
 #define _WINDOWS_ARDUINO_H_
 
 // Arduino compatibility header for inclusion by user programs
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 
 #include <windows.h>
+#include <devioctl.h>
+
+#ifdef USE_NETWORKSERIAL
+#include <winsock2.h>
+#include <WS2tcpip.h>
+#endif
 
 #include <algorithm>
 #include <cstdint>
