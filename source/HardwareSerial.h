@@ -37,6 +37,8 @@ private:
     const std::wstring _comPortName;
     unsigned long _timeout;
 
+    HardwareSerial & operator= (HardwareSerial &);
+
 public:
     enum SerialConfigs
     {
@@ -236,6 +238,29 @@ public:
     virtual size_t write(uint8_t c);
     virtual size_t write(const uint8_t *buffer, size_t size);
 
+    inline size_t write(char c)
+     {
+         return write((uint8_t) c);
+     }
+    
+     inline size_t write(const String &s)
+     {
+         size_t count = 0;
+         for (uint16_t i = 0; i < s.length(); i++) {
+             count += write(s[i]);
+         }
+         return count;
+     }
+    
+     inline size_t write(const char str[])
+     {
+         size_t count = 0;
+        for (uint16_t i = 0; i < strlen(str); i++) {
+            count += write(str[i]);
+        }
+        return count;
+     }
+    
     inline size_t write(unsigned long n)
     {
         // at least 32 bits in size

@@ -14,7 +14,9 @@
 #define ADC_MAX_VALUE 0xfff
 #define ADC_RESOLUTION 12
 
-#define PWM_MAX_DUTYCYCLE 0xffff
+#ifndef PWM_RESOLUTION
+#define PWM_RESOLUTION 8
+#endif
 
 typedef enum _GALILEO_GPIO_PIN {
 	
@@ -99,5 +101,9 @@ const GALILEO_GPIO_PIN GALILEO_PWM_PINS[] =
     GPORT1_BIT0_PWM6,
     GPORT0_BIT0_PWM7
 };
+
+#ifndef LED_BUILTIN
+#define LED_BUILTIN QRK_LEGACY_RESUME_SUS1
+#endif
 
 #endif // _INTEL_GALILEO_H_

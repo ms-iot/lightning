@@ -2,7 +2,7 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-#include "PCAL9535ASuppport.h"
+#include "PCAL9535ASupport.h"
 #include "ExpanderDefs.h"
 #include "I2cController.h"
 

@@ -10,6 +10,16 @@
 
 #include <winbase.h>
 
+#ifdef PWM_MAX_DUTYCYCLE
+#undef PWM_MAX_DUTYCYCLE
+#endif
+#define PWM_MAX_DUTYCYCLE 0xffff
+
+#ifdef PWM_RESOLUTION
+#undef PWM_RESOLUTION
+#endif
+#define PWM_RESOLUTION 16
+
 #define EMBAPI __cdecl
 
 #ifdef __cplusplus

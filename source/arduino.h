@@ -6,8 +6,23 @@
 #define _WINDOWS_ARDUINO_H_
 
 // Arduino compatibility header for inclusion by user programs
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 
 #include <windows.h>
+#include <devioctl.h>
+
+#ifdef USE_NETWORKSERIAL
+#include <winsock2.h>
+#include <WS2tcpip.h>
+#endif
+
+#include <algorithm>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <vector>
 
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
@@ -23,6 +38,12 @@
 #include "wire.h"
 #include "Adc.h"
 
+#include <memory>
+#include <map>
+#include <vector>
+#include <algorithm>
+#include "avr/macros.h"
+
 #define NUM_ARDUINO_PINS 20
 #define NUM_ANALOG_PINS 6
 
@@ -34,9 +55,10 @@
 // Definition of Constants as defined on http://wiring.org.co/reference/index.html and http://arduino.cc/en/Reference/Constants
 //
 
-#define PI              3.1415926535897932384626433832795
-#define HALF_PI         1.5707963267948966192313216916398
-#define TWO_PI          6.283185307179586476925286766559
+#define PI              M_PI
+#define HALF_PI         M_PI_2
+#define TAU             (M_PI * 2.0f)
+#define TWO_PI          TAU
 
 #define boolean bool
 typedef uint8_t byte;
@@ -63,7 +85,7 @@ inline int Log(const char *format, ...)
         {
             OutputDebugStringA(buffer);
         }
-        delete[](buffer);
+        delete [](buffer);
     }
     else
     {
@@ -89,7 +111,7 @@ inline int Log(const wchar_t *format, ...)
         {
             OutputDebugStringW(buffer);
         }
-        delete[](buffer);
+        delete [](buffer);
     }
     else
     {
@@ -100,15 +122,12 @@ inline int Log(const wchar_t *format, ...)
 
 // Arduino math definitions
 #define abs(x) ((x)>0?(x):-(x))
-#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+#define constrain(amt,low,high) do {amt=((amt)<(low)?(low):((amt)>(high)?(high):(amt)));} while (0)
 #define sq(x) ((x)*(x))
 inline long map(long x, long in_min, long in_max, long out_min, long out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
-
-// Function prototypes.
-inline void pinMode(unsigned int pin, unsigned int mode);
 
 //
 // Pauses the program for the amount of time (in microseconds) 
@@ -149,14 +168,14 @@ inline unsigned long micros(void)
 //
 inline bool _IsAnalogPin(int num)
 {
-    return num >= GALILEO_A0;
+    return num >= A0;
 }
 
 // This function throws an error if the specified pin number is not a valid
 // Arduino GPIO pin number.
 inline void _ValidateArduinoPinNumber(int pin)
 {
-    if ( (pin < 0) || (pin >= NUM_ARDUINO_PINS) )
+    if ((pin < 0) || (pin >= NUM_ARDUINO_PINS))
     {
         ThrowError("Invalid pin number (%d). Pin must be in the range [0, %d)",
             pin, NUM_ARDUINO_PINS);
@@ -404,10 +423,11 @@ inline uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_
 {
     uint8_t buffer(0);
 
-    for (uint8_t loop_count = 0, bit_index = 0 ; loop_count < 8 ; ++loop_count) {
+    for (uint8_t loop_count = 0, bit_index = 0; loop_count < 8; ++loop_count) {
         if (bit_order_ == LSBFIRST) {
             bit_index = loop_count;
-        } else {
+        }
+        else {
             bit_index = (7 - loop_count);
         }
 
@@ -424,7 +444,8 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
     for (uint8_t loop_count = 0, bit_mask = 0; loop_count < 8; ++loop_count) {
         if (bit_order_ == LSBFIRST) {
             bit_mask = (1 << loop_count);
-        } else {
+        }
+        else {
             bit_mask = (1 << (7 - loop_count));
         }
 
@@ -436,11 +457,44 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
     return;
 }
 
+///
+/// \brief Performs a tone operation.
+/// \details This will start a PWM wave on the designated pin of the
+/// inputted frequency with 50% duty cycle
+/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+/// \param [in] frequency - in Hertz
+///
+void tone(int pin, unsigned int frequency);
+
+///
+/// \brief Performs a tone operation.
+/// \details This will start a PWM wave on the designated pin of the
+/// inputted frequency with 50% duty cycle and set up a timer to trigger
+/// a callback after the inputted duration
+/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+/// \param [in] frequency - in Hertz
+/// \param [in] duration - in milliseconds
+///
+void tone(int pin, unsigned int frequency, unsigned long duration);
+
+///
+/// \brief Performs a noTone operation.
+/// \details This will stop a PWM wave on the designated pin if there is
+/// a tone running on it
+/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
+///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+///
+void noTone(int pin);
+
 //
 // Arduino Sketch Plumbing
 //
 
+#include "Stream.h"
 #include "HardwareSerial.h"
+#include "WInterrupt.h"
 
 void setup();
 void loop();
@@ -460,8 +514,14 @@ inline int RunArduinoSketch()
     {
         //ArduinoInit();
         setup();
-        while ( 1 )
+        while (1)
         {
+            // This call is used to handle async procedure calls (APCs); usually by timers
+            // This call will relinquish the remainder of its time slice to another 
+            // ready to run thread of equal priority. However, in practice it is 
+            // a no-op unless there's a pending APC. 
+            SleepEx(0, TRUE);
+
             loop();
             #ifdef SERIAL_EVENT
             if (Serial && Serial.available() > 0)
@@ -477,13 +537,13 @@ inline int RunArduinoSketch()
             #endif
         }
     }
-    catch ( const _arduino_fatal_error &ex )
+    catch (const _arduino_fatal_error &ex)
     {
         ret = 1;
         Log("\nSketch Aborted! A fatal error has occurred:\n");
         Log("%s\n", ex.what());
     }
-    catch ( const _arduino_quit_exception & )
+    catch (const _arduino_quit_exception &)
     {
         // exit cleanly
     }
@@ -536,8 +596,22 @@ inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 #define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
 #define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
 
+// Interrupt enable/disable stubs
+#define cli()
+#define sei()
+
 #define bit(b) (1UL << (b))
 #define __attribute__(x)
+
+
+// Other utility Macros
+// Turn passed in value into a string
+#define STRINGIFY(x) #x
+// Turn passed in macro into a string
+#define STRINGIFY_MACRO(x) STRINGIFY(x)
+
+inline float radians(float deg) { return deg * 180.0f / static_cast<float>(PI); }
+inline float degrees(float rad) { return rad * static_cast<float>(PI) / 180.0f; }
 
 #include "Wire.h"
 #endif // _WINDOWS_ARDUINO_H_

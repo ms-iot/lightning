@@ -6,6 +6,7 @@
 #define PGM_SPACE_H
 
 #include <cstdint>
+#include <cstring>
 
 /*
  * The avr/pgmspace.h file providies a set of macros
@@ -17,19 +18,73 @@
  * conversion of Arduino specific code.
  */
 
-#define pgm_read_byte_near(address_short) *reinterpret_cast<uint8_t *>(reinterpret_cast<void *>(NULL) | static_cast<uint16_t>(address_short))
-#define pgm_read_word_near(address_short) *reinterpret_cast<uint16_t *>(reinterpret_cast<void *>(NULL) | static_cast<uint16_t>(address_short))
-#define pgm_read_dword_near(address_short) *reinterpret_cast<uint32_t *>(reinterpret_cast<void *>(NULL) | static_cast<uint16_t>(address_short))
-#define pgm_read_float_near(address_short) *reinterpret_cast<float *>(reinterpret_cast<void *>(NULL) | static_cast<uint16_t>(address_short))
+typedef const char* PGM_P;
+typedef const void* PGM_VOID_P;
 
-#define pgm_read_byte_far(address_long) *reinterpret_cast<uint8_t *>(reinterpret_cast<void *>(NULL) | static_cast<uint32_t>(address_long))
-#define pgm_read_word_far(address_long) *reinterpret_cast<uint16_t *>(reinterpret_cast<void *>(NULL) | static_cast<uint32_t>(address_long))
-#define pgm_read_dword_far(address_long) *reinterpret_cast<uint32_t *>(reinterpret_cast<void *>(NULL) | static_cast<uint32_t>(address_long))
-#define pgm_read_float_far(address_long) *reinterpret_cast<float *>(reinterpret_cast<void *>(NULL) | static_cast<uint32_t>(address_long))
+inline uint8_t pgm_read_byte(PGM_P address)
+{
+	return *reinterpret_cast<uint8_t *>(const_cast<char*>(address));
+}
 
-#define pgm_read_byte(address_short) *reinterpret_cast<uint8_t *>(reinterpret_cast<void *>(NULL) | static_cast<uint16_t>(address_short))
-#define pgm_read_word(address_short) *reinterpret_cast<uint16_t *>(reinterpret_cast<void *>(NULL) | static_cast<uint16_t>(address_short))
-#define pgm_read_dword(address_short) *reinterpret_cast<uint32_t *>(reinterpret_cast<void *>(NULL) | static_cast<uint16_t>(address_short))
-#define pgm_read_float(address_short) *reinterpret_cast<float *>(reinterpret_cast<void *>(NULL) | static_cast<uint16_t>(address_short))
+inline uint16_t pgm_read_word(PGM_P address)
+{
+	return *reinterpret_cast<uint16_t *>(const_cast<char*>(address));
+}
+inline uint32_t pgm_read_dword(PGM_P address)
+{
+	return *reinterpret_cast<uint32_t *>(const_cast<char*>(address));	
+} 
+
+inline float pgm_read_float(PGM_P address)
+{
+	return *reinterpret_cast<float *>(const_cast<char*>(address));
+}
+
+inline uint8_t pgm_read_byte(PGM_VOID_P address)
+{
+	return *const_cast<uint8_t*> (reinterpret_cast<const uint8_t *>(address));
+}
+
+inline uint16_t pgm_read_word(PGM_VOID_P address)
+{
+	return *const_cast<uint16_t*> (reinterpret_cast<const uint16_t *>(address));
+}
+inline uint32_t pgm_read_dword(PGM_VOID_P address)
+{
+	return *const_cast<uint32_t*> (reinterpret_cast<const uint32_t *>(address));	
+} 
+
+inline float pgm_read_float(PGM_VOID_P address)
+{
+	return *const_cast<float*> (reinterpret_cast<const float *>(address));
+}
+
+#define pgm_read_byte_near(address) pgm_read_byte(address)
+#define pgm_read_word_near(address) pgm_read_word(address)
+#define pgm_read_dword_near(address) pgm_read_dword(address)
+#define pgm_read_float_near(address) pgm_read_float(address)
+
+#define pgm_read_byte_far(address) pgm_read_byte(address)
+#define pgm_read_word_far(address) pgm_read_word(address)
+#define pgm_read_dword_far(address) pgm_read_dword(address)
+#define pgm_read_float_far(address) pgm_read_float(address)
+
+
+// PGM versions of string functions can use regular string functions on Windows
+inline char* strcpy_P(char* buffer, PGM_P from)
+{
+#pragma warning(disable : 4996)
+	return strcpy(buffer, from);
+} 
+
+inline size_t strlen_P(PGM_P str) 
+{
+#pragma warning(disable : 4996)
+	return strlen(str);
+}
+
+// Other APIs for conversions
+#define utoa _ultoa
+char* dtostrf(double value, char width, uint8_t precision, char* buffer);
 
 #endif
