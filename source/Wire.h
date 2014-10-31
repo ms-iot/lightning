@@ -1,8 +1,6 @@
-/** \file wire.h
- * Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
- * Licensed under the BSD 2-Clause License.
- * See License.txt in the project root for license information.
- */
+// Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.  
+// Licensed under the BSD 2-Clause License.  
+// See License.txt in the project root for license information.
 
 #ifndef TWO_WIRE_H
 #define TWO_WIRE_H
@@ -10,10 +8,10 @@
 #include <Windows.h>
 #include <stdint.h>
 #include <vector>
+#include <algorithm>
 
 #include "ArduinoError.h"
-#include "embprpusr.h"
-#include "galileo.h"
+#include "I2cController.h"
 
 #ifndef TWI_FREQ
 #define TWI_FREQ 100000L
@@ -28,6 +26,8 @@ class TwoWire
 {
 
 public:
+
+    /// Enum with status codes returned by endTransmission().
     enum TwiError {
         SUCCESS = 0,
         TWI_BUFFER_OVERRUN = 1,
@@ -36,367 +36,382 @@ public:
         OTHER_ERROR = 4,
     };
 
-    TwoWire() :
-        i2c(nullptr),
-        i2cHasBeenEnabled(false),
-        connectionSlaveAddress(0),
-        slaveWriteAddress(0),
-        writeBuf(),
-        readBuf(),
-        readIndex()
+    /// Constructor.
+    TwoWire()
     {
-        this->readIndex = readBuf.end();
+        _cleanTransaction();
     }
 
+    /// Destructor.
     virtual ~TwoWire()
     {
-        EnableI2C(false);
-
-        if (this->i2c != nullptr)
-        {
-            I2CFree(i2c);
-            this->i2c = nullptr;
-        }
     }
 
-    /// \brief Initiate the Wire library and join the I2C bus as a master or slave.
-    /// \note The Galileo cannot operate in slave mode
-    /// \see <a href="http://arduino.cc/en/Reference/WireBegin" target="_blank">origin: Arduino::Wire::begin</a>
+    /// Method to begin use of the I2C bus by the code using this library.
     void begin()
     {
-        if (this->i2c != nullptr)
+        if (!g_i2c.beginExternal())
         {
-            I2CFree(i2c);
-            this->i2c = nullptr;
+            ThrowError("Error beginning I2C use: %08x", GetLastError());
         }
 
-        this->connectionSlaveAddress = 0;
-        this->slaveWriteAddress = 0;
-        this->writeBuf.reserve(BUFFER_LENGTH);
-        this->readBuf.reserve(BUFFER_LENGTH);
-        this->readIndex = readBuf.end();
-
-        EnableI2C(true);
+        m_writeBuffs.clear();
+        m_readBuffs.clear();
+        m_writeBuff.clear();
     }
 
-    /// \brief Begin a transmission to the I2C slave device with the given address.
-    /// \param [in] slaveAddress The 7-bit device address where the data should be sent
-    /// \note  Subsequently, queue bytes for transmission with the write() function
-    /// and transmit them by calling endTransmission().
-    /// \see Wire::write
-    /// \see Wire::endTransmission
-    /// \see <a href="http://arduino.cc/en/Reference/WireBeginTransmission" target="_blank">origin: Arduino::Wire::beginTransmission</a>
-    void beginTransmission(int slaveAddress)
+    /// Method to end use of the I2C bus by the code using this library.
+    void end()
     {
-        _UpdateConnection(static_cast<ULONG>(slaveAddress));
+        _cleanTransaction();
 
-        this->slaveWriteAddress = slaveAddress;
-        this->writeBuf.clear();
+        g_i2c.endExternal();
     }
 
-    /// \brief Ends a transmission to a slave device
-    /// \details Ends a transmission started by beginTransmission() and transmits
-    /// the bytes that were queued by write().
-    /// \param [in] [sendStop] TRUE or FALSE (default is true)
-    /// \n If true, endTransmission() sends a stop message after transmission, releasing
-    /// the I2C bus. If false, endTransmission() sends a restart message after transmission.
-    /// The bus will not be released, which prevents another master device from transmitting
-    /// between messages.This allows one master device to send multiple transmissions while
-    /// in control.
-    /// \return The status of the transmission
-    /// \arg 0 - success
-    /// \arg 1 - data too long to fit in transmit buffer
-    /// \arg 2 - received NACK on transmit of address
-    /// \arg 3 - received NACK on transmit of data
-    /// \arg 4 - other error
-    /// \see Wire::beginTransmission
-    /// \see Wire::write
-    /// \see <a href="http://arduino.cc/en/Reference/WireEndTransmission" target="_blank">origin: Arduino::Wire::endTransmission</a>
-    int endTransmission(int sendStop)
-    {
-        DWORD bytesWritten = 0;
+    // slave mode not supported
+    // void begin(uint8_t);
+    // void begin(int);
 
+    /// Method to start a write tranfer to an I2C slave.
+    /**
+    This method prepares to queue writes to an I2C slave.  If this method specifies
+    a slave address different than previously queued transfers, those transfers are 
+    performed first and an I2C STOP is done before the new I2C sequence is created.
+    \note Writes done after calling beginTransmission() are captured and processed
+    when endTransmission() is called.  If beginTransmission is called again, without
+    calling endTranmission() first, the write requests are lost.
+    \param[in] address The address of the I2C slave to read from.
+    \return None.  Any error is thrown.
+    */
+    void beginTransmission(int address)
+    {
+        // Set the address of the I2C slave we are working with.
+        _setSlaveAddress(address);
+
+        // Empty the current write buffer.
+        m_writeBuff.clear();
+    }
+
+    /// Complete a series of I2C writes.
+    /**
+    This method completes a series of writes that was begun with a beginTransmission()
+    call.  It consolidates the series of write requests into a single write transfer, 
+    and then queues it to the current I2C sequence.  All queued I2C tranfers are then 
+    performed, and the bus is released with a STOP.
+    \return SUCCESS - Success, ADDR_NACK_RECV - Slave did not ACK a transfer operation.
+    */
+    ULONG endTransmission(void)
+    {
+        return this->endTransmission(TRUE);
+    }
+
+    /// Queue a series of writes, and optionally perform them.
+    /**
+    This method consolidates all write requests done since a beginTransmission() into 
+    a single write tranfer, and queues it to the current I2C sequence.  If sendStop is
+    TRUE, all queued transfers are performed and the bus is released with a STOP.  If 
+    sendStop is false, the write transfer is queued and no other action is taken.
+    \param[in] sendStop FALSE - just queue a write transfer, TRUE - also perform all queued transfers.
+    \return SUCCESS - Success. ADDR_NACK_RECV, DATA_NACK_RECV, OTHER ERROR - Error.
+    */
+    ULONG endTransmission(BOOL sendStop)
+    {
+        ULONG retVal = SUCCESS;
+
+        // Create a buffer on the write buffer queue for the transfer.
+        m_writeBuffs.push_back(m_writeBuff);
+
+        // Empty the write buffer now that it's contents are queued.
+        m_writeBuff.clear();
+
+        // Queue a write from the buffer.
+        if (!m_i2cTransaction.queueWrite(m_writeBuffs.back().data(), m_writeBuffs.back().size()))
+        {
+            _cleanTransaction();
+            ThrowError("An error occurred queueing an I2C write of %d bytes.  Error: 0x%08X", m_writeBuffs.back().size(), GetLastError());
+        }
+
+        // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-            HRESULT hr = I2CWrite(
-                this->i2c,
-                this->writeBuf.data(),
-                this->writeBuf.size(),
-                &bytesWritten);
-
-            if (FAILED(hr))
+            if (!m_i2cTransaction.execute())
             {
-                return ADDR_NACK_RECV;
+                if (m_i2cTransaction.getError() == I2cTransactionClass::ERROR_CODE::ADR_NACK)
+                {
+                    retVal = ADDR_NACK_RECV;
+                }
+                else if (m_i2cTransaction.getError() == I2cTransactionClass::ERROR_CODE::DATA_NACK)
+                {
+                    retVal = DATA_NACK_RECV;
+                }
+                else
+                {
+                    retVal = OTHER_ERROR;
+                }
+                m_readBuffs.clear();
             }
 
-            this->slaveWriteAddress = 0;
+            // Clean up all queued transfers now that they have been performed (or failed).
+            m_writeBuffs.clear();
+
+            // Get the current count of bytes available in the read buffer.  Any read buffers
+            // queued should be full of data (or gone, if the transfer failed).
+            _calculateReadBytesInBuffer();
         }
 
-        return SUCCESS;
+        return retVal;
     }
 
-    int endTransmission(void)
-    {
-        return this->endTransmission(1);
-    }
-
-    /// \brief Used to request bytes from a slave device
-    /// \note The bytes may then be retrieved with the available()
-    /// and read() functions.
-    /// \param [in] address The 7-bit address of the device to request bytes from 
-    /// \param [in] quantity The number of bytes to request
-    /// \param [in] sendStop True will send a stop message after the request,
-    /// releasing the bus. false will continually send a restart after the request,
-    /// keeping the connection active.
-    /// \return The number of bytes returned from the slave device
-    /// \see Wire::available
-    /// \see Wire::read
-    /// \see <a href="http://arduino.cc/en/Reference/WireRequestFrom" target="_blank">origin: Arduino::Wire::requestFrom</a>
-    int requestFrom(int address, int quantity, int sendStop)
-    {
-        DWORD bytesReturned;
-
-        UNREFERENCED_PARAMETER(sendStop);
-
-        if (quantity < 0)
-            ThrowError("quantity must be positive: %d", quantity);
-
-        _UpdateConnection(address);
-
-        this->readBuf.resize(quantity);
-
-        // is there a writeread sequence pending?
-        if (this->slaveWriteAddress == address)
-        {
-            // if user previously called endTransmission with sendStop=0,
-            // they are most likely doing a write/read sequence.
-            // Until generic sequence transfers are implemented using the 
-            // SPB controller lock mechanism, we can support the special
-            // case of a single write/read sequence which covers the
-            // majority of uses that require repeated starts.
-            HRESULT hr = I2CWriteReadAtomic(
-                this->i2c,
-                this->writeBuf.data(),
-                this->writeBuf.size(),
-                this->readBuf.data(),
-                this->readBuf.size(),
-                &bytesReturned);
-
-            if (FAILED(hr))
-            {
-                ThrowError("I2C_CONTROLLER IO failed");
-            }
-
-            // indicate that pending write has been flushed
-            this->slaveWriteAddress = 0;
-        }
-        else
-        {
-            HRESULT hr = I2CRead(
-                this->i2c,
-                this->readBuf.data(),
-                this->readBuf.size(),
-                &bytesReturned);
-
-            if (FAILED(hr))
-            {
-                ThrowError("I2C_CONTROLLER IO failed");
-            }
-        }
-
-        this->readBuf.resize(bytesReturned);
-        this->readIndex = this->readBuf.begin();
-
-        return bytesReturned;
-    }
-
-    int requestFrom(int address, int quantity)
+    /// Method to perform a complete read from an I2C slave.
+    /**
+    This method queues a read transfer and causes it (and any other transfers
+    previously queued to the same slave address) to be performed on the I2C bus.
+    If this method specifies a slave address different than previously queued
+    transfers, those transfers are performed first and an I2C STOP is done before
+    the new read transfer is queued.
+    \param[in] address The address of the I2C slave to read from.
+    \param[in] quantity The number of bytes to read.
+    \return Zero.  Any error is thrown.
+    */
+    ULONG requestFrom(ULONG address, ULONG quantity)
     {
         return this->requestFrom(address, quantity, 1);
     }
 
-    void setI2cHasBeenEnabled(bool enable)
+    /// Method to queue or perform a read from an I2C slave.
+    /**
+    This method queues a read transfer and optionally causes it (and any other
+    transfers previously queued to the same slave address) to be performed on the 
+    I2C bus.  If this method specifies a slave address different than previously queued
+    transfers, those transfers are performed first and an I2C STOP is done before
+    the new read transfer is queued.
+    \param[in] address The address of the I2C slave to read from.
+    \param[in] quantity The number of bytes to read.
+    \param[in] sendStop TRUE - end the tranfer with an I2C stop, FALSE - don't end with STOP.
+    \return Zero.  Any error is thrown.
+    */
+    ULONG requestFrom(ULONG address, ULONG quantity, BOOL sendStop)
     {
-        i2cHasBeenEnabled = enable;
+        if (quantity == 0)
+        {
+            _cleanTransaction();
+            ThrowError("Zero byte I2C reads are not allowed.");
+        }
+
+        // Set the address of the I2C slave we are working with.
+        _setSlaveAddress(address);
+
+        // Create a buffer on the read buffer queue for the transfer.
+        buff_t newBuf(quantity, 0);
+        m_readBuffs.push_back(newBuf);
+
+        // Queue a read into the buffer.
+        if (!m_i2cTransaction.queueRead(m_readBuffs.back().data(), quantity))
+        {
+            _cleanTransaction();
+            ThrowError("An error occurred queueing an I2C read of %d bytes to address: 0x%02X.  Error: 0x%08X", quantity, address, GetLastError());
+        }
+
+        // Perform all queued transfers if a STOP was specified.
+        if (sendStop)
+        {
+            if (!m_i2cTransaction.execute())
+            {
+                _cleanTransaction();
+                ThrowError("Error encountered performing queued I2C transfers to address: 0x%02X, Error: 0x%08X", address, GetLastError());
+            }
+
+            // Clear out queued transfers now that we are done with them.
+            m_writeBuffs.clear();
+
+            // Get the current count of bytes available in the read buffer.
+            _calculateReadBytesInBuffer();
+        }
+
+        return quantity;
     }
 
-    bool getI2cHasBeenEnabled()
+    /// Set the address of the I2C slave we are talking to.
+    /**
+    This method determines if the slave address is changing.  If the address 
+    is changing and the I2C transaction has not yet been processed, an error 
+    is thrown.
+    \param[in] address The slave address to set.
+    */
+    void _setSlaveAddress(ULONG address)
     {
-        return i2cHasBeenEnabled;
+        if (address != m_i2cTransaction.getAddress())
+        {
+            if ((m_i2cTransaction.getAddress() != 0) && m_i2cTransaction.isIncomplete())
+            {
+                _cleanTransaction();
+                ThrowError("Previous I2C operation to address: 0x%02X must be completed before starting new operation to address: 0x%02X", m_i2cTransaction.getAddress(), address);
+            }
+            m_i2cTransaction.reset();
+            m_writeBuffs.clear();
+            if (!m_i2cTransaction.setAddress(address))
+            {
+                _cleanTransaction();
+                ThrowError("Error encountered setting I2C address: 0x%02X, Error: 0x%08X", address, GetLastError());
+            }
+        }
     }
 
-    /// \brief Registers a function to be called when a slave device receives a transmission
-    /// \param [in] handler The function to be called when the slave receives data;
-    /// should take a single int parameter (the number of bytes read from the master)
-    /// and return nothing
-    /// \see Wire::onRequest
-    /// \see <a href="http://arduino.cc/en/Reference/WireOnReceive" target="_blank">origin: Arduino::Wire::onReceive</a>
-    void onReceive(void(*handler)(int))
+    /// Queue a single byte write transfer on the I2C bus.
+    /**
+    \param[in] data The byte to send over the I2C bus.
+    \return The number of bytes "sent" (1 in this case).
+    */
+    virtual size_t write(const uint8_t data)
+    {
+        this->m_writeBuff.push_back(data);
+        return 1;
+    }
+
+    void onReceive(void(*)(int))
     {
         Log("FEATURE UNAVAILABLE: Galileo cannot act as I2C slave device!");
     }
     
-    /// \brief Register a function to be called when a master requests data
-    /// \param [in] handler The function to be called, takes no parameters and returns nothing
-    /// \see Wire::onReceive
-    /// \see <a href="http://arduino.cc/en/Reference/WireOnRequest" target="_blank">origin: Arduino::Wire::onRequest</a>
-    void onRequest(void(*handler)(void))
+    void onRequest(void(*)(void))
     {
         Log("FEATURE UNAVAILABLE: Galileo cannot act as I2C slave device!");
     }
 
-    /// \brief Returns the number of bytes available for retrieval with read()
-    /// \details This should be called on a master device after a call to
-    /// requestFrom() or on a slave inside the onReceive() handler.
-    /// \return The number of bytes available for reading.
-    /// \see Wire::read
-    /// \see Stream::available
-    /// \see <a href="http://arduino.cc/en/Reference/WireAvailable" target="_blank">origin: Arduino::Wire::available</a>
-    virtual int available(void)
+    /// Queue an array of bytes write on the I2C bus.
+    /**
+    \param[in] data Pointer to the first byte to send over the I2C bus.
+    \param[in] cbData The length of the data in bytes.
+    \return The number of bytes "sent" (the value cbData in this case).
+    */
+    size_t write(const uint8_t *data, size_t cbData)
+
     {
-        return this->readBuf.end() - this->readIndex;
-    }
-
-    /// \brief Reads a byte that was transmitted on the I2C bus
-    /// \return The next byte received
-    /// \see Wire::write
-    /// \see Wire::available
-    /// \see Wire::requestFrom
-    /// \see Stream::read
-    /// \see <a href="http://arduino.cc/en/Reference/WireRead" target="_blank">origin: Arduino::Wire::read</a>
-    virtual int read(void)
-    {
-        int data = -1;
-
-        if (this->readIndex != this->readBuf.end())
-        {
-            data = *this->readIndex++;
-        }
-
-        return data;
-    }
-
-    virtual int peek(void)
-    {
-        int data = -1;
-
-        if (this->readIndex != this->readBuf.end())
-        {
-            data = *this->readIndex;
-        }
-
-        return data;
-    }
-
-    virtual void flush(void)
-    {
-
-    }
-
-    /// \brief Writes data on the I2C bus
-    /// \param [in] data An array of data to send as bytes
-    /// \param [in] cbData The number of bytes to transmit
-    /// \return The number of bytes written
-    /// \see <a href="http://arduino.cc/en/Reference/WireWrite" target="_blank">origin: Arduino::Wire::write</a>
-    virtual size_t write(const uint8_t *data, size_t cbData)
-    {
-        buffer_t::iterator end = this->writeBuf.end();
-        this->writeBuf.resize(this->writeBuf.size() + cbData);
-        std::copy_n(data, cbData, end);
-
+        this->m_writeBuff.reserve(this->m_writeBuff.size() + cbData);
+        std::copy_n(data, cbData, this->m_writeBuff.end());
         return cbData;
     }
 
-    virtual size_t write(uint8_t data)
+    /// Queue a null terminated string write on the I2C bus.
+    /**
+    \param[in] string Pointer to the start of the null terminated byte string.
+    \return The number of bytes "sent" (the number of characters in the string).
+    */
+    size_t write(PCHAR string)
     {
-        this->writeBuf.push_back(data);
-        return 1;
+        this->m_writeBuff.reserve(this->m_writeBuff.size() + strlen(string));
+        std::copy_n(string, strlen(string), this->m_writeBuff.end());
+        return strlen(string);
     }
 
-    inline size_t write(unsigned long n) { return write((uint8_t)n); }
-    inline size_t write(long n) { return write((uint8_t)n); }
-    inline size_t write(unsigned int n) { return write((uint8_t)n); }
-    inline size_t write(int n) { return write((uint8_t)n); }
-
-    I2C_CONTROLLER *handle() const
+    /// Method to return the number of bytes of available to be read from the buffer.
+    /**
+    \return The total number of bytes currently in the queued read buffers.
+    */
+    inline ULONG available(void)
     {
-        return this->i2c;
+        return m_readBytesAvailable;
+    }
+
+    /// Method to get the next byte from the read buffers.
+    /**
+    \note All bytes requested to be read should be present in the read buffers.  This is 
+    also true for an read transfers requested that failed--their bytes are zeros.
+    \return The next byte from the queued read buffers.
+    */
+    ULONG read(void)
+    {
+        ULONG retVal = 0;
+
+        // If we have at least one byte in our read buffer:
+        if (m_readBytesAvailable > 0)
+        {
+            // Get a pointer to the current buffer.
+            buff_t* buffer = &m_readBuffs[m_readBuffIndex];
+
+            // If all the bytes in this buffer have already been handled:
+            if (m_readByteIndex >= buffer->size())
+            {
+                // Clear the buffer to free storage, we are done with it.
+                buffer->clear();
+
+                // Move to the next buffer in the queue.  There should be one, 
+                // since we have at least one byte in a buffer waiting to be 
+                // retreived.  We don't allow zero length reads, so there has 
+                // to be at least one byte in this new buffer.
+                m_readBuffIndex++;
+                buffer = &m_readBuffs[m_readBuffIndex];
+                m_readByteIndex = 0;
+            }
+
+            // Get the byte from the buffer and count it as handled.
+            retVal = buffer->data()[m_readByteIndex];
+            m_readByteIndex++;
+            m_readBytesAvailable--;
+
+            // If we have no more bytes remaining:
+            if (m_readBytesAvailable == 0)
+            {
+                // Get rid of the whole read buffer queue.
+                m_readBuffs.clear();
+                m_readBuffIndex = 0;
+                m_readByteIndex = 0;
+            }
+        }
+
+        return retVal;
     }
 
 private:
 
-    typedef std::vector<uint8_t> buffer_t;
+    /// The I2C transaction object used to drive transfers.
+    I2cTransactionClass m_i2cTransaction;
 
-    // Ensures that the I2C connection handle is opened for
-    // the specified slave address
-    void _UpdateConnection(ULONG address)
+    /// Typdef for a transmit or receive buffer.
+    typedef std::vector<uint8_t> buff_t;
+
+    /// Typedef for a queue of buffers.
+    typedef std::vector<buff_t> buff_queue_t;
+
+    /// Queue of write buffers.
+    buff_queue_t m_writeBuffs;
+
+    /// Current write buffer.
+    buff_t m_writeBuff;
+
+    /// Queue of read buffers.
+    buff_queue_t m_readBuffs;
+
+    /// Index into the read buffer queue to the current read buffer.
+    ULONG m_readBuffIndex;
+
+    /// Index into the current read buffer to the next byte to fetch from the buffer.
+    ULONG m_readByteIndex;
+
+    /// Count of bytes available to be read.
+    ULONG m_readBytesAvailable;
+
+    /// Method to count the total number of read bytes in read buffers.
+    void _calculateReadBytesInBuffer()
     {
-        const ULONG I2C_CONNECTION_SPEED = TWI_FREQ;
-
-        // if the address is different, we need to reopen the connection
-        if (this->connectionSlaveAddress != address)
+        m_readBytesAvailable = 0;
+        for (buff_queue_t::iterator i = m_readBuffs.begin(); i != m_readBuffs.end(); i++)
         {
-            // if a connection is open, close it
-            if (this->i2c != nullptr)
-            {
-                I2CFree(this->i2c);
-                this->i2c = nullptr;
-            }
-
-            HRESULT hr = I2CCreateInstance(
-                I2C_CONTROLLER_INDEX,
-                address,
-                I2C_CONNECTION_SPEED,
-                &this->i2c);
-
-            if (FAILED(hr))
-            {
-                ThrowError("Failed to create I2C_CONTROLLER instance");
-            }
-
-            this->connectionSlaveAddress = address;
+            m_readBytesAvailable += i->size();
         }
     }
 
-    void EnableI2C(bool enable)
+    /// Method to clean up any existing transaction.
+    void _cleanTransaction()
     {
-        HRESULT hr = GpioSetDir(GPORT1_BIT5, 1);
-        if (FAILED(hr))
-        {
-            ThrowError("Failed to configure I2C_CONTROLLER mux");
-        }
-
-        hr = GpioWrite(GPORT1_BIT5, enable ? 0 : 1);
-        if (FAILED(hr))
-        {
-            ThrowError("Failed to configure I2C_CONTROLLER mux");
-        }
-        i2cHasBeenEnabled = enable;
+        m_i2cTransaction.reset();
+        m_writeBuff.clear();
+        m_writeBuff.clear();
+        m_readBuffs.clear();
+        m_readBuffIndex = 0;
+        m_readByteIndex = 0;
+        m_readBytesAvailable = 0;
     }
-
-    I2C_CONTROLLER *i2c;
-
-    // stores the fact that I2C has been explicitely enabled.
-    bool i2cHasBeenEnabled;
-
-    // stores the slave address that is currently opened by I2C handle
-    ULONG connectionSlaveAddress;
-
-    // stores the slave address to write to. This is set
-    // in beginTransmission() and gets passed to the 
-    // driver in endTransmission() when the data is finally flushed
-    int slaveWriteAddress;
-
-    // buffer for containing data to send to a slave device
-    // calling beginTransmission() initiates "buffer fill mode",
-    // where subsequent calls to write() will append data to 
-    // the buffer. No data is written to the device until
-    // endTransmission() is called.
-    buffer_t writeBuf;
-
-    // buffer for containing data read from a slave device
-    buffer_t readBuf;
-    buffer_t::const_iterator readIndex;
 };
 
 __declspec(selectany) TwoWire Wire;

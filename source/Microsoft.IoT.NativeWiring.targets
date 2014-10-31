@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>ARDUINO=100;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include\avr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include\avr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\eeprom.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Servo.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\HardwareSerial.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\NetworkSerial.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PulseIn.cpp" />    
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\DmapSupport.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\GalileoPins.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\GpioController.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\I2cController.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PCA9685Support.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PCAL9535ASupport.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\CY8C9540ASupport.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Spi.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\SpiController.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\WInterrupt.cpp" />    
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\arduino.cpp" />    
+  </ItemGroup>
+</Project>

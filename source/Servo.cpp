@@ -117,9 +117,10 @@ void Servo::writeMicroseconds(int value)
     int frequency = (int)((double) 1 / ((double) REFRESH_INTERVAL / 1000000));
     
     // Validation of the pin to make sure PWM functionality is allowed
-    _ValidatePwmPin(_attachedPin);
-    _ValidatePinOkToChange(_attachedPin);
-    _InitializePinIfNeeded(_attachedPin);
+    if (!g_pins.verifyPinFunction(_attachedPin, FUNC_PWM, GalileoPinsClass::NO_LOCK_CHANGE))
+    {
+        ThrowError("Error occurred verifying pin: %d function: PWM, Error: %08x", _attachedPin, GetLastError());
+    }
 
     HRESULT hr = ERROR_SUCCESS;
 
@@ -127,34 +128,10 @@ void Servo::writeMicroseconds(int value)
     // From 0-255 to 0-PWM_MAX_DUTYCYCLE, rounding to nearest value.
     ULONG dutyCycle = (ULONG) ((((double) alternateValue / REFRESH_INTERVAL * 255UL * PWM_MAX_DUTYCYCLE) + 127UL) / 255UL);
 
-    // If PWM operation is not currently enabled on this pin:
-    if (!_pinData[_attachedPin].pwmIsEnabled)
+    // Prepare the pin for PWM use.
+    if (!g_pins.setPwmDutyCycle(_attachedPin, (ULONG) dutyCycle))
     {
-        // Prepare the pin for PWM use.
-        _PinFunction(_attachedPin, _PwmMuxFunction[_attachedPin]);
-        _SetImplicitPinMode(_attachedPin, OUTPUT);
-        _pinData[_attachedPin].stateIsKnown = FALSE;
-
-        // Start PWM on the pin.
-        hr = PwmStart(_PwmPinMap[_attachedPin], frequency, dutyCycle);
-        if (FAILED(hr))
-        {
-            ThrowError("PwmStart() failed. pin=%d, freq=%d", _attachedPin, frequency);
-        }
-        _pinData[_attachedPin].pwmIsEnabled = TRUE;
-        _pinData[_attachedPin].pwmDutyCycle = dutyCycle;
-    }
-    // If PWM operation is enabled on this pin:
-    else
-    {
-        // Since we have no driver function to change a PWM Frequency, we will have to stop it and restart it with the new frequency.
-        PwmStop(_PwmPinMap[_attachedPin]);
-        hr = PwmStart(_PwmPinMap[_attachedPin], frequency, dutyCycle);
-        if (FAILED(hr))
-        {
-            ThrowError("PwmStart() failed. pin=%d, freq=%d", _attachedPin, frequency);
-        }
-        _pinData[_attachedPin].pwmDutyCycle = dutyCycle;
+        ThrowError("Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", _attachedPin, dutyCycle, GetLastError());
     }
 
     double servoIndexDouble = (double) (alternateValue - _min) / (_max - _min) * 180;
