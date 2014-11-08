@@ -154,6 +154,9 @@ public:
             // Clean up all queued transfers now that they have been performed (or failed).
             m_writeBuffs.clear();
 
+            // Clean out the transaction so it can be used again in the future.
+            m_i2cTransaction.reset();
+
             // Get the current count of bytes available in the read buffer.  Any read buffers
             // queued should be full of data (or gone, if the transfer failed).
             _calculateReadBytesInBuffer();
@@ -223,6 +226,9 @@ public:
 
             // Clear out queued transfers now that we are done with them.
             m_writeBuffs.clear();
+
+            // Clean out the transaction so it can be used again in the future.
+            m_i2cTransaction.reset();
 
             // Get the current count of bytes available in the read buffer.
             _calculateReadBytesInBuffer();
