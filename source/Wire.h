@@ -291,10 +291,12 @@ public:
     \return The number of bytes "sent" (the value cbData in this case).
     */
     size_t write(const uint8_t *data, size_t cbData)
-
     {
-        this->m_writeBuff.reserve(this->m_writeBuff.size() + cbData);
-        std::copy_n(data, cbData, this->m_writeBuff.end());
+        uint8_t length = this->m_writeBuff.size();
+        this->m_writeBuff.resize(this->m_writeBuff.size() + cbData);
+        auto it = this->m_writeBuff.begin();
+        advance(it, length);
+        std::copy_n(data, cbData, it);
         return cbData;
     }
 
@@ -305,8 +307,11 @@ public:
     */
     size_t write(PCHAR string)
     {
-        this->m_writeBuff.reserve(this->m_writeBuff.size() + strlen(string));
-        std::copy_n(string, strlen(string), this->m_writeBuff.end());
+        uint8_t length = this->m_writeBuff.size();
+        this->m_writeBuff.resize(this->m_writeBuff.size() + strlen(string));
+        auto it = this->m_writeBuff.begin();
+        advance(it, length);
+        std::copy_n(string, strlen(string), it);
         return strlen(string);
     }
 
