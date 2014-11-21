@@ -33,7 +33,7 @@
 #include "ArduinoError.h"
 #include "WindowsRandom.h"
 #include "WindowsTime.h"
-#include "GalileoPins.h"
+#include "BoardPins.h"
 #include "binary.h"
 #include "wire.h"
 #include "Adc.h"
@@ -171,29 +171,6 @@ inline bool _IsAnalogPin(int num)
     return num >= A0;
 }
 
-// This function returns if this is a valid
-// Arduino GPIO pin number.
-inline bool _IsArduinoPinNumber(int pin)
-{
-    if ((pin < 0) || (pin >= NUM_ARDUINO_PINS))
-    {
-        return false;
-    }
-
-    return true;
-}
-
-// This function throws an error if the specified pin number is not a valid
-// Arduino GPIO pin number.
-inline void _ValidateArduinoPinNumber(int pin)
-{
-    if (!_IsArduinoPinNumber(pin))
-    {
-        ThrowError("Invalid pin number (%d). Pin must be in the range [0, %d)",
-            pin, NUM_ARDUINO_PINS);
-    }
-}
-
 //
 // Set the digital pin (IO0 - IO13) to the specified state.
 // If the analog pins (A0-A5) are configured as digital IOs,
@@ -210,8 +187,6 @@ inline void _ValidateArduinoPinNumber(int pin)
 //
 inline void digitalWrite(unsigned int pin, unsigned int state)
 {
-    _ValidateArduinoPinNumber(pin);
-
     if (!g_pins.verifyPinFunction(pin, FUNC_DIO, GalileoPinsClass::NO_LOCK_CHANGE))
     {
         ThrowError("Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, GetLastError());
@@ -247,7 +222,7 @@ inline int digitalRead(int pin)
 {
     ULONG readData = 0;
 
-    if (!_IsArduinoPinNumber(pin))
+    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, GalileoPinsClass::NO_LOCK_CHANGE))
     {
         return LOW;
     }
@@ -364,7 +339,6 @@ on the board, or if a pin that does not support PWM is specified.
 inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
 {
     ULONGLONG scaledDutyCycle;
-    _ValidateArduinoPinNumber(pin);
 
     // Verify the pin is in PWM mode, and configure it for PWM use if not.
     if (!g_pins.verifyPinFunction(pin, FUNC_PWM, GalileoPinsClass::NO_LOCK_CHANGE))
@@ -549,7 +523,8 @@ inline int RunArduinoSketch()
             #endif
         }
     }
-    catch (const _arduino_fatal_error &ex)
+
+	catch (const _arduino_fatal_error &ex)
     {
         ret = 1;
         Log("\nSketch Aborted! A fatal error has occurred:\n");

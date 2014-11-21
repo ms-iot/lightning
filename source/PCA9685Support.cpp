@@ -336,8 +336,8 @@ BOOL PCA9685Device::_InitializeChip(ULONG i2cAdr)
             // Register a callback to test if the chip is initialized.
             status = transaction.queueCallback([&readBuf, &transaction]()
             {
-                PMODE1 mode1Reg = (PMODE1)readBuf;
-                if (mode1Reg->SLEEP == 0)   // If chip is not in sleep mode,
+                PMODE1 mode1RegPtr = (PMODE1)readBuf;
+                if (mode1RegPtr->SLEEP == 0)   // If chip is not in sleep mode,
                 {
                     transaction.abort();
                 }

@@ -125,7 +125,7 @@ public:
         m_writeBuff.clear();
 
         // Queue a write from the buffer.
-        if (!m_i2cTransaction.queueWrite(m_writeBuffs.back().data(), m_writeBuffs.back().size()))
+        if (!m_i2cTransaction.queueWrite(m_writeBuffs.back().data(), (ULONG) m_writeBuffs.back().size()))
         {
             _cleanTransaction();
             ThrowError("An error occurred queueing an I2C write of %d bytes.  Error: 0x%08X", m_writeBuffs.back().size(), GetLastError());
@@ -408,7 +408,7 @@ private:
         m_readBytesAvailable = 0;
         for (buff_queue_t::iterator i = m_readBuffs.begin(); i != m_readBuffs.end(); i++)
         {
-            m_readBytesAvailable += i->size();
+            m_readBytesAvailable += (ULONG) i->size();
         }
     }
 

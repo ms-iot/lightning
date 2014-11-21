@@ -14,6 +14,17 @@
 #include "CY8C9540ASupport.h"
 #include "ExpanderDefs.h"
 
+// Pin function type values.
+const UCHAR FUNC_NUL = 0x00;    ///< No function has been set
+const UCHAR FUNC_DIO = 0x01;    ///< Digital I/O function
+const UCHAR FUNC_PWM = 0x02;    ///< Pulse Width Modulation (PWM) function
+const UCHAR FUNC_AIN = 0x04;    ///< Analog In function
+const UCHAR FUNC_I2C = 0x08;    ///< I2C Bus function
+const UCHAR FUNC_SPI = 0x10;    ///< SPI Bus function
+const UCHAR FUNC_SER = 0x20;    ///< Hardware Serial function
+const UCHAR FUNC_I2S = 0x40;    ///< Hardware I2S function
+const UCHAR FUNC_SPK = 0X80;	///< Hardware 8254 speaker function
+
 /// The class used to configure and use GPIO pins.
 class GalileoPinsClass
 {
@@ -28,7 +39,7 @@ public:
     /** This struct contains all the attributes needed to configure and use one
         of the I/O pins. */
     typedef struct {
-        UCHAR gpioType;         ///< Fabric, Legacy Resume, Legacy Core, Expander
+        UCHAR gpioType;         ///< Fabric, Legacy Resume, Legacy Core, Expander, etc.
         UCHAR portBit;          ///< Which bit on the port is attached to this pin
         UCHAR pullupExp : 4;    ///< Number of I/O expander for pull-up control
         UCHAR pullupBit : 4;    ///< Bit of I/O expander for pull-up control
@@ -47,9 +58,11 @@ public:
         UCHAR spiMuxA : 1;      ///< State of 1st MUX for SPI use of pin
         UCHAR spiMuxB : 1;      ///< State of 2nd MUX for SPI use of pin
         UCHAR serMuxA : 1;      ///< State of 1st MUX for serial use of pin
-        UCHAR serMuxB : 1;      ///< State of 1nd MUX for serial use of pin
+        UCHAR serMuxB : 1;      ///< State of 2nd MUX for serial use of pin
+		UCHAR i2SMux : 1;		///< State of MUX for I2S use of pin
+		UCHAR spkMux : 1;       ///< State of MUX for 8254 speaker use of pin
         UCHAR triStIn : 1;      ///< Tri-state control bit state for input pin
-        UCHAR _pad : 3;         ///< Pad to byte boundary
+        UCHAR _pad : 1;         ///< Pad to byte boundary
         UCHAR funcMask;         ///< Mask of functin types supported on the pin
     } PORT_ATTRIBUTES, *PPORT_ATTRIBUTES;
     
@@ -97,6 +110,14 @@ public:
         UNLOCK_FUNCTION         ///< Unlock the pin function
     };
 
+	/// Enum of board types.
+	const enum BOARD_TYPE {
+		NOT_SET,				///< Indicates board type not yet set
+		GALILEO_GEN1,			///< Original Galileo board
+		GALILEO_GEN2,			///< Galileo Gen2 board
+		MBM_BARE				///< MBM without Lure attached
+	};
+
     /// Method to set an I/O pin to a state (HIGH or LOW).
     BOOL setPinState(ULONG pin, ULONG state);
 
@@ -112,11 +133,11 @@ public:
     /// Method to set the PWM duty cycle for a pin.
     BOOL setPwmDutyCycle(ULONG pin, ULONG dutyCycle);
 
-    /// Method to override auto-detection of board generation.
-    BOOL setBoardGeneration(ULONG gen);
+    /// Method to override auto-detection of board type.
+    BOOL setBoardType(BOARD_TYPE board);
 
-    /// Method to get the board generation.
-    BOOL getBoardGeneration(ULONG & gen);
+    /// Method to get the board type.
+    BOOL getBoardType(BOARD_TYPE & board);
 
 private:
 
@@ -132,11 +153,17 @@ private:
     /// Pointer to array of pin function tracking structures.
     const PPIN_FUNCTION m_PinFunctions;
 
+	/// The count of entries in the pin function tracking array.
+	const ULONG m_PinFunctionEntryCount;
+
     /// Pointer to array of PWM channels.
     const PWM_CHANNEL* m_PwmChannels;
 
-    /// The generation of the board we are running on.
-    ULONG m_boardGeneration;
+	/// The number of GPIO pins present on the current board.
+	ULONG m_GpioPinCount;
+
+    /// The type of the board we are running on.
+    BOARD_TYPE m_boardType;
 
     /// Method to configure an I/O Pin for one of the functions it suppports.
     BOOL _setPinFunction(ULONG pin, ULONG function);
@@ -174,14 +201,17 @@ private:
     /// Method to set the state of an I/O Expander port pin.
     BOOL _setExpBitToState(ULONG expNo, ULONG bitNo, ULONG state);
 
-    /// Method to test whether a pin number is in the valid range or not.
-    inline BOOL _pinNumberIsValid(ULONG pin);
+    /// Method to test whether a pin number is safe to use as an array index.
+    inline BOOL _pinNumberIsSafe(ULONG pin);
 
-    /// Method to verify the board generation has been configured.
-    BOOL _verifyBoardGeneration();
+    /// Method to verify the board type has been configured.
+    BOOL _verifyBoardType();
 
-    /// Method to determine if we are running on a Gen1 or Gen2 board.
-    BOOL _determineBoardGeneration();
+    /// Method to determine what type of board we are running on.
+    BOOL _determineBoardType();
+
+	/// Methiod to determine the generation of a Galileo board.
+	BOOL _determineGalileoGen();
 
     /// Test an I2C address to see if a slave is present on it.
     BOOL _testI2cAddress(ULONG i2cAdr);
@@ -195,9 +225,9 @@ Method to determine if a pin number is in the legal range or not.
 \param[in] pin the pin number to check for range
 \return TRUE if pin number is in range, FALSE otherwise
 */
-inline BOOL GalileoPinsClass::_pinNumberIsValid(ULONG pin)
+inline BOOL GalileoPinsClass::_pinNumberIsSafe(ULONG pin)
 {
-    return (pin < NUM_ARDUINO_PINS);
+    return (pin < m_GpioPinCount);
 }
 
 /**
@@ -205,15 +235,15 @@ Determine if the board generation has been determined yet, and if not, determine
 board generation and configure the code for that generation.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-inline BOOL GalileoPinsClass::_verifyBoardGeneration()
+inline BOOL GalileoPinsClass::_verifyBoardType()
 {
-    if (m_boardGeneration != 0)
+    if (m_boardType != NOT_SET)
     {
         return TRUE;
     }
     else
     {
-        return _determineBoardGeneration();
+        return _determineBoardType();
     }
 }
 

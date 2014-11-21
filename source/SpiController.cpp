@@ -53,10 +53,10 @@ BOOL SPIControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz)
         switch (busNumber)
         {
         case ADC_SPI_BUS:
-            deviceName = dmapSpi0DeviceName;
+            deviceName = galileoSpi0DeviceName;
             break;
         case EXTERNAL_SPI_BUS:
-            deviceName = dmapSpi1DeviceName;
+            deviceName = galileoSpi1DeviceName;
             break;
         default:    // Only support the two SPI busses
             status = FALSE;
