@@ -171,11 +171,23 @@ inline bool _IsAnalogPin(int num)
     return num >= A0;
 }
 
+// This function returns if this is a valid
+// Arduino GPIO pin number.
+inline bool _IsArduinoPinNumber(int pin)
+{
+    if ((pin < 0) || (pin >= NUM_ARDUINO_PINS))
+    {
+        return false;
+    }
+
+    return true;
+}
+
 // This function throws an error if the specified pin number is not a valid
 // Arduino GPIO pin number.
 inline void _ValidateArduinoPinNumber(int pin)
 {
-    if ((pin < 0) || (pin >= NUM_ARDUINO_PINS))
+    if (!_IsArduinoPinNumber(pin))
     {
         ThrowError("Invalid pin number (%d). Pin must be in the range [0, %d)",
             pin, NUM_ARDUINO_PINS);
@@ -224,7 +236,7 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
 //
 // Return Value:
 //
-// 1 for HIGH, 0 for LOW, or -1 for error
+// 1 for HIGH, 0 for LOW or error
 // 
 // Example:
 //
@@ -235,16 +247,16 @@ inline int digitalRead(int pin)
 {
     ULONG readData = 0;
 
-    _ValidateArduinoPinNumber(pin);
-
-    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, GalileoPinsClass::NO_LOCK_CHANGE))
+    if (!_IsArduinoPinNumber(pin))
     {
-        ThrowError("Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, GetLastError());
+        return LOW;
     }
 
-    if (!g_pins.getPinState(pin, readData))
+    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, GalileoPinsClass::NO_LOCK_CHANGE) ||
+        !g_pins.getPinState(pin, readData))
     {
-        ThrowError("Error occurred reading pin: %d Error: %08x", pin, GetLastError());
+        // On error return LOW per docs.
+        readData = LOW;
     }
 
     return readData;
