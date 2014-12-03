@@ -8,7 +8,7 @@
 #include <Windows.h>
 #include <functional>
 
-#include "GalileoPins.h"
+#include "BoardPins.h"
 #include "DmapSupport.h"
 
 #define CMD_WRITE 0
@@ -633,6 +633,7 @@ public:
         m_bufBytes = 0;
         m_isRead = FALSE;
         m_preRestart = FALSE;
+		m_callBack = nullptr;
         resetCmd();
         resetRead();
     }
@@ -730,7 +731,8 @@ public:
     // Return TRUE if this transfer specifies a callback function.
     inline BOOL hasCallback() const
     {
-        return (!m_callBack._Empty() && (m_callBack != nullptr));
+		return (m_callBack != nullptr);
+//TODO:        return (!m_callBack._Empty() && (m_callBack != nullptr));
     }
 
 private:

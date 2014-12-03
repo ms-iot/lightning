@@ -10,7 +10,7 @@
 #include "ArduinoCommon.h"
 #include "ArduinoError.h"
 #include "SpiController.h"
-#include "GalileoPins.h"
+#include "BoardPins.h"
 
 // SPI clock values in KHz.
 #define SPI_CLOCK_DIV2 8000

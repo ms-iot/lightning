@@ -39,7 +39,7 @@ public:
         if (status)
         {
             // Make the fabric GPIO bit that drives the ADC chip select signal an output.
-            status = g_fabricGpio.setPinDirection(m_csFabricBit, DIRECTION_OUT);
+            status = g_quarkFabricGpio.setPinDirection(m_csFabricBit, DIRECTION_OUT);
             if (!status)  { error = GetLastError(); }
         }
 
@@ -82,13 +82,13 @@ public:
             dataOut = channel << CHAN_SHIFT;
 
             // Perform a conversion and get the result.
-            g_fabricGpio.setPinState(m_csFabricBit, LOW);       // Make ADC chip select active
+            g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);       // Make ADC chip select active
             if (!status) { error = GetLastError(); }
             else
             {
                 status = m_spi.transfer32(dataOut, dataIn);
                 if (!status) { error = GetLastError(); }
-                g_fabricGpio.setPinState(m_csFabricBit, HIGH);  // Make ADC chip select inactive
+                g_quarkFabricGpio.setPinState(m_csFabricBit, HIGH);  // Make ADC chip select inactive
             }
         }
 

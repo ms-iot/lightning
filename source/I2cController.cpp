@@ -64,7 +64,7 @@ BOOL I2cControllerClass::_mapController()
     BOOL error = ERROR_SUCCESS;
     PVOID baseAddress = nullptr;
 
-    status = GetControllerBaseAddress(dmapI2cDeviceName,
+    status = GetControllerBaseAddress(galileoI2cDeviceName,
         m_hController,
         baseAddress,
         FILE_SHARE_READ | FILE_SHARE_WRITE);

@@ -53,15 +53,6 @@ const UCHAR A3 = 17;
 const UCHAR A4 = 18;
 const UCHAR A5 = 19;
 
-// Pin function type values.
-const UCHAR FUNC_NUL = 0x00;    ///< No function has been set
-const UCHAR FUNC_DIO = 0x01;    ///< Digital I/O function
-const UCHAR FUNC_PWM = 0x02;    ///< Pulse Width Modulation (PWM) function
-const UCHAR FUNC_AIN = 0x04;    ///< Analog In function
-const UCHAR FUNC_I2C = 0x08;    ///< I2C Bus function
-const UCHAR FUNC_SPI = 0x10;    ///< SPI Bus function
-const UCHAR FUNC_SER = 0x20;    ///< Hardware Serial function
-
 // SPI signal to pin mapping.
 const UCHAR PIN_MOSI = D11;     ///< Pin used for SPI MOSI signal
 const UCHAR PIN_MISO = D12;     ///< Pin used for SPI MISO signal
