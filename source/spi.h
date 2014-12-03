@@ -40,7 +40,11 @@ public:
         m_bitOrder = MSBFIRST;      // Default bit order is MSB First
         m_clockKHz = 4000;          // Default clock rate is 4 MHz
         m_mode = SPI_MODE0;         // Default to Mode 0
-    }
+		m_csPin = 0xFFFFFFFF;		// Start with invalid pin values
+		m_sckPin = 0xFFFFFFFF;		//   "
+		m_mosiPin = 0xFFFFFFFF;		//   "
+		m_misoPin = 0xFFFFFFFF;		//   "
+	}
 
     virtual ~SPIClass()
     {
@@ -50,52 +54,91 @@ public:
     /// Initialize the externally accessible SPI bus for use.
     void begin()
     {
+		GalileoPinsClass::BOARD_TYPE board;
+
+		if (!g_pins.getBoardType(board))
+		{
+			ThrowError("An error occurred determining board type: %08x", GetLastError());
+		}
+
+		if (board == GalileoPinsClass::BOARD_TYPE::MBM_BARE)
+		{
+			m_csPin = BARE_MBM_PIN_CS;
+			m_misoPin = BARE_MBM_PIN_MISO;
+			m_mosiPin = BARE_MBM_PIN_MOSI;
+			m_sckPin = BARE_MBM_PIN_SCK;
+		}
+		else
+		{
+			m_mosiPin = ARDUINO_PIN_MOSI;
+			m_misoPin = ARDUINO_PIN_MISO;
+			m_sckPin = ARDUINO_PIN_SCK;
+		}
+
         if (m_controller == nullptr)
         {
             m_controller = new SPIControllerClass;
         }
 
         // Set SCK and MOSI as outputs dedicated to SPI, and pulled LOW.
-        if (!g_pins.verifyPinFunction(PIN_SCK, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
+		if (!g_pins.verifyPinFunction(m_sckPin, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
+		{
+			ThrowError("An error occurred configuring SCK pin for SPI use: %08x", GetLastError());
+		}
+
+		if (!g_pins.setPinState(m_sckPin, LOW))
+		{
+			ThrowError("An error occurred setting SCK pin LOW: %08x", GetLastError());
+		}
+
+		if (!g_pins.setPinMode(m_sckPin, DIRECTION_OUT, FALSE))
+		{
+			ThrowError("An error occurred setting SCK pin as output: %08x", GetLastError());
+		}
+
+        if (!g_pins.verifyPinFunction(m_mosiPin, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
         {
-            ThrowError("An error occurred configuring pinSCK for SPI use: %08x", GetLastError());
+            ThrowError("An error occurred configuring MOSI pin for SPI use: %08x", GetLastError());
         }
 
-        if (!g_pins.setPinState(PIN_SCK, LOW))
+        if (!g_pins.setPinState(m_mosiPin, LOW))
         {
-            ThrowError("An error occurred setting pinSCK LOW: %08x", GetLastError());
+            ThrowError("An error occurred setting MOSI pin LOW: %08x", GetLastError());
         }
 
-        if (!g_pins.setPinMode(PIN_SCK, DIRECTION_OUT, FALSE))
+        if (!g_pins.setPinMode(m_mosiPin, DIRECTION_OUT, FALSE))
         {
-            ThrowError("An error occurred setting pinSCK as output: %08x", GetLastError());
-        }
-
-        if (!g_pins.verifyPinFunction(PIN_MOSI, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
-        {
-            ThrowError("An error occurred configuring pinMOSI for SPI use: %08x", GetLastError());
-        }
-
-        if (!g_pins.setPinState(PIN_MOSI, LOW))
-        {
-            ThrowError("An error occurred setting pinMOSI LOW: %08x", GetLastError());
-        }
-
-        if (!g_pins.setPinMode(PIN_MOSI, DIRECTION_OUT, FALSE))
-        {
-            ThrowError("An error occurred setting pinMOSI as output: %08x", GetLastError());
+            ThrowError("An error occurred setting MOSI pin as output: %08x", GetLastError());
         }
 
         // Set MISO as an input dedicated to SPI.
-        if (!g_pins.verifyPinFunction(PIN_MISO, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
+        if (!g_pins.verifyPinFunction(m_misoPin, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
         {
-            ThrowError("An error occurred configuring pinMISO for SPI use: %08x", GetLastError());
+            ThrowError("An error occurred configuring MISO pin for SPI use: %08x", GetLastError());
         }
 
-        if (!g_pins.setPinMode(PIN_MISO, DIRECTION_IN, FALSE))
+        if (!g_pins.setPinMode(m_misoPin, DIRECTION_IN, FALSE))
         {
-            ThrowError("An error occurred setting pinMISO as output: %08x", GetLastError());
+            ThrowError("An error occurred setting MISO pin as output: %08x", GetLastError());
         }
+
+		if (board == GalileoPinsClass::BOARD_TYPE::MBM_BARE)
+		{
+			if (!g_pins.verifyPinFunction(m_csPin, FUNC_SPI, GalileoPinsClass::LOCK_FUNCTION))
+			{
+				ThrowError("An error occurred configuring CS pin for SPI use: %08x", GetLastError());
+			}
+
+			if (!g_pins.setPinState(m_csPin, HIGH))
+			{
+				ThrowError("An error occurred setting CS pin HIGH: %08x", GetLastError());
+			}
+
+			if (!g_pins.setPinMode(m_csPin, DIRECTION_OUT, FALSE))
+			{
+				ThrowError("An error occurred setting CS pin as output: %08x", GetLastError());
+			}
+		}
 
         // Set the desired SPI bit shifting order.
         if (m_bitOrder == MSBFIRST)
@@ -123,17 +166,17 @@ public:
             m_controller = nullptr;
 
             // Set all SPI pins as digitial I/O.
-            if (!g_pins.verifyPinFunction(PIN_SCK, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
+            if (!g_pins.verifyPinFunction(m_sckPin, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
             {
-                ThrowError("An error occurred reverting pinSCK from SPI use: %08x", GetLastError());
+                ThrowError("An error occurred reverting SCK pin from SPI use: %08x", GetLastError());
             }
-            if (!g_pins.verifyPinFunction(PIN_MOSI, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
+            if (!g_pins.verifyPinFunction(m_mosiPin, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
             {
-                ThrowError("An error occurred reverting pinMOSI from SPI use: %08x", GetLastError());
+                ThrowError("An error occurred reverting MOSI pin from SPI use: %08x", GetLastError());
             }
-            if (!g_pins.verifyPinFunction(PIN_MISO, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
+            if (!g_pins.verifyPinFunction(m_misoPin, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION))
             {
-                ThrowError("An error occurred reverting pinMISO from SPI use: %08x", GetLastError());
+                ThrowError("An error occurred reverting MISO pin from SPI use: %08x", GetLastError());
             }
         }
     }
@@ -244,6 +287,18 @@ private:
 
     // SPI mode to use.
     ULONG m_mode;
+
+	/// SPI CS pin number.
+	ULONG m_csPin;
+
+	/// SPI Clock pin number.
+	ULONG m_sckPin;
+
+	/// SPI Master Out Slave In pin number.
+	ULONG m_mosiPin;
+
+	/// SPI Master In Slave Out pin number.
+	ULONG  m_misoPin;
 };
 
 __declspec(selectany) SPIClass SPI;

@@ -572,7 +572,7 @@ BOOL GalileoPinsClass::_setPinDigitalIo(ULONG pin)
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for Digital I/O.
-        status = _setMux(m_PinAttributes[pin].muxA, m_PinAttributes[pin].digIoMuxA);
+        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].digIoMuxA);
         if (!status) { error = GetLastError(); }
     }
 
@@ -580,11 +580,11 @@ BOOL GalileoPinsClass::_setPinDigitalIo(ULONG pin)
     if (status && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for Digital I/O.
-        status = _setMux(m_PinAttributes[pin].muxB, m_PinAttributes[pin].digIoMuxB);
+        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].digIoMuxB);
         if (!status) { error = GetLastError(); }
     }
 
-    // If the pin is on a CY8C9540A I/O Expander chip, deselect the PWM function.
+    // If the pin PWM capable and on a CY8C9540A I/O Expander chip, deselect the PWM function.
     if (status && (m_PwmChannels[pin].expander == CY8))
     {
         ULONG i2cAdr = m_ExpAttributes[m_PwmChannels[pin].expander].I2c_Address;
@@ -617,7 +617,7 @@ BOOL GalileoPinsClass::_setPinPwm(ULONG pin)
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for PWM.
-        status = _setMux(m_PinAttributes[pin].muxA, m_PinAttributes[pin].pwmMuxA);
+        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].pwmMuxA);
         if (!status) { error = GetLastError(); }
     }
 
@@ -625,7 +625,7 @@ BOOL GalileoPinsClass::_setPinPwm(ULONG pin)
     if (status && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for PWM.
-        status = _setMux(m_PinAttributes[pin].muxB, m_PinAttributes[pin].pwmMuxB);
+        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].pwmMuxB);
         if (!status) { error = GetLastError(); }
     }
 
@@ -673,7 +673,7 @@ BOOL GalileoPinsClass::_setPinAnalogInput(ULONG pin)
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for Analog Input.
-        status = _setMux(m_PinAttributes[pin].muxA, m_PinAttributes[pin].anInMuxA);
+        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].anInMuxA);
         if (!status) { error = GetLastError(); }
     }
 
@@ -681,7 +681,7 @@ BOOL GalileoPinsClass::_setPinAnalogInput(ULONG pin)
     if (status && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for Analog Input.
-        status = _setMux(m_PinAttributes[pin].muxB, m_PinAttributes[pin].anInMuxB);
+        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].anInMuxB);
         if (!status) { error = GetLastError(); }
     }
 
@@ -716,7 +716,7 @@ BOOL GalileoPinsClass::_setPinI2c(ULONG pin)
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for I2C bus use.
-        status = _setMux(m_PinAttributes[pin].muxA, m_PinAttributes[pin].i2cMuxA);
+        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].i2cMuxA);
         if (!status) { error = GetLastError(); }
     }
 
@@ -724,7 +724,7 @@ BOOL GalileoPinsClass::_setPinI2c(ULONG pin)
     if (status && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for I2C bus use.
-        status = _setMux(m_PinAttributes[pin].muxB, m_PinAttributes[pin].i2cMuxB);
+        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].i2cMuxB);
         if (!status) { error = GetLastError(); }
     }
 
@@ -752,7 +752,7 @@ BOOL GalileoPinsClass::_setPinSpi(ULONG pin)
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for SPI bus use.
-        status = _setMux(m_PinAttributes[pin].muxA, m_PinAttributes[pin].spiMuxA);
+        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].spiMuxA);
         if (!status) { error = GetLastError(); }
     }
 
@@ -760,7 +760,7 @@ BOOL GalileoPinsClass::_setPinSpi(ULONG pin)
     if (status && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for SPI bus use.
-        status = _setMux(m_PinAttributes[pin].muxB, m_PinAttributes[pin].spiMuxB);
+        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].spiMuxB);
         if (!status) { error = GetLastError(); }
     }
 
@@ -788,7 +788,7 @@ BOOL GalileoPinsClass::_setPinHwSerial(ULONG pin)
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for Hardware Serial use.
-        status = _setMux(m_PinAttributes[pin].muxA, m_PinAttributes[pin].serMuxA);
+        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].serMuxA);
         if (!status) { error = GetLastError(); }
     }
 
@@ -796,7 +796,7 @@ BOOL GalileoPinsClass::_setPinHwSerial(ULONG pin)
     if (status && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for Hardware Serial use.
-        status = _setMux(m_PinAttributes[pin].muxB, m_PinAttributes[pin].serMuxB);
+        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].serMuxB);
         if (!status) { error = GetLastError(); }
     }
 
@@ -949,13 +949,14 @@ BOOL GalileoPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direc
 
 /**
 This method sets the state of an I/O Expander port pin.
+\param[in] pin The number of the GPIO pin being configured.
 \param[in] expNo The number of the I/O Expander in question.
 \param[in] bitNo Specifies the port and bit number to set (such as: P1_4 for port 1, bit 4)
 \param[in] state The desired state: HIGH or LOW.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
 // Method to set an I/O Expander bit to the specified state.
-BOOL GalileoPinsClass::_setExpBitToState(ULONG expNo, ULONG bitNo, ULONG state)
+BOOL GalileoPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1001,6 +1002,16 @@ BOOL GalileoPinsClass::_setExpBitToState(ULONG expNo, ULONG bitNo, ULONG state)
 		}
 		break;
 	case BAYTRAIL:
+		if (m_PinAttributes[pin].gpioType == GPIO_S0)
+		{
+			status = g_btFabricGpio.setS0PinFunction(m_PinAttributes[pin].portBit, state);
+			if (!status) { error = GetLastError(); }
+		}
+		else
+		{
+			status = g_btFabricGpio.setS5PinFunction(m_PinAttributes[pin].portBit, state);
+			if (!status) { error = GetLastError(); }
+		}
 		// TODO: Add muxing code when needed for functions other than digitalIO.
 		break;
 	default:
@@ -1058,7 +1069,7 @@ BOOL GalileoPinsClass::_configurePinDrivers(ULONG pin, ULONG mode)
             }
 
             // Set the I/O Expander bit to the correct state.
-            status = _setExpBitToState(expNo, bitNo, state);
+            status = _setExpBitToState(pin, expNo, bitNo, state);
             if (!status) { error = GetLastError(); }
         }
     }
@@ -1101,7 +1112,7 @@ BOOL GalileoPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
             if (pullup)
             {
                 // Set the I/O Expander bit high (also sets it as an output)
-                status = _setExpBitToState(expNo, bitNo, 1);
+                status = _setExpBitToState(pin, expNo, bitNo, 1);
                 if (!status)  { error = GetLastError(); }
             }
 
@@ -1121,11 +1132,12 @@ BOOL GalileoPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
 
 /**
 Method to set a MUX to select the desired signal.
+\parma[in] pin The number of the pin being configured.
 \param[in] mux The number of the MUX in question.
 \param[in] selection The desired state of the MUX "select" input (LOW or HIGH).
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setMux(ULONG mux, ULONG selection)
+BOOL GalileoPinsClass::_setMux(ULONG pin, ULONG mux, ULONG selection)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1147,7 +1159,7 @@ BOOL GalileoPinsClass::_setMux(ULONG mux, ULONG selection)
         bitNo = m_MuxAttributes[mux].selectBit;
 
         // Set the I/O Expander bit to the correct state.
-        status = _setExpBitToState(expNo, bitNo, selection);
+        status = _setExpBitToState(pin, expNo, bitNo, selection);
         if (!status) { error = GetLastError(); }
     }
 

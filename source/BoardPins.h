@@ -193,13 +193,13 @@ private:
     BOOL _configurePinPullup(ULONG pin, BOOL pullUp);
 
     /// Method to set a mux to a desired state.
-    BOOL _setMux(ULONG mux, ULONG selection);
+    BOOL _setMux(ULONG pin, ULONG mux, ULONG selection);
 
     /// Method to set the direction on an I/O Expander port pin.
     BOOL _setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG directin, BOOL pullup);
 
     /// Method to set the state of an I/O Expander port pin.
-    BOOL _setExpBitToState(ULONG expNo, ULONG bitNo, ULONG state);
+    BOOL _setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state);
 
     /// Method to test whether a pin number is safe to use as an array index.
     inline BOOL _pinNumberIsSafe(ULONG pin);

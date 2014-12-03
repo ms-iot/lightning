@@ -483,6 +483,12 @@ public:
 	/// Method to set the direction (input or output) of an S5 GPIO port bit.
 	inline BOOL setS5PinDirection(ULONG gpioNo, ULONG mode);
 
+	/// Method to set the function (mux state) of an S0 GPIO port bit.
+	inline BOOL setS0PinFunction(ULONG gpioNo, ULONG function);
+
+	/// Method to set the function (mux state) of an S5 GPIO port bit.
+	inline BOOL setS5PinFunction(ULONG gpioNo, ULONG function);
+
 private:
 
 #pragma warning(push)
@@ -1239,6 +1245,57 @@ inline BOOL BtFabricGpioControllerClass::setS5PinDirection(ULONG gpioNo, ULONG m
 }
 
 /**
+This method assumes the caller has checked the input parameters.
+\param[in] gpioNo The S0 GPIO number of the pad to configure.  Range: 0-127.
+\param[in] function The function to set for the pin.  Range: 0-7 (only 0-1 used here).
+*/
+inline BOOL BtFabricGpioControllerClass::setS0PinFunction(ULONG gpioNo, ULONG function)
+{
+	BOOL status = TRUE;
+	DWORD error = ERROR_SUCCESS;
+
+	status = mapS0IfNeeded();
+	if (!status) { error = GetLastError(); }
+
+	if (status)
+	{
+		_PCONF0 padConfig;
+		padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
+		padConfig.FUNC_PIN_MUX = function;
+		m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
+	}
+
+	if (!status) { SetLastError(error); }
+	return status;
+}
+
+/**
+This method assumes the caller has checked the input parameters.
+\param[in] gpioNo The S5 GPIO number of the pad to configure.  Range: 0-59.
+\param[in] function The function to set for the pin.  Range: 0-7 (only 0-1 used here).
+*/
+inline BOOL BtFabricGpioControllerClass::setS5PinFunction(ULONG gpioNo, ULONG function)
+{
+	BOOL status = TRUE;
+	DWORD error = ERROR_SUCCESS;
+
+	status = mapS5IfNeeded();
+	if (!status) { error = GetLastError(); }
+
+	if (status)
+	{
+		_PCONF0 padConfig;
+		padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
+		padConfig.FUNC_PIN_MUX = function;
+		m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
+	}
+
+	if (!status) { SetLastError(error); }
+	return status;
+}
+
+
+/**
 This routine disables the output latch for the pad, disables pin output and
 enables pin input.
 \param[in] gpioNo The S0 GPIO number of the pad to configure. Range: 0-127.
@@ -1248,7 +1305,6 @@ inline void BtFabricGpioControllerClass::_setS0PinInput(ULONG gpioNo)
 	_PCONF0 padConfig;
 	padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
 	padConfig.BYPASS_FLOP = 1;			// Disable flop
-	padConfig.FUNC_PIN_MUX = 0;			// Select GPIO use for the pad
 	m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
 	_PAD_VAL padVal;
@@ -1268,7 +1324,6 @@ inline void BtFabricGpioControllerClass::_setS5PinInput(ULONG gpioNo)
 	_PCONF0 padConfig;
 	padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
 	padConfig.BYPASS_FLOP = 1;			// Disable flop
-	padConfig.FUNC_PIN_MUX = 0;			// Select GPIO use for the pad
 	m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
 	_PAD_VAL padVal;
@@ -1289,7 +1344,6 @@ inline void BtFabricGpioControllerClass::_setS0PinOutput(ULONG gpioNo)
 	padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
 	padConfig.BYPASS_FLOP = 0;			// Enable flop
 	padConfig.PULL_ASSIGN = 0;			// No pull resistor
-	padConfig.FUNC_PIN_MUX = 0;			// Select GPIO use for the pad
 	m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
 	_PAD_VAL padVal;
@@ -1310,7 +1364,6 @@ inline void BtFabricGpioControllerClass::_setS5PinOutput(ULONG gpioNo)
 	padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
 	padConfig.BYPASS_FLOP = 0;			// Enable flop
 	padConfig.PULL_ASSIGN = 0;			// No pull resistor
-	padConfig.FUNC_PIN_MUX = 0;			// Select GPIO use for the pad
 	m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
 	_PAD_VAL padVal;
