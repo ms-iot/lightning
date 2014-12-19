@@ -32,7 +32,7 @@ public:
         ULONG error = ERROR_SUCCESS;
 
         // Prepare to use the controller for the ADC's SPI controller.
-        status = m_spi.begin(ADC_SPI_BUS, 2, 20000);
+        status = m_spi.begin(ADC_SPI_BUS, 2, 20000, 16);
         if (!status)  { error = GetLastError(); }
 
         if (status)
@@ -247,7 +247,7 @@ private:
     const ULONG ADC_CHAN_BITS = 4;
 
     /// The SPI Controller object used to talk to the ADC.
-    SPIControllerClass m_spi;
+	SpiControllerClass m_spi;
 
     /// The Fabric GPIO bit that controls the chip select signal.
     const ULONG m_csFabricBit = 0;

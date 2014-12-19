@@ -159,8 +159,8 @@ void HardwareSerial::begin(unsigned long baud, uint8_t config)
 
     if ( _comPortName == L"\\\\.\\COM1" )
     {
-        g_pins.verifyPinFunction(0, FUNC_SER, GalileoPinsClass::LOCK_FUNCTION);
-        g_pins.verifyPinFunction(1, FUNC_SER, GalileoPinsClass::LOCK_FUNCTION);
+        g_pins.verifyPinFunction(0, FUNC_SER, BoardPinsClass::LOCK_FUNCTION);
+        g_pins.verifyPinFunction(1, FUNC_SER, BoardPinsClass::LOCK_FUNCTION);
         pinMode(0, DIRECTION_IN);
         pinMode(1, DIRECTION_OUT);
     }
@@ -202,8 +202,8 @@ void HardwareSerial::end(void)
             #endif
         }
         _comHandle = INVALID_HANDLE_VALUE;
-        g_pins.verifyPinFunction(1, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION);
-        g_pins.verifyPinFunction(0, FUNC_DIO, GalileoPinsClass::UNLOCK_FUNCTION);
+        g_pins.verifyPinFunction(1, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
+        g_pins.verifyPinFunction(0, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
     }
 }
 

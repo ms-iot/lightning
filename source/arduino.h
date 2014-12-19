@@ -187,7 +187,7 @@ inline bool _IsAnalogPin(int num)
 //
 inline void digitalWrite(unsigned int pin, unsigned int state)
 {
-    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, GalileoPinsClass::NO_LOCK_CHANGE))
+    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE))
     {
         ThrowError("Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, GetLastError());
     }
@@ -222,12 +222,12 @@ inline int digitalRead(int pin)
 {
     ULONG readData = 0;
 
-    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, GalileoPinsClass::NO_LOCK_CHANGE))
+    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE))
     {
         return LOW;
     }
 
-    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, GalileoPinsClass::NO_LOCK_CHANGE) ||
+    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE) ||
         !g_pins.getPinState(pin, readData))
     {
         // On error return LOW per docs.
@@ -268,7 +268,7 @@ inline int analogRead(int pin)
         ThrowError("Pin: %d is not an analog input pin.", pin);
     }
 
-    if (!g_pins.verifyPinFunction(ioPin, FUNC_AIN, GalileoPinsClass::NO_LOCK_CHANGE))
+    if (!g_pins.verifyPinFunction(ioPin, FUNC_AIN, BoardPinsClass::NO_LOCK_CHANGE))
     {
         ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, GetLastError());
     }
@@ -341,7 +341,7 @@ inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
     ULONGLONG scaledDutyCycle;
 
     // Verify the pin is in PWM mode, and configure it for PWM use if not.
-    if (!g_pins.verifyPinFunction(pin, FUNC_PWM, GalileoPinsClass::NO_LOCK_CHANGE))
+    if (!g_pins.verifyPinFunction(pin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE))
     {
         ThrowError("Error occurred verifying pin: %d function: PWM, Error: %08x", pin, GetLastError());
     }

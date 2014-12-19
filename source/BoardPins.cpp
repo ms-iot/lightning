@@ -101,7 +101,7 @@ const ULONG NUM_MBM_PINS = 27;	///< Number of entries in a zero based array inde
 This table contains all the pin-specific attributes needed to configure and use an I/O pin.
 It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
 */
-const GalileoPinsClass::PORT_ATTRIBUTES g_Gen2PinAttributes[] =
+const BoardPinsClass::PORT_ATTRIBUTES g_Gen2PinAttributes[] =
 {
 	//gpioType           pullupExp   triStExp    muxA               Muxes (A,B) by function:    I2S   triStIn   Function_mask
 	//             portBit     pullupBit   triStBit      muxB     Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
@@ -132,7 +132,7 @@ const GalileoPinsClass::PORT_ATTRIBUTES g_Gen2PinAttributes[] =
 This table contains the information needed to set each mux to a desired state.  It is indexed by
 mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
 */
-const GalileoPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[MAX_MUXES] =
+const BoardPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[MAX_MUXES] =
 {
     { PWM,  LED0 },     ///< MUX0
     { PWM,  LED2 },     ///< MUX1
@@ -156,7 +156,7 @@ const GalileoPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[MAX_MUXES] =
 This table contains the information needed to drive the PWM channels.  It is indexed by the
 Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM for that pin.
 */
-const GalileoPinsClass::PWM_CHANNEL g_Gen2PwmChannels[] =
+const BoardPinsClass::PWM_CHANNEL g_Gen2PwmChannels[] =
 {
     { NO_X, 0, 0, 0 },          ///< D0
     { NO_X, 0, 0, 0 },          ///< D1
@@ -186,7 +186,7 @@ This table contains the information needed to communicate with each I/O Expander
 It is indexed by Expander number and contains the type of chip used for that I/O Expander
 and the address on the I2C bus the chip responds to.
 */
-const GalileoPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
+const BoardPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
 {
     { PCAL9535A, 0x25 },    ///< EXP0 - Galileo Gen2
     { PCAL9535A, 0x26 },    ///< EXP1 - Galileo Gen2
@@ -207,7 +207,7 @@ const ULONG g_gen1ExpSig = 0x10;
 This table contains all the pin-specific attributes needed to configure and use an I/O pin.
 It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
 */
-const GalileoPinsClass::PORT_ATTRIBUTES g_Gen1PinAttributes[] =
+const BoardPinsClass::PORT_ATTRIBUTES g_Gen1PinAttributes[] =
 {
 	//gpioType          pullupExp triStExp muxA                Muxes (A,B) by function:    I2S   triStIn   Function_mask
 	//             portBit     pullupBit triStBit    muxB    Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
@@ -238,7 +238,7 @@ const GalileoPinsClass::PORT_ATTRIBUTES g_Gen1PinAttributes[] =
 This table contains the information needed to set each mux to a desired state.  It is indexed by
 mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
 */
-const GalileoPinsClass::MUX_ATTRIBUTES g_Gen1MuxAttributes[MAX_MUXES] =
+const BoardPinsClass::MUX_ATTRIBUTES g_Gen1MuxAttributes[MAX_MUXES] =
 {
     { CY8, P3_6 },      ///< MUX_U1_1
     { CY8, P3_7 },      ///< MUX_U1_2
@@ -262,7 +262,7 @@ const GalileoPinsClass::MUX_ATTRIBUTES g_Gen1MuxAttributes[MAX_MUXES] =
 This table contains the information needed to drive the PWM channels.  It is indexed by the
 Galileo GPIO pin number, and specifies the chip and PWM channel used for that pin.
 */
-const GalileoPinsClass::PWM_CHANNEL g_Gen1PwmChannels[] =
+const BoardPinsClass::PWM_CHANNEL g_Gen1PwmChannels[] =
 {
     { NO_X, 0, 0, 0 },        ///< D0
     { NO_X, 0, 0, 0 },        ///< D1
@@ -291,7 +291,7 @@ const GalileoPinsClass::PWM_CHANNEL g_Gen1PwmChannels[] =
 This table contains all the pin-specific attributes needed to configure and use an I/O pin.
 It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
 */
-const GalileoPinsClass::PORT_ATTRIBUTES g_MbmPinAttributes[] =
+const BoardPinsClass::PORT_ATTRIBUTES g_MbmPinAttributes[] =
 {
 	//gpioType           pullupExp   triStExp    muxA               Muxes (A,B) by function:    I2S  triStIn   Function_mask
 	//             portBit     pullupBit   triStBit      muxB     Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
@@ -329,7 +329,7 @@ const GalileoPinsClass::PORT_ATTRIBUTES g_MbmPinAttributes[] =
 This table contains the information needed to set each mux to a desired state.  It is indexed by
 mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
 */
-const GalileoPinsClass::MUX_ATTRIBUTES g_MbmMuxAttributes[MAX_MUXES] =
+const BoardPinsClass::MUX_ATTRIBUTES g_MbmMuxAttributes[MAX_MUXES] =
 {
 	{ SOC,  0 }     ///< MUX0
 };
@@ -339,7 +339,7 @@ const GalileoPinsClass::MUX_ATTRIBUTES g_MbmMuxAttributes[MAX_MUXES] =
 This table contains the information needed to drive the PWM channels.  It is indexed by the
 Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM for that pin.
 */
-const GalileoPinsClass::PWM_CHANNEL g_MbmPwmChannels[] =
+const BoardPinsClass::PWM_CHANNEL g_MbmPwmChannels[] =
 {
 	{ NO_X, 0, 0, 0 },          ///<  0
 	{ NO_X, 0, 0, 0 },          ///<  1
@@ -374,7 +374,7 @@ const GalileoPinsClass::PWM_CHANNEL g_MbmPwmChannels[] =
 /**
 This table tracks the currently configured function for each pin of the board.
 */
-GalileoPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
+BoardPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
 {
 	{ FUNC_NUL, false },    ///<  0 - (Galileo D0)
 	{ FUNC_NUL, false },    ///<  1 - (Galileo D1)
@@ -409,7 +409,7 @@ GalileoPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
 /**
 Initialize the data members that point to the global attributes tables.
 */
-GalileoPinsClass::GalileoPinsClass()
+BoardPinsClass::BoardPinsClass()
 	:
 	m_boardType(NOT_SET),
 	m_PinAttributes(NULL),
@@ -432,7 +432,7 @@ and to set it to that function if possible.
 \sa FUNC_DIO \sa FUNC_PWM \sa FUNC_AIN \sa FUNC_I2C \sa FUNC_SPI \sa FUNC_SER
 \sa NO_LOCK_CHANGE \sa LOCK_FUNCTION \sa UNLOCK_FUNCTION
 */
-BOOL GalileoPinsClass::verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction)
+BOOL BoardPinsClass::verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -488,7 +488,7 @@ Functions are Digital I/O, Analog In, PWM, etc.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 \sa FUNC_DIO \sa FUNC_PWM \sa FUNC_AIN \sa FUNC_I2C \sa FUNC_SPI \sa FUNC_SER
 */
-BOOL GalileoPinsClass::_setPinFunction(ULONG pin, ULONG function)
+BOOL BoardPinsClass::_setPinFunction(ULONG pin, ULONG function)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -562,7 +562,7 @@ I/O is supported on the specified pin.
 \param[in] pin The number of the pin in question.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setPinDigitalIo(ULONG pin)
+BOOL BoardPinsClass::_setPinDigitalIo(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -607,7 +607,7 @@ is supported on the specified pin.
 \param[in] pin The number of the pin in question.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setPinPwm(ULONG pin)
+BOOL BoardPinsClass::_setPinPwm(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -663,7 +663,7 @@ Input is supported on the specified pin.
 \param[in] pin The number of the pin in question.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setPinAnalogInput(ULONG pin)
+BOOL BoardPinsClass::_setPinAnalogInput(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -706,7 +706,7 @@ bus use is supported on the specified pin.
 \param[in] pin The number of the pin in question.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setPinI2c(ULONG pin)
+BOOL BoardPinsClass::_setPinI2c(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -742,7 +742,7 @@ bus use is supported on the specified pin.
 \param[in] pin The number of the pin in question.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setPinSpi(ULONG pin)
+BOOL BoardPinsClass::_setPinSpi(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -778,7 +778,7 @@ Serial is supported on the specified pin.
 \param[in] pin The number of the pin in question.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setPinHwSerial(ULONG pin)
+BOOL BoardPinsClass::_setPinHwSerial(ULONG pin)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -814,7 +814,7 @@ This method sets the mode and drive type of a pin (Input, Output, etc.)
 \param[in] pullup True to enable pin pullup resistor, false to disable pullup
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
+BOOL BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -907,7 +907,7 @@ This method sets the direction of an I/O Expander port pin.
 \param[in] pullup TRUE - enable pullup resistor on the pin, FALSE - disable pullup resistor.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direction, BOOL pullup)
+BOOL BoardPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direction, BOOL pullup)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -956,7 +956,7 @@ This method sets the state of an I/O Expander port pin.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
 // Method to set an I/O Expander bit to the specified state.
-BOOL GalileoPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state)
+BOOL BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1030,7 +1030,7 @@ This code assumes the caller has verified the pin number and mode to be in range
 \param[in] mode The desired direction for the pin.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_configurePinDrivers(ULONG pin, ULONG mode)
+BOOL BoardPinsClass::_configurePinDrivers(ULONG pin, ULONG mode)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1085,7 +1085,7 @@ verified the pin number to be in the valid range.
 \param[in] pullup True to turn pullup on, false to turn pullup off.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
+BOOL BoardPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1137,7 +1137,7 @@ Method to set a MUX to select the desired signal.
 \param[in] selection The desired state of the MUX "select" input (LOW or HIGH).
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_setMux(ULONG pin, ULONG mux, ULONG selection)
+BOOL BoardPinsClass::_setMux(ULONG pin, ULONG mux, ULONG selection)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1176,7 +1176,7 @@ Method to set a GPIO pin to a specified state.
 \param[in] state The desired state (HIGH or LOW).
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::setPinState(ULONG pin, ULONG state)
+BOOL BoardPinsClass::setPinState(ULONG pin, ULONG state)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1246,7 +1246,7 @@ Method to read a GPIO input pin.
 \param[out] state The variable to pass back the pin state (HIGH or LOW).
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::getPinState(ULONG pin, ULONG & state)
+BOOL BoardPinsClass::getPinState(ULONG pin, ULONG & state)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1308,7 +1308,7 @@ PWM functions, and is in PWM mode.
 \param[in] dutyCycle The desired duty-cycle of the positive pulses (0-0xFFFFFFFF for 0-100%).
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
+BOOL BoardPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1355,7 +1355,7 @@ The board type is determined by parsing the processor identifier string
 in the Registry.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_determineBoardType()
+BOOL BoardPinsClass::_determineBoardType()
 {
 	BOOL status = TRUE;
 	DWORD error = ERROR_SUCCESS;
@@ -1428,7 +1428,7 @@ The generation of a Galileo Board is decided by determining which I/O Expander
 I2C addresses are acknowledged and which are not.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::_determineGalileoGen()
+BOOL BoardPinsClass::_determineGalileoGen()
 {
 	BOOL status = TRUE;
 	DWORD error = ERROR_SUCCESS;
@@ -1473,7 +1473,7 @@ connect I2C slaves at the addresses of the I/O expanders.
 \param[in] gen The type of board to set (GALILEO_GEN2, etc).
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-BOOL GalileoPinsClass::setBoardType(BOARD_TYPE board)
+BOOL BoardPinsClass::setBoardType(BOARD_TYPE board)
 {
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
@@ -1513,33 +1513,11 @@ BOOL GalileoPinsClass::setBoardType(BOARD_TYPE board)
 }
 
 /**
-This method determines the board type if it is not yet known.
-\param[out] gen The type of the board we are currently running on.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
-*/
-BOOL GalileoPinsClass::getBoardType(BOARD_TYPE & board)
-{
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-
-    status = _verifyBoardType();
-    if (!status) { error = GetLastError(); }
-
-    if (status)
-    {
-		board = m_boardType;
-    }
-
-    if (!status) { SetLastError(error); }
-    return status;
-}
-
-/**
 Attempt to access an I2C slave at a specified address to determine if the slave
 is present or not.
 \param[in] i2cAdr The I2C address to probe.
 */
-BOOL GalileoPinsClass::_testI2cAddress(ULONG i2cAdr)
+BOOL BoardPinsClass::_testI2cAddress(ULONG i2cAdr)
 {
     BOOL status = TRUE;
     I2cTransactionClass trans;

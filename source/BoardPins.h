@@ -26,12 +26,12 @@ const UCHAR FUNC_I2S = 0x40;    ///< Hardware I2S function
 const UCHAR FUNC_SPK = 0X80;	///< Hardware 8254 speaker function
 
 /// The class used to configure and use GPIO pins.
-class GalileoPinsClass
+class BoardPinsClass
 {
 public:
-    GalileoPinsClass();
+    BoardPinsClass();
 
-    virtual ~GalileoPinsClass()
+    virtual ~BoardPinsClass()
     {
     }
 
@@ -137,7 +137,7 @@ public:
     BOOL setBoardType(BOARD_TYPE board);
 
     /// Method to get the board type.
-    BOOL getBoardType(BOARD_TYPE & board);
+    inline BOOL getBoardType(BOARD_TYPE & board);
 
 private:
 
@@ -218,14 +218,36 @@ private:
 };
 
 /// Global object used to configure and use the I/O pins.
-__declspec (selectany) GalileoPinsClass g_pins;
+__declspec (selectany) BoardPinsClass g_pins;
+
+/**
+This method determines the board type if it is not yet known.
+\param[out] gen The type of the board we are currently running on.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+inline BOOL BoardPinsClass::getBoardType(BOARD_TYPE & board)
+{
+	BOOL status = TRUE;
+	DWORD error = ERROR_SUCCESS;
+
+	status = _verifyBoardType();
+	if (!status) { error = GetLastError(); }
+
+	if (status)
+	{
+		board = m_boardType;
+	}
+
+	if (!status) { SetLastError(error); }
+	return status;
+}
 
 /**
 Method to determine if a pin number is in the legal range or not.
 \param[in] pin the pin number to check for range
 \return TRUE if pin number is in range, FALSE otherwise
 */
-inline BOOL GalileoPinsClass::_pinNumberIsSafe(ULONG pin)
+inline BOOL BoardPinsClass::_pinNumberIsSafe(ULONG pin)
 {
     return (pin < m_GpioPinCount);
 }
@@ -235,7 +257,7 @@ Determine if the board generation has been determined yet, and if not, determine
 board generation and configure the code for that generation.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
-inline BOOL GalileoPinsClass::_verifyBoardType()
+inline BOOL BoardPinsClass::_verifyBoardType()
 {
     if (m_boardType != NOT_SET)
     {
