@@ -15,17 +15,17 @@ public:
     /// Constructor.
     AdcClass()
     {
-		m_boardType = GalileoPinsClass::BOARD_TYPE::NOT_SET;
+		m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
     }
 
     /// Destructor.
     virtual ~AdcClass()
     {
-        if (m_boardType == GalileoPinsClass::BOARD_TYPE::GALILEO_GEN2)
+        if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
         {
             m_gen2Adc.end();
         }
-        else if (m_boardType == GalileoPinsClass::BOARD_TYPE::GALILEO_GEN1)
+        else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
         {
             m_gen1Adc.end();
         }
@@ -58,7 +58,7 @@ public:
 
         if (status)
         {
-            if (m_boardType == GalileoPinsClass::BOARD_TYPE::GALILEO_GEN2)
+            if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
             {
                 status = m_gen2Adc.readValue(channel, value, bits);
                 if (!status) { error = GetLastError(); }
@@ -77,7 +77,7 @@ public:
 private:
 
     /// The board type for which this object has been initialized.
-    GalileoPinsClass::BOARD_TYPE m_boardType;
+    BoardPinsClass::BOARD_TYPE m_boardType;
 
     /// Gen2 ADC device.
     ADC108S102Device m_gen2Adc;
@@ -101,12 +101,12 @@ private:
         
             if (status)
             {
-                if (m_boardType == GalileoPinsClass::BOARD_TYPE::GALILEO_GEN2)
+                if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
                 {
                     status = m_gen2Adc.begin();
                     if (!status) { error = GetLastError(); }
                 }
-                else if (m_boardType == GalileoPinsClass::BOARD_TYPE::GALILEO_GEN1)
+                else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
                 {
                     status = m_gen1Adc.begin();
                     if (!status) { error = GetLastError(); }
@@ -114,7 +114,7 @@ private:
                 else
                 {
                     // If we have an unrecognized board generation, indicate ADC is uninitialized.
-					m_boardType = GalileoPinsClass::BOARD_TYPE::NOT_SET;
+					m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
                 }
             }
         }

@@ -117,7 +117,7 @@ void Servo::writeMicroseconds(int value)
     int frequency = (int)((double) 1 / ((double) REFRESH_INTERVAL / 1000000));
     
     // Validation of the pin to make sure PWM functionality is allowed
-    if (!g_pins.verifyPinFunction(_attachedPin, FUNC_PWM, GalileoPinsClass::NO_LOCK_CHANGE))
+    if (!g_pins.verifyPinFunction(_attachedPin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE))
     {
         ThrowError("Error occurred verifying pin: %d function: PWM, Error: %08x", _attachedPin, GetLastError());
     }
