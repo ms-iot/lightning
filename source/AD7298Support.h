@@ -247,7 +247,7 @@ private:
     const ULONG ADC_CHAN_BITS = 4;
 
     /// The SPI Controller object used to talk to the ADC.
-	SpiControllerClass m_spi;
+    SpiControllerClass m_spi;
 
     /// The Fabric GPIO bit that controls the chip select signal.
     const ULONG m_csFabricBit = 0;

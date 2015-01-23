@@ -406,215 +406,215 @@ __declspec (selectany) QuarkLegacyGpioControllerClass g_quarkLegacyGpio;
 class BtFabricGpioControllerClass
 {
 public:
-	/// Constructor.
-	BtFabricGpioControllerClass()
-	{
-		m_hS0Controller = INVALID_HANDLE_VALUE;
-		m_hS5Controller = INVALID_HANDLE_VALUE;
-		m_s0Controller = nullptr;
-		m_s5Controller = nullptr;
-	}
+    /// Constructor.
+    BtFabricGpioControllerClass()
+    {
+        m_hS0Controller = INVALID_HANDLE_VALUE;
+        m_hS5Controller = INVALID_HANDLE_VALUE;
+        m_s0Controller = nullptr;
+        m_s5Controller = nullptr;
+    }
 
-	/// Destructor.
-	virtual ~BtFabricGpioControllerClass()
-	{
-		if (m_hS0Controller != INVALID_HANDLE_VALUE)
-		{
-			CloseHandle(m_hS0Controller);
-			m_hS0Controller = INVALID_HANDLE_VALUE;
-		}
-		m_s0Controller = nullptr;
+    /// Destructor.
+    virtual ~BtFabricGpioControllerClass()
+    {
+        if (m_hS0Controller != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(m_hS0Controller);
+            m_hS0Controller = INVALID_HANDLE_VALUE;
+        }
+        m_s0Controller = nullptr;
 
-		if (m_hS5Controller != INVALID_HANDLE_VALUE)
-		{
-			CloseHandle(m_hS5Controller);
-			m_hS5Controller = INVALID_HANDLE_VALUE;
-		}
-		m_s5Controller = nullptr;
-	}
+        if (m_hS5Controller != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(m_hS5Controller);
+            m_hS5Controller = INVALID_HANDLE_VALUE;
+        }
+        m_s5Controller = nullptr;
+    }
 
-	/// Method to map the S0 GPIO controller registers if they are not already mapped.
-	/**
-	\return TRUE success, FALSE failure, GetLastError() provides the error code.
-	*/
-	inline BOOL mapS0IfNeeded()
-	{
-		if (m_hS0Controller == INVALID_HANDLE_VALUE)
-		{
-			return _mapS0Controller();
-		}
-		else
-		{
-			return TRUE;
-		}
-	}
+    /// Method to map the S0 GPIO controller registers if they are not already mapped.
+    /**
+    \return TRUE success, FALSE failure, GetLastError() provides the error code.
+    */
+    inline BOOL mapS0IfNeeded()
+    {
+        if (m_hS0Controller == INVALID_HANDLE_VALUE)
+        {
+            return _mapS0Controller();
+        }
+        else
+        {
+            return TRUE;
+        }
+    }
 
-	/// Method to map the S5 GPIO controller registers if they are not already mapped.
-	/**
-	\return TRUE success, FALSE failure, GetLastError() provides the error code.
-	*/
-	inline BOOL mapS5IfNeeded()
-	{
-		if (m_hS5Controller == INVALID_HANDLE_VALUE)
-		{
-			return _mapS5Controller();
-		}
-		else
-		{
-			return TRUE;
-		}
-	}
+    /// Method to map the S5 GPIO controller registers if they are not already mapped.
+    /**
+    \return TRUE success, FALSE failure, GetLastError() provides the error code.
+    */
+    inline BOOL mapS5IfNeeded()
+    {
+        if (m_hS5Controller == INVALID_HANDLE_VALUE)
+        {
+            return _mapS5Controller();
+        }
+        else
+        {
+            return TRUE;
+        }
+    }
 
-	/// Method to set the state of an S0 GPIO port bit.
-	inline BOOL setS0PinState(ULONG gpioNo, ULONG state);
+    /// Method to set the state of an S0 GPIO port bit.
+    inline BOOL setS0PinState(ULONG gpioNo, ULONG state);
 
-	/// Method to set the state of an S5 GPIO port bit.
-	inline BOOL setS5PinState(ULONG gpioNo, ULONG state);
+    /// Method to set the state of an S5 GPIO port bit.
+    inline BOOL setS5PinState(ULONG gpioNo, ULONG state);
 
-	/// Method to read the state of an S0 GPIO bit.
-	inline BOOL getS0PinState(ULONG gpioNo, ULONG & state);
+    /// Method to read the state of an S0 GPIO bit.
+    inline BOOL getS0PinState(ULONG gpioNo, ULONG & state);
 
-	/// Method to read the state of an S5 GPIO bit.
-	inline BOOL getS5PinState(ULONG gpioNo, ULONG & state);
+    /// Method to read the state of an S5 GPIO bit.
+    inline BOOL getS5PinState(ULONG gpioNo, ULONG & state);
 
-	/// Method to set the direction (input or output) of an S0 GPIO port bit.
-	inline BOOL setS0PinDirection(ULONG gpioNo, ULONG mode);
+    /// Method to set the direction (input or output) of an S0 GPIO port bit.
+    inline BOOL setS0PinDirection(ULONG gpioNo, ULONG mode);
 
-	/// Method to set the direction (input or output) of an S5 GPIO port bit.
-	inline BOOL setS5PinDirection(ULONG gpioNo, ULONG mode);
+    /// Method to set the direction (input or output) of an S5 GPIO port bit.
+    inline BOOL setS5PinDirection(ULONG gpioNo, ULONG mode);
 
-	/// Method to set the function (mux state) of an S0 GPIO port bit.
-	inline BOOL setS0PinFunction(ULONG gpioNo, ULONG function);
+    /// Method to set the function (mux state) of an S0 GPIO port bit.
+    inline BOOL setS0PinFunction(ULONG gpioNo, ULONG function);
 
-	/// Method to set the function (mux state) of an S5 GPIO port bit.
-	inline BOOL setS5PinFunction(ULONG gpioNo, ULONG function);
+    /// Method to set the function (mux state) of an S5 GPIO port bit.
+    inline BOOL setS5PinFunction(ULONG gpioNo, ULONG function);
 
 private:
 
 #pragma warning(push)
 #pragma warning(disable : 4201) // Ignore nameless struct/union warnings
 
-	/// Pad Configuration Register.  Active high (1 enables) unless noted.
-	typedef union {
-		struct {
-			ULONG FUNC_PIN_MUX : 3;			///< Functional Pin Muxing
-			ULONG _rsv0 : 1;
-			ULONG IDYNWK2KEN : 1;			///< Reduce weak 2k contention current
-			ULONG _rsv1 : 2;
-			ULONG PULL_ASSIGN : 2;			///< Pull assignment: 0 - None, 1 - Up, 2 - Down
-			ULONG PULL_STR : 2;				///< Pull strength: 0 - 2k, 1 - 10k, 2 - 20k, 3 - 40k
-			ULONG BYPASS_FLOP : 1;			///< Bypass pad I/O flops: 0 - Flop enabled if exists
-			ULONG _rsv2 : 1;
-			ULONG IHYSCTL : 2;				///< Hysteresis control
-			ULONG IHYSENB : 1;				///< Hysteresis enable, active low
-			ULONG FAST_CLKGATE : 1;			///< 1 enables the glitch filter fast clock
-			ULONG SLOW_CLKGATE : 1;			///< 1 enables the glitch filter slow clock
-			ULONG FILTER_SLOW : 1;			///< Use RTC clock for unglitch filter
-			ULONG FILTER_EN : 1;			///< Enable the glitch filter
-			ULONG DEBOUNCE : 1;             ///< Enable debouncer (uses community debounce time)
-			ULONG _rsv3 : 2;
-			ULONG STRAP_VAL : 1;			///< Reflect strap pin value even if overriden
-			ULONG GD_LEVEL : 1;				///< 1 - Use level IRQ, 0 - Edge triggered IRQ
-			ULONG GD_TPE : 1;				///< 1 - Enable positive edge/level detection
-			ULONG GD_TNE : 1;				///< 1 - Enable negative edge/level detection
-			ULONG DIRECT_IRQ_EN : 1;		///< Enable direct wire interrupt, not shared.
-			ULONG I25COMP : 1;				///< Enable 25 ohm compensation of hflvt buffers
-			ULONG DISABLE_SECOND_MASK : 1;	///< Disable second mask when PB_CONFIG ALL_FUNC_MASK used
-			ULONG _rsv4 : 1;
-			ULONG IODEN : 1;				///< Enable open drain.
-		};
-		ULONG ALL_BITS;
-	} _PCONF0;
+    /// Pad Configuration Register.  Active high (1 enables) unless noted.
+    typedef union {
+        struct {
+            ULONG FUNC_PIN_MUX : 3;			///< Functional Pin Muxing
+            ULONG _rsv0 : 1;
+            ULONG IDYNWK2KEN : 1;			///< Reduce weak 2k contention current
+            ULONG _rsv1 : 2;
+            ULONG PULL_ASSIGN : 2;			///< Pull assignment: 0 - None, 1 - Up, 2 - Down
+            ULONG PULL_STR : 2;				///< Pull strength: 0 - 2k, 1 - 10k, 2 - 20k, 3 - 40k
+            ULONG BYPASS_FLOP : 1;			///< Bypass pad I/O flops: 0 - Flop enabled if exists
+            ULONG _rsv2 : 1;
+            ULONG IHYSCTL : 2;				///< Hysteresis control
+            ULONG IHYSENB : 1;				///< Hysteresis enable, active low
+            ULONG FAST_CLKGATE : 1;			///< 1 enables the glitch filter fast clock
+            ULONG SLOW_CLKGATE : 1;			///< 1 enables the glitch filter slow clock
+            ULONG FILTER_SLOW : 1;			///< Use RTC clock for unglitch filter
+            ULONG FILTER_EN : 1;			///< Enable the glitch filter
+            ULONG DEBOUNCE : 1;             ///< Enable debouncer (uses community debounce time)
+            ULONG _rsv3 : 2;
+            ULONG STRAP_VAL : 1;			///< Reflect strap pin value even if overriden
+            ULONG GD_LEVEL : 1;				///< 1 - Use level IRQ, 0 - Edge triggered IRQ
+            ULONG GD_TPE : 1;				///< 1 - Enable positive edge/level detection
+            ULONG GD_TNE : 1;				///< 1 - Enable negative edge/level detection
+            ULONG DIRECT_IRQ_EN : 1;		///< Enable direct wire interrupt, not shared.
+            ULONG I25COMP : 1;				///< Enable 25 ohm compensation of hflvt buffers
+            ULONG DISABLE_SECOND_MASK : 1;	///< Disable second mask when PB_CONFIG ALL_FUNC_MASK used
+            ULONG _rsv4 : 1;
+            ULONG IODEN : 1;				///< Enable open drain.
+        };
+        ULONG ALL_BITS;
+    } _PCONF0;
 
-	/// Delay Line Multiplexer Register.
-	typedef union {
-		struct {
-			ULONG DLL_STD_MUX : 5;			///< Delay standard mux
-			ULONG DLL_HGH_MUX : 5;			///< Delay high mux
-			ULONG DLL_DDR_MUX : 5;			///< Delay ddr mux
-			ULONG DLL_CF_OD : 1;			///< Cf values, software override enable
-			ULONG _rsv : 16;
-		};
-		ULONG ALL_BITS;
-	} _PCONF1;
+    /// Delay Line Multiplexer Register.
+    typedef union {
+        struct {
+            ULONG DLL_STD_MUX : 5;			///< Delay standard mux
+            ULONG DLL_HGH_MUX : 5;			///< Delay high mux
+            ULONG DLL_DDR_MUX : 5;			///< Delay ddr mux
+            ULONG DLL_CF_OD : 1;			///< Cf values, software override enable
+            ULONG _rsv : 16;
+        };
+        ULONG ALL_BITS;
+    } _PCONF1;
 
-	/// Pad Value Register.
-	typedef union {
-		struct {
-			ULONG PAD_VAL : 1;				///< Value read from or written to the I/O pad
-			ULONG IOUTENB : 1;				///< Output enable, active low
-			ULONG IINENB : 1;				///< Input enable, active low
-			ULONG FUNC_C_VAL : 15;			///< C value for function delay
-			ULONG FUNC_F_VAL : 4;			///< F value for function delay
-			ULONG _rsv : 10;
-		};
-		ULONG ALL_BITS;
-	} _PAD_VAL;
+    /// Pad Value Register.
+    typedef union {
+        struct {
+            ULONG PAD_VAL : 1;				///< Value read from or written to the I/O pad
+            ULONG IOUTENB : 1;				///< Output enable, active low
+            ULONG IINENB : 1;				///< Input enable, active low
+            ULONG FUNC_C_VAL : 15;			///< C value for function delay
+            ULONG FUNC_F_VAL : 4;			///< F value for function delay
+            ULONG _rsv : 10;
+        };
+        ULONG ALL_BITS;
+    } _PAD_VAL;
 
 
 #pragma warning( pop )
 
-	/// Layout of the BayTrail GPIO Controller registers in memory for one pad.
-	typedef struct _GPIO_PAD {
-		_PCONF0				PCONF0;			///< 0x00 - Pad Configuration
-		_PCONF1				PCONF1;			///< 0x04 - Delay Line Multiplexer
-		_PAD_VAL			PAD_VAL;		///< 0x08 - Pad Value
-		ULONG				_reserved;		///< 0x0C - 4 ULONG address space per register set
-	} volatile GPIO_PAD, *PGPIO_PAD;
+    /// Layout of the BayTrail GPIO Controller registers in memory for one pad.
+    typedef struct _GPIO_PAD {
+        _PCONF0				PCONF0;			///< 0x00 - Pad Configuration
+        _PCONF1				PCONF1;			///< 0x04 - Delay Line Multiplexer
+        _PAD_VAL			PAD_VAL;		///< 0x08 - Pad Value
+        ULONG				_reserved;		///< 0x0C - 4 ULONG address space per register set
+    } volatile GPIO_PAD, *PGPIO_PAD;
 
-	//
-	// BtFabricGpioControllerClass private data members.
-	//
+    //
+    // BtFabricGpioControllerClass private data members.
+    //
 
-	/// Handle to the controller device for GPIOs active only in S0 state.
-	/**
-	This handle can be used to map the S0 GPIO Controller registers in to user
-	memory address space.
-	*/
-	HANDLE m_hS0Controller;
+    /// Handle to the controller device for GPIOs active only in S0 state.
+    /**
+    This handle can be used to map the S0 GPIO Controller registers in to user
+    memory address space.
+    */
+    HANDLE m_hS0Controller;
 
-	/// Handle to the controller device for GPIOs active in S5 state.
-	/**
-	This handle can be used to map the S5 GPIO Controller registers in to user
-	memory address space.
-	*/
-	HANDLE m_hS5Controller;
+    /// Handle to the controller device for GPIOs active in S5 state.
+    /**
+    This handle can be used to map the S5 GPIO Controller registers in to user
+    memory address space.
+    */
+    HANDLE m_hS5Controller;
 
-	/// Pointer to the S0 GPIO controller object in this process' address space.
-	/**
-	This controller object is used to access the S0 GPIO registers after
-	they are mapped into this process' virtual address space.
-	*/
-	PGPIO_PAD m_s0Controller;
+    /// Pointer to the S0 GPIO controller object in this process' address space.
+    /**
+    This controller object is used to access the S0 GPIO registers after
+    they are mapped into this process' virtual address space.
+    */
+    PGPIO_PAD m_s0Controller;
 
-	/// Pointer to the S5 GPIO controller object in this process' address space.
-	/**
-	This controller object is used to access the S0 GPIO registers after
-	they are mapped into this process' virtual address space.
-	*/
-	PGPIO_PAD m_s5Controller;
+    /// Pointer to the S5 GPIO controller object in this process' address space.
+    /**
+    This controller object is used to access the S0 GPIO registers after
+    they are mapped into this process' virtual address space.
+    */
+    PGPIO_PAD m_s5Controller;
 
-	//
-	// QuarkFabricGpioControllerClass private methods.
-	//
+    //
+    // QuarkFabricGpioControllerClass private methods.
+    //
 
-	/// Method to map the S0 GPIO Controller into this process' virtual address space.
-	BOOL _mapS0Controller();
+    /// Method to map the S0 GPIO Controller into this process' virtual address space.
+    BOOL _mapS0Controller();
 
-	/// Method to map the S5 GPIO Controller into this process' virtual address space.
-	BOOL _mapS5Controller();
+    /// Method to map the S5 GPIO Controller into this process' virtual address space.
+    BOOL _mapS5Controller();
 
-	/// Method to set an S0 GPIO pin as an input.
-	inline void _setS0PinInput(ULONG gpioNo);
+    /// Method to set an S0 GPIO pin as an input.
+    inline void _setS0PinInput(ULONG gpioNo);
 
-	/// Method to set an S5 GPIO pin as an input.
-	inline void _setS5PinInput(ULONG gpioNo);
+    /// Method to set an S5 GPIO pin as an input.
+    inline void _setS5PinInput(ULONG gpioNo);
 
-	/// Method to set an S0 GPIO pin as an output
-	inline void _setS0PinOutput(ULONG gpioNo);
+    /// Method to set an S0 GPIO pin as an output
+    inline void _setS0PinOutput(ULONG gpioNo);
 
-	/// Method to set an S5 GPIO pin as an output
-	inline void _setS5PinOutput(ULONG gpioNo);
+    /// Method to set an S5 GPIO pin as an output
+    inline void _setS5PinOutput(ULONG gpioNo);
 };
 
 /// The global object used to interact with the BayTrail Fabric GPIO hardware.
@@ -1094,24 +1094,24 @@ This method assumes the caller has checked the input parameters.
 */
 inline BOOL BtFabricGpioControllerClass::setS0PinState(ULONG gpioNo, ULONG state)
 {
-	BOOL status = mapS0IfNeeded();
+    BOOL status = mapS0IfNeeded();
 
-	if (status)
-	{
-		_PAD_VAL padVal;
-		padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
-		if (state == 0)
-		{
-			padVal.PAD_VAL = 0;
-		}
-		else
-		{
-			padVal.PAD_VAL = 1;
-		}
-		m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
-	}
+    if (status)
+    {
+        _PAD_VAL padVal;
+        padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
+        if (state == 0)
+        {
+            padVal.PAD_VAL = 0;
+        }
+        else
+        {
+            padVal.PAD_VAL = 1;
+        }
+        m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
+    }
 
-	return status;
+    return status;
 }
 
 /**
@@ -1122,24 +1122,24 @@ This method assumes the caller has checked the input parameters.
 */
 inline BOOL BtFabricGpioControllerClass::setS5PinState(ULONG gpioNo, ULONG state)
 {
-	BOOL status = mapS5IfNeeded();
+    BOOL status = mapS5IfNeeded();
 
-	if (status)
-	{
-		_PAD_VAL padVal;
-		padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
-		if (state == 0)
-		{
-			padVal.PAD_VAL = 0;
-		}
-		else
-		{
-			padVal.PAD_VAL = 1;
-		}
-		m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
-	}
+    if (status)
+    {
+        _PAD_VAL padVal;
+        padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
+        if (state == 0)
+        {
+            padVal.PAD_VAL = 0;
+        }
+        else
+        {
+            padVal.PAD_VAL = 1;
+        }
+        m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
+    }
 
-	return status;
+    return status;
 }
 
 /**
@@ -1150,16 +1150,16 @@ This method assumes the caller has checked the input parameters.
 */
 inline BOOL BtFabricGpioControllerClass::getS0PinState(ULONG gpioNo, ULONG & state)
 {
-	BOOL status = mapS0IfNeeded();
+    BOOL status = mapS0IfNeeded();
 
-	if (status)
-	{
-		_PAD_VAL padVal;
-		padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
-		state = padVal.PAD_VAL;
-	}
+    if (status)
+    {
+        _PAD_VAL padVal;
+        padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
+        state = padVal.PAD_VAL;
+    }
 
-	return status;
+    return status;
 }
 
 /**
@@ -1170,16 +1170,16 @@ This method assumes the caller has checked the input parameters.
 */
 inline BOOL BtFabricGpioControllerClass::getS5PinState(ULONG gpioNo, ULONG & state)
 {
-	BOOL status = mapS5IfNeeded();
+    BOOL status = mapS5IfNeeded();
 
-	if (status)
-	{
-		_PAD_VAL padVal;
-		padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
-		state = padVal.PAD_VAL;
-	}
+    if (status)
+    {
+        _PAD_VAL padVal;
+        padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
+        state = padVal.PAD_VAL;
+    }
 
-	return status;
+    return status;
 }
 
 /**
@@ -1190,27 +1190,27 @@ This method assumes the caller has checked the input parameters.
 */
 inline BOOL BtFabricGpioControllerClass::setS0PinDirection(ULONG gpioNo, ULONG mode)
 {
-	BOOL status = TRUE;
-	DWORD error = ERROR_SUCCESS;
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
 
-	status = mapS0IfNeeded();
-	if (!status) { error = GetLastError(); }
+    status = mapS0IfNeeded();
+    if (!status) { error = GetLastError(); }
 
-	if (status)
-	{
-		switch (mode)
-		{
-		case DIRECTION_IN:
-			_setS0PinInput(gpioNo);
-			break;
-		case DIRECTION_OUT:
-			_setS0PinOutput(gpioNo);
-			break;
-		}
-	}
+    if (status)
+    {
+        switch (mode)
+        {
+        case DIRECTION_IN:
+            _setS0PinInput(gpioNo);
+            break;
+        case DIRECTION_OUT:
+            _setS0PinOutput(gpioNo);
+            break;
+        }
+    }
 
-	if (!status) { SetLastError(error); }
-	return status;
+    if (!status) { SetLastError(error); }
+    return status;
 }
 
 /**
@@ -1221,27 +1221,27 @@ This method assumes the caller has checked the input parameters.
 */
 inline BOOL BtFabricGpioControllerClass::setS5PinDirection(ULONG gpioNo, ULONG mode)
 {
-	BOOL status = TRUE;
-	DWORD error = ERROR_SUCCESS;
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
 
-	status = mapS5IfNeeded();
-	if (!status) { error = GetLastError(); }
+    status = mapS5IfNeeded();
+    if (!status) { error = GetLastError(); }
 
-	if (status)
-	{
-		switch (mode)
-		{
-		case DIRECTION_IN:
-			_setS5PinInput(gpioNo);
-			break;
-		case DIRECTION_OUT:
-			_setS5PinOutput(gpioNo);
-			break;
-		}
-	}
+    if (status)
+    {
+        switch (mode)
+        {
+        case DIRECTION_IN:
+            _setS5PinInput(gpioNo);
+            break;
+        case DIRECTION_OUT:
+            _setS5PinOutput(gpioNo);
+            break;
+        }
+    }
 
-	if (!status) { SetLastError(error); }
-	return status;
+    if (!status) { SetLastError(error); }
+    return status;
 }
 
 /**
@@ -1251,22 +1251,22 @@ This method assumes the caller has checked the input parameters.
 */
 inline BOOL BtFabricGpioControllerClass::setS0PinFunction(ULONG gpioNo, ULONG function)
 {
-	BOOL status = TRUE;
-	DWORD error = ERROR_SUCCESS;
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
 
-	status = mapS0IfNeeded();
-	if (!status) { error = GetLastError(); }
+    status = mapS0IfNeeded();
+    if (!status) { error = GetLastError(); }
 
-	if (status)
-	{
-		_PCONF0 padConfig;
-		padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
-		padConfig.FUNC_PIN_MUX = function;
-		m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
-	}
+    if (status)
+    {
+        _PCONF0 padConfig;
+        padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
+        padConfig.FUNC_PIN_MUX = function;
+        m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
+    }
 
-	if (!status) { SetLastError(error); }
-	return status;
+    if (!status) { SetLastError(error); }
+    return status;
 }
 
 /**
@@ -1276,22 +1276,22 @@ This method assumes the caller has checked the input parameters.
 */
 inline BOOL BtFabricGpioControllerClass::setS5PinFunction(ULONG gpioNo, ULONG function)
 {
-	BOOL status = TRUE;
-	DWORD error = ERROR_SUCCESS;
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
 
-	status = mapS5IfNeeded();
-	if (!status) { error = GetLastError(); }
+    status = mapS5IfNeeded();
+    if (!status) { error = GetLastError(); }
 
-	if (status)
-	{
-		_PCONF0 padConfig;
-		padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
-		padConfig.FUNC_PIN_MUX = function;
-		m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
-	}
+    if (status)
+    {
+        _PCONF0 padConfig;
+        padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
+        padConfig.FUNC_PIN_MUX = function;
+        m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
+    }
 
-	if (!status) { SetLastError(error); }
-	return status;
+    if (!status) { SetLastError(error); }
+    return status;
 }
 
 
@@ -1302,16 +1302,16 @@ enables pin input.
 */
 inline void BtFabricGpioControllerClass::_setS0PinInput(ULONG gpioNo)
 {
-	_PCONF0 padConfig;
-	padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
-	padConfig.BYPASS_FLOP = 1;			// Disable flop
-	m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
+    _PCONF0 padConfig;
+    padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
+    padConfig.BYPASS_FLOP = 1;			// Disable flop
+    m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
-	_PAD_VAL padVal;
-	padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
-	padVal.IINENB = 0;					// Enable pad for input
-	padVal.IOUTENB = 1;					// Disable pad for output
-	m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
+    _PAD_VAL padVal;
+    padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
+    padVal.IINENB = 0;					// Enable pad for input
+    padVal.IOUTENB = 1;					// Disable pad for output
+    m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
 
 /**
@@ -1321,16 +1321,16 @@ enables pin input.
 */
 inline void BtFabricGpioControllerClass::_setS5PinInput(ULONG gpioNo)
 {
-	_PCONF0 padConfig;
-	padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
-	padConfig.BYPASS_FLOP = 1;			// Disable flop
-	m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
+    _PCONF0 padConfig;
+    padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
+    padConfig.BYPASS_FLOP = 1;			// Disable flop
+    m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
-	_PAD_VAL padVal;
-	padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
-	padVal.IINENB = 0;					// Enable pad for input
-	padVal.IOUTENB = 1;					// Disable pad for output
-	m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
+    _PAD_VAL padVal;
+    padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
+    padVal.IINENB = 0;					// Enable pad for input
+    padVal.IOUTENB = 1;					// Disable pad for output
+    m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
 
 /**
@@ -1340,17 +1340,17 @@ the pad, disables pin input and enables pin output.
 */
 inline void BtFabricGpioControllerClass::_setS0PinOutput(ULONG gpioNo)
 {
-	_PCONF0 padConfig;
-	padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
-	padConfig.BYPASS_FLOP = 0;			// Enable flop
-	padConfig.PULL_ASSIGN = 0;			// No pull resistor
-	m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
+    _PCONF0 padConfig;
+    padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
+    padConfig.BYPASS_FLOP = 0;			// Enable flop
+    padConfig.PULL_ASSIGN = 0;			// No pull resistor
+    m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
-	_PAD_VAL padVal;
-	padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
-	padVal.IOUTENB = 0;					// Enable pad for output
-	padVal.IINENB = 1;					// Disable pad for input
-	m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
+    _PAD_VAL padVal;
+    padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
+    padVal.IOUTENB = 0;					// Enable pad for output
+    padVal.IINENB = 1;					// Disable pad for input
+    m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
 
 /**
@@ -1360,17 +1360,17 @@ the pad, disables pin input and enables pin output.
 */
 inline void BtFabricGpioControllerClass::_setS5PinOutput(ULONG gpioNo)
 {
-	_PCONF0 padConfig;
-	padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
-	padConfig.BYPASS_FLOP = 0;			// Enable flop
-	padConfig.PULL_ASSIGN = 0;			// No pull resistor
-	m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
+    _PCONF0 padConfig;
+    padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
+    padConfig.BYPASS_FLOP = 0;			// Enable flop
+    padConfig.PULL_ASSIGN = 0;			// No pull resistor
+    m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
-	_PAD_VAL padVal;
-	padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
-	padVal.IOUTENB = 0;					// Enable pad for output
-	padVal.IINENB = 1;					// Disable pad for input
-	m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
+    _PAD_VAL padVal;
+    padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
+    padVal.IOUTENB = 0;					// Enable pad for output
+    padVal.IINENB = 1;					// Disable pad for input
+    m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
 
 #endif  // _GPIO_CONTROLLER_H_

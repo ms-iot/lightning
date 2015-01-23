@@ -91,15 +91,41 @@ public:
 
     inline void setStandardSpeed()
     {
-        m_controller->IC_SS_SCL_HCNT.IC_SS_SCL_HCNT = 0x92;
-        m_controller->IC_SS_SCL_LCNT.IC_SS_SCL_LCNT = 0xAB;
+        BoardPinsClass::BOARD_TYPE board;
+
+        g_pins.getBoardType(board);
+
+        if ((board == BoardPinsClass::BOARD_TYPE::MBM_BARE) ||
+            (board == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE))
+        {
+            m_controller->IC_SS_SCL_HCNT.IC_SS_SCL_HCNT = 0x190;
+            m_controller->IC_SS_SCL_LCNT.IC_SS_SCL_LCNT = 0x1D6;
+        }
+        else
+        {
+            m_controller->IC_SS_SCL_HCNT.IC_SS_SCL_HCNT = 0x92;
+            m_controller->IC_SS_SCL_LCNT.IC_SS_SCL_LCNT = 0xAB;
+        }
         m_controller->IC_CON.SPEED = 1;
     }
 
     inline void setFastSpeed()
     {
-        m_controller->IC_FS_SCL_HCNT.IC_FS_SCL_HCNT = 0x14;
-        m_controller->IC_FS_SCL_LCNT.IC_FS_SCL_LCNT = 0x2E;
+        BoardPinsClass::BOARD_TYPE board;
+
+        g_pins.getBoardType(board);
+
+        if ((board == BoardPinsClass::BOARD_TYPE::MBM_BARE) ||
+            (board == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE))
+        {
+            m_controller->IC_FS_SCL_HCNT.IC_FS_SCL_HCNT = 0x3C;
+            m_controller->IC_FS_SCL_LCNT.IC_FS_SCL_LCNT = 0x82;
+        }
+        else
+        {
+            m_controller->IC_FS_SCL_HCNT.IC_FS_SCL_HCNT = 0x14;
+            m_controller->IC_FS_SCL_LCNT.IC_FS_SCL_LCNT = 0x2E;
+        }
         m_controller->IC_CON.SPEED = 2;
     }
 
@@ -115,12 +141,17 @@ public:
 
     inline void set7bitAddressing()
     {
-        m_controller->IC_CON.IC_10BITADDR_MASTER = 0;
+        _IC_CON icCon;
+        icCon.ALL_BITS = m_controller->IC_CON.ALL_BITS;
+        icCon.IC_10BITADDR_MASTER = 0;
+        m_controller->IC_CON.ALL_BITS = icCon.ALL_BITS;
     }
 
-    inline void setAddress(const ULONG adr)       // Supports 7 or 10 bit addressing
+    inline void setAddress(const ULONG adr)       // Supports only 7-bit addressing
     {
-        m_controller->IC_TAR.IC_TAR = (adr & 0x3FF);
+        // All bits but the 7-bit address are intentionally cleared here.  This is needed
+        // for Bay Trail, which supports additional bits (all of which we want clear).
+        m_controller->IC_TAR.ALL_BITS = (adr & 0x7F);
     }
 
     inline ULONG getAddress() const
@@ -251,7 +282,8 @@ private:
             ULONG IC_TAR : 10;              // Target slave address for an I2C transaction
             ULONG GC_OR_START : 1;          // Reserved - see Quark datasheet 9.5.1.27
             ULONG SPECIAL : 1;              // Reserved - see Quark datasheet 9.5.1.27
-            ULONG _rsv : 20;                // Reserved
+            ULONG IC_10BITADDR_MASTER : 1;	// Clear for 7-bit addressing
+            ULONG _rsv : 19;                // Reserved
         };
         ULONG ALL_BITS;
     } _IC_TAR;
@@ -549,7 +581,7 @@ private:
 
     #pragma warning( pop )
 
-    // Laoyout of the Quark I2C Controller registers in memory.
+    // Layout of the Quark I2C Controller registers in memory.
     typedef struct _I2C_CONTROLLER {
         volatile _IC_CON            IC_CON;             // 0x00 - Control Register
         volatile _IC_TAR            IC_TAR;             // 0x04 - Master Target Address
@@ -633,7 +665,7 @@ public:
         m_bufBytes = 0;
         m_isRead = FALSE;
         m_preRestart = FALSE;
-		m_callBack = nullptr;
+        m_callBack = nullptr;
         resetCmd();
         resetRead();
     }
@@ -731,8 +763,7 @@ public:
     // Return TRUE if this transfer specifies a callback function.
     inline BOOL hasCallback() const
     {
-		return (m_callBack != nullptr);
-//TODO:        return (!m_callBack._Empty() && (m_callBack != nullptr));
+        return (m_callBack != nullptr);
     }
 
 private:

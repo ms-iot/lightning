@@ -64,8 +64,12 @@ const UCHAR BARE_MBM_PIN_MISO = 7;		///< Pin used for MBM SPI MISO signal
 const UCHAR BARE_MBM_PIN_MOSI = 9;		///< Pin used for MBM SPI MOSI signal
 const UCHAR BARE_MBM_PIN_SCK = 11;		///< Pin used for MBM SPI Clock signal
 
-// I2C signal to pin mapping.
-const UCHAR PIN_I2C_DAT = A4;   ///< Pin used for I2C Data signal
-const UCHAR PIN_I2C_CLK = A5;   ///< Pin used for I2C Clock signal
+// I2C signal to pin mapping for Arduino pin configuration.
+const UCHAR ARDUINO_PIN_I2C_DAT = A4;   ///< Pin used for Arduino I2C Data signal
+const UCHAR ARDUINO_PIN_I2C_CLK = A5;   ///< Pin used for Arduino I2C Clock signal
+
+// I2C signal to pin mapping for MBM 26-pin connector.
+const UCHAR BARE_MBM_PIN_I2C_DAT = 15;	///< Pin used for MBM I2C Data signal
+const UCHAR BARE_MBM_PIN_I2C_CLK = 13;	///< Pin used for MBM I2C Clock signal
 
 #endif  // _ARDUINO_COMMON_H_

@@ -24,6 +24,7 @@
 #define mbmPwm0DeviceName	L"\\\\.\\ACPI#80860F09#1#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
 #define mbmPwm1DeviceNmae	L"\\\\.\\ACPI#80860F09#2#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
 #define mbmSpiDeviceName	L"\\\\.\\ACPI#80860F0E#0#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
+#define mbmI2cDeviceName	L"\\\\.\\ACPI#80860F41#6#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
 
 /// Routine to get the base address of a memory mapped controller with no sharing allowed.
 BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress);

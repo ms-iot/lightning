@@ -18,13 +18,13 @@ BOOL I2cControllerClass::beginExternal()
 
 
     // Set the MUXes for external I2C use.
-    status = g_pins.verifyPinFunction(PIN_I2C_CLK, FUNC_I2C, BoardPinsClass::LOCK_FUNCTION);
-    if (!status) { status = GetLastError(); }
+    status = g_pins.verifyPinFunction(ARDUINO_PIN_I2C_CLK, FUNC_I2C, BoardPinsClass::LOCK_FUNCTION);
+    if (!status) { error = GetLastError(); }
 
     if (status)
     {
-        status = g_pins.verifyPinFunction(PIN_I2C_DAT, FUNC_I2C, BoardPinsClass::LOCK_FUNCTION);
-        if (!status) { status = GetLastError(); }
+        status = g_pins.verifyPinFunction(ARDUINO_PIN_I2C_DAT, FUNC_I2C, BoardPinsClass::LOCK_FUNCTION);
+        if (!status) { error = GetLastError(); }
     }
 
     if (!status)
@@ -38,10 +38,10 @@ BOOL I2cControllerClass::beginExternal()
 void I2cControllerClass::endExternal()
 {
     // Set the pns used for I2C back to Digital inputs, on a best effort basis.
-    g_pins.verifyPinFunction(PIN_I2C_DAT, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
-    g_pins.setPinMode(PIN_I2C_DAT, DIRECTION_IN, false);
-    g_pins.verifyPinFunction(PIN_I2C_CLK, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
-    g_pins.setPinMode(PIN_I2C_CLK, DIRECTION_IN, false);
+    g_pins.verifyPinFunction(ARDUINO_PIN_I2C_DAT, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
+    g_pins.setPinMode(ARDUINO_PIN_I2C_DAT, DIRECTION_IN, false);
+    g_pins.verifyPinFunction(ARDUINO_PIN_I2C_CLK, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
+    g_pins.setPinMode(ARDUINO_PIN_I2C_CLK, DIRECTION_IN, false);
 }
 
 // This method maps the I2C controller if needed.
@@ -63,18 +63,45 @@ BOOL I2cControllerClass::_mapController()
     BOOL status = TRUE;
     BOOL error = ERROR_SUCCESS;
     PVOID baseAddress = nullptr;
+    BoardPinsClass::BOARD_TYPE board;
+    PWCHAR deviceName = nullptr;
 
-    status = GetControllerBaseAddress(galileoI2cDeviceName,
-        m_hController,
-        baseAddress,
-        FILE_SHARE_READ | FILE_SHARE_WRITE);
-    if (!status)
+
+    status = g_pins.getBoardType(board);
+    if (!status) { error = GetLastError(); }
+
+    if (status)
     {
-        error = GetLastError();
+        switch (board)
+        {
+        case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
+        case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
+            deviceName = galileoI2cDeviceName;
+            break;
+        case BoardPinsClass::BOARD_TYPE::MBM_BARE:
+        case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
+            deviceName = mbmI2cDeviceName;
+            break;
+        default:
+            status = FALSE;
+            error = ERROR_DEVICE_NOT_AVAILABLE;
+        }
     }
-    else
+
+    if (status)
     {
-        m_controller = (PI2C_CONTROLLER)baseAddress;
+        status = GetControllerBaseAddress(deviceName,
+                                          m_hController,
+                                          baseAddress,
+                                          FILE_SHARE_READ | FILE_SHARE_WRITE);
+        if (!status)
+        {
+            error = GetLastError();
+        }
+        else
+        {
+            m_controller = (PI2C_CONTROLLER)baseAddress;
+        }
     }
 
     if (!status) { SetLastError(error); }
