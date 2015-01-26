@@ -15,7 +15,7 @@ public:
     /// Constructor.
     AdcClass()
     {
-		m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
+        m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
     }
 
     /// Destructor.
@@ -96,7 +96,7 @@ private:
         if (m_boardType == 0)
         {
             // Get the board generation.
-			status = g_pins.getBoardType(m_boardType);
+            status = g_pins.getBoardType(m_boardType);
             if (!status) { error = GetLastError(); }
         
             if (status)
@@ -114,7 +114,7 @@ private:
                 else
                 {
                     // If we have an unrecognized board generation, indicate ADC is uninitialized.
-					m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
+                    m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
                 }
             }
         }

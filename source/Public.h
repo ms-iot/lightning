@@ -39,12 +39,12 @@ DEFINE_GUID (GUID_DEVINTERFACE_DMap,
 
 typedef struct _DMAP_MAPMEMORY_OUTPUT_BUFFER
 {
-	PVOID Address;
-	ULONG Length;
+    PVOID Address;
+    ULONG Length;
 } DMAP_MAPMEMORY_OUTPUT_BUFFER;
 
 typedef struct _DMAP_WRITEPORT_INPUT_BUFFER
 {
-	ULONG Address;
-	UCHAR Value;
+    ULONG Address;
+    UCHAR Value;
 } DMAP_WRITEPORT_INPUT_BUFFER;

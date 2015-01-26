@@ -59,8 +59,8 @@ public:
         UCHAR spiMuxB : 1;      ///< State of 2nd MUX for SPI use of pin
         UCHAR serMuxA : 1;      ///< State of 1st MUX for serial use of pin
         UCHAR serMuxB : 1;      ///< State of 2nd MUX for serial use of pin
-		UCHAR i2SMux : 1;		///< State of MUX for I2S use of pin
-		UCHAR spkMux : 1;       ///< State of MUX for 8254 speaker use of pin
+        UCHAR i2SMux : 1;		///< State of MUX for I2S use of pin
+        UCHAR spkMux : 1;       ///< State of MUX for 8254 speaker use of pin
         UCHAR triStIn : 1;      ///< Tri-state control bit state for input pin
         UCHAR _pad : 1;         ///< Pad to byte boundary
         UCHAR funcMask;         ///< Mask of functin types supported on the pin
@@ -110,13 +110,14 @@ public:
         UNLOCK_FUNCTION         ///< Unlock the pin function
     };
 
-	/// Enum of board types.
-	const enum BOARD_TYPE {
-		NOT_SET,				///< Indicates board type not yet set
-		GALILEO_GEN1,			///< Original Galileo board
-		GALILEO_GEN2,			///< Galileo Gen2 board
-		MBM_BARE				///< MBM without Lure attached
-	};
+    /// Enum of board types.
+    const enum BOARD_TYPE {
+        NOT_SET,				///< Indicates board type not yet set
+        GALILEO_GEN1,			///< Original Galileo board
+        GALILEO_GEN2,			///< Galileo Gen2 board
+        MBM_BARE,				///< MBM without Lure attached
+        MBM_IKA_LURE			///< MBM with Ika Lure attached
+    };
 
     /// Method to set an I/O pin to a state (HIGH or LOW).
     BOOL setPinState(ULONG pin, ULONG state);
@@ -153,14 +154,14 @@ private:
     /// Pointer to array of pin function tracking structures.
     const PPIN_FUNCTION m_PinFunctions;
 
-	/// The count of entries in the pin function tracking array.
-	const ULONG m_PinFunctionEntryCount;
+    /// The count of entries in the pin function tracking array.
+    const ULONG m_PinFunctionEntryCount;
 
     /// Pointer to array of PWM channels.
     const PWM_CHANNEL* m_PwmChannels;
 
-	/// The number of GPIO pins present on the current board.
-	ULONG m_GpioPinCount;
+    /// The number of GPIO pins present on the current board.
+    ULONG m_GpioPinCount;
 
     /// The type of the board we are running on.
     BOARD_TYPE m_boardType;
@@ -210,8 +211,11 @@ private:
     /// Method to determine what type of board we are running on.
     BOOL _determineBoardType();
 
-	/// Methiod to determine the generation of a Galileo board.
-	BOOL _determineGalileoGen();
+    /// Method to determine the generation of a Galileo board.
+    BOOL _determineGalileoGen();
+
+    /// Method to determine the configuration of an MBM board.
+    BOOL _determineMbmConfig();
 
     /// Test an I2C address to see if a slave is present on it.
     BOOL _testI2cAddress(ULONG i2cAdr);
@@ -227,19 +231,19 @@ This method determines the board type if it is not yet known.
 */
 inline BOOL BoardPinsClass::getBoardType(BOARD_TYPE & board)
 {
-	BOOL status = TRUE;
-	DWORD error = ERROR_SUCCESS;
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
 
-	status = _verifyBoardType();
-	if (!status) { error = GetLastError(); }
+    status = _verifyBoardType();
+    if (!status) { error = GetLastError(); }
 
-	if (status)
-	{
-		board = m_boardType;
-	}
+    if (status)
+    {
+        board = m_boardType;
+    }
 
-	if (!status) { SetLastError(error); }
-	return status;
+    if (!status) { SetLastError(error); }
+    return status;
 }
 
 /**

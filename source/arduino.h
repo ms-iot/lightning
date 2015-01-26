@@ -495,10 +495,10 @@ void serialEvent1();
 inline int RunArduinoSketch()
 {
     int ret = 0;
+    BoardPinsClass::BOARD_TYPE board;
 
     try
     {
-        //ArduinoInit();
         setup();
         while (1)
         {
@@ -524,7 +524,7 @@ inline int RunArduinoSketch()
         }
     }
 
-	catch (const _arduino_fatal_error &ex)
+    catch (const _arduino_fatal_error &ex)
     {
         ret = 1;
         Log("\nSketch Aborted! A fatal error has occurred:\n");

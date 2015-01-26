@@ -6,6 +6,13 @@
 #include "BoardPins.h"
 #include "I2cController.h"
 
+// The default PWM chip I2C address on the Ika Lure is 0x40.  To use the Ika Lure with a 
+// Weather Shield which has a humidity sensor at addresss 0x40 the address of the PWM chip
+// on the Ika Lure must be changed (by lifting the PWM chip pin #1 and tying it high,
+// setting the PWM chip address to 0x41, for example).  If you change the PWM chip address
+// by modifying the hardware, change the following #define to match.
+#define IKA_LURE_PWM_I2C_ADR 0x40
+
 // GPIO type values.
 const UCHAR GPIO_FABRIC = 1;    ///< GPIO is from the Quark Fabric sub-system (memory mapped)
 const UCHAR GPIO_LEGRES = 2;    ///< GPIO is from the Quark Legacy sub-system that can resume from sleep
@@ -25,15 +32,16 @@ const UCHAR GPIO_OUTPUT_DRIVER_SELECT = 0;  ///< Specify output driver should be
 const UCHAR EXP0       =  0;    ///< Value specifies I/O Expander 0
 const UCHAR EXP1       =  1;    ///< Value specifies I/O Expander 1
 const UCHAR EXP2       =  2;    ///< Value specifies I/O Expander 2
-const UCHAR PWM        =  3;    ///< Value specifies PWM used as I/O Expander
+const UCHAR PWMG       =  3;    ///< Value specifies Galileo PWM used as I/O Expander
 const UCHAR CY8        =  4;    ///< Value specifies CY8 I/O Expander (on Gen1)
 const UCHAR SOC        =  5;    ///< Value specifies SOC is the "I/O Expander"
-const UCHAR NUM_IO_EXP =  6;    ///< The number of I/O Expanders present
+const UCHAR PWMI       =  6;    ///< Value specifies Ika Lure PWM used as I/O Expander
+const UCHAR NUM_IO_EXP =  7;    ///< The number of I/O Expander types
 const UCHAR NO_X       = 15;    ///< Value specifies that no I/O Expander is used
 
 // I/O Expander types.
 const UCHAR PCAL9535A = 0;      ///< I/O Expander chip used on Gen2
-const UCHAR PCA9685 = 1;        ///< PWM chip used on Gen2
+const UCHAR PCA9685 = 1;        ///< PWM chip used on Gen2 and Ika Lure
 const UCHAR CY8C9540A = 2;      ///< I/O Expander/PWM chip used on Gen1
 const UCHAR BAYTRAIL = 3;		///< Muxing is done within the SOC
 const UCHAR NUM_EXP_TYPSES = 3; ///< The number of I/O Expanders types present
@@ -96,6 +104,9 @@ const UCHAR MAX_MUXES = 15;     ///< Maximum number of MUXes on a Gen1 or Gen2 b
 // The number of GPIO pins on an MBM plus one (to allow for 0 not being used).
 const ULONG NUM_MBM_PINS = 27;	///< Number of entries in a zero based array indexed by MBM pin number.
 
+// The I2C Address of the MBM Ika Lure ADC.
+const ULONG MBM_IKA_LURE_ADC_ADR = 0x48;	///< I2C address of ADC on MBM Ika Lure
+
 /// The global table of pin attributes for the Galileo Gen2 board.
 /**
 This table contains all the pin-specific attributes needed to configure and use an I/O pin.
@@ -103,9 +114,9 @@ It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
 */
 const BoardPinsClass::PORT_ATTRIBUTES g_Gen2PinAttributes[] =
 {
-	//gpioType           pullupExp   triStExp    muxA               Muxes (A,B) by function:    I2S   triStIn   Function_mask
-	//             portBit     pullupBit   triStBit      muxB     Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
-	{ GPIO_FABRIC, 3,    EXP1, P0_1, EXP1, P0_0, NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_SER },            // D0
+    //gpioType           pullupExp   triStExp    muxA               Muxes (A,B) by function:    I2S   triStIn   Function_mask
+    //             portBit     pullupBit   triStBit      muxB     Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
+    { GPIO_FABRIC, 3,    EXP1, P0_1, EXP1, P0_0, NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_SER },            // D0
     { GPIO_FABRIC, 4,    EXP0, P1_5, EXP0, P1_4, MUX7,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 1, 0, FUNC_DIO | FUNC_SER },            // D1
     { GPIO_FABRIC, 5,    EXP1, P0_3, EXP1, P0_2, MUX10,  NO_MUX,  1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_SER },            // D2
     { GPIO_FABRIC, 6,    EXP0, P0_1, EXP0, P0_0, MUX0,   MUX9,    0,0, 1,0, 0,0, 0,0, 0,0, 0,1, 0, 0, 1, 0, FUNC_DIO | FUNC_PWM | FUNC_SER }, // D3
@@ -134,20 +145,20 @@ mux number and specifies which port bit of which I/O Expander drives the mux sel
 */
 const BoardPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[MAX_MUXES] =
 {
-    { PWM,  LED0 },     ///< MUX0
-    { PWM,  LED2 },     ///< MUX1
-    { PWM,  LED4 },     ///< MUX2
-    { PWM,  LED6 },     ///< MUX3
-    { PWM,  LED8 },     ///< MUX4
+    { PWMG,  LED0 },    ///< MUX0
+    { PWMG,  LED2 },    ///< MUX1
+    { PWMG,  LED4 },    ///< MUX2
+    { PWMG,  LED6 },    ///< MUX3
+    { PWMG,  LED8 },    ///< MUX4
     { EXP1, P1_4 },     ///< MUX5
-    { PWM,  LED10 },    ///< MUX6
+    { PWMG,  LED10 },   ///< MUX6
     { EXP1, P1_5 },     ///< MUX7
     { EXP1, P1_6 },     ///< MUX8
-    { PWM,  LED12 },    ///< MUX9
-    { PWM,  LED13 },    ///< MUX10
+    { PWMG,  LED12 },   ///< MUX9
+    { PWMG,  LED13 },   ///< MUX10
     { EXP2, P1_4 },     ///< AMUX1
-    { PWM,  LED14 },    ///< AMUX2_1
-    { PWM,  LED15 },    ///< AMUX2_2
+    { PWMG,  LED14 },   ///< AMUX2_1
+    { PWMG,  LED15 },   ///< AMUX2_2
     { NO_X, 0 }         ///< Not used on Gen2
 };
 
@@ -161,15 +172,15 @@ const BoardPinsClass::PWM_CHANNEL g_Gen2PwmChannels[] =
     { NO_X, 0, 0, 0 },          ///< D0
     { NO_X, 0, 0, 0 },          ///< D1
     { NO_X, 0, 0, 0 },          ///< D2
-    { PWM, LED1, LED1 , 0 },    ///< D3
+    { PWMG, LED1, LED1 , 0 },   ///< D3
     { NO_X, 0, 0, 0 },          ///< D4
-    { PWM, LED3, LED3, 0 },     ///< D5
-    { PWM, LED5, LED5, 0 },     ///< D6
+    { PWMG, LED3, LED3, 0 },    ///< D5
+    { PWMG, LED5, LED5, 0 },    ///< D6
     { NO_X, 0, 0, 0 },          ///< D7
     { NO_X, 0, 0, 0 },          ///< D8
-    { PWM, LED7, LED7, 0 },     ///< D9
-    { PWM, LED11, LED11, 0 },   ///< D10
-    { PWM, LED9, LED9, 0 },     ///< D11
+    { PWMG, LED7, LED7, 0 },    ///< D9
+    { PWMG, LED11, LED11, 0 },  ///< D10
+    { PWMG, LED9, LED9, 0 },    ///< D11
     { NO_X, 0, 0, 0 },          ///< D12
     { NO_X, 0, 0, 0 },          ///< D13
     { NO_X, 0, 0, 0 },          ///< A0
@@ -188,12 +199,13 @@ and the address on the I2C bus the chip responds to.
 */
 const BoardPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
 {
-    { PCAL9535A, 0x25 },    ///< EXP0 - Galileo Gen2
-    { PCAL9535A, 0x26 },    ///< EXP1 - Galileo Gen2
-    { PCAL9535A, 0x27 },    ///< EXP2 - Galileo Gen2
-    { PCA9685,   0x47 },    ///< PWM - Galileo Gen2
-    { CY8C9540A, 0x20 },    ///< CY8 - Galileo Gen1
-	{ BAYTRAIL,  0x00 }		///< SOC - MBM
+    { PCAL9535A, 0x25 },					///< EXP0 - Galileo Gen2
+    { PCAL9535A, 0x26 },					///< EXP1 - Galileo Gen2
+    { PCAL9535A, 0x27 },					///< EXP2 - Galileo Gen2
+    { PCA9685,   0x47 },					///< PWMG - Galileo Gen2
+    { CY8C9540A, 0x20 },					///< CY8 - Galileo Gen1
+    { BAYTRAIL,  0x00 },					///< SOC - MBM
+    { PCA9685,   IKA_LURE_PWM_I2C_ADR }     ///< PWMI - MGM with Ika Lure
 };
 
 /// The Gen2 I/O expander signature.
@@ -209,9 +221,9 @@ It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
 */
 const BoardPinsClass::PORT_ATTRIBUTES g_Gen1PinAttributes[] =
 {
-	//gpioType          pullupExp triStExp muxA                Muxes (A,B) by function:    I2S   triStIn   Function_mask
-	//             portBit     pullupBit triStBit    muxB    Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
-	{ GPIO_CY8,    P4_6, NO_X, 0, NO_X, 0, MUX_U2_1, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },            // D0
+    //gpioType          pullupExp triStExp muxA                Muxes (A,B) by function:    I2S   triStIn   Function_mask
+    //             portBit     pullupBit triStBit    muxB    Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
+    { GPIO_CY8,    P4_6, NO_X, 0, NO_X, 0, MUX_U2_1, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },            // D0
     { GPIO_CY8,    P4_7, NO_X, 0, NO_X, 0, MUX_U2_2, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },            // D1
     { GPIO_FABRIC, 6,    NO_X, 0, NO_X, 0, MUX_U9_2, NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },                       // D2
     { GPIO_FABRIC, 7,    NO_X, 0, NO_X, 0, MUX_U9_1, NO_MUX, 0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D3
@@ -289,39 +301,39 @@ const BoardPinsClass::PWM_CHANNEL g_Gen1PwmChannels[] =
 /// The global table of pin attributes for the MBM board.
 /**
 This table contains all the pin-specific attributes needed to configure and use an I/O pin.
-It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
+It is indexed by pin number (0 to NUM_MBM_PINS-1).
 */
 const BoardPinsClass::PORT_ATTRIBUTES g_MbmPinAttributes[] =
 {
-	//gpioType           pullupExp   triStExp    muxA               Muxes (A,B) by function:    I2S  triStIn   Function_mask
-	//             portBit     pullupBit   triStBit      muxB     Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
-	{ GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  0
-	{ GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  1
-	{ GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  2
-	{ GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  3
-	{ GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  4
-	{ GPIO_S0,    17,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  //  5
-	{ GPIO_S0,     1,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  //  6
-	{ GPIO_S0,    18,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  //  7
-	{ GPIO_S0,     2,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  //  8
-	{ GPIO_S0,    19,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  //  9
-	{ GPIO_S0,     4,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  // 10
-	{ GPIO_S0,    16,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 11
-	{ GPIO_S0,     0,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  // 12
-	{ GPIO_S0,    20,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_I2C },  // 13
-	{ GPIO_S0,    13,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 1, 0, 0, 0, FUNC_DIO | FUNC_I2S },  // 14
-	{ GPIO_S0,    21,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_I2C },  // 15
-	{ GPIO_S0,    12,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 1, 0, 0, 0, FUNC_DIO | FUNC_I2S },  // 16
-	{ GPIO_S0,     7,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  // 17
-	{ GPIO_S0,    14,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 1, 0, 0, 0, FUNC_DIO | FUNC_I2S },  // 18
-	{ GPIO_S0,     6,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  // 19
-	{ GPIO_S0,    15,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 1, 0, 0, 0, FUNC_DIO | FUNC_I2S },  // 20
-	{ GPIO_S5,    29,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 21
-	{ GPIO_S0,    10,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },  // 22
-	{ GPIO_S5,    33,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 23
-	{ GPIO_S0,    11,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },  // 24
-	{ GPIO_S5,    30,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 25
-	{ GPIO_S0,   103,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 1, 0, 0, FUNC_DIO | FUNC_SPK }   // 26
+    //gpioType           pullupExp   triStExp    muxA               Muxes (A,B) by function:    I2S  triStIn   Function_mask
+    //             portBit     pullupBit   triStBit      muxB     Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  0
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  1
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  2
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  3
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  4
+    { GPIO_S0,    17,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  //  5
+    { GPIO_S0,     1,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  //  6
+    { GPIO_S0,    18,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  //  7
+    { GPIO_S0,     2,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  //  8
+    { GPIO_S0,    19,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  //  9
+    { GPIO_S0,     4,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  // 10
+    { GPIO_S0,    16,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 11
+    { GPIO_S0,     0,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  // 12
+    { GPIO_S0,    20,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_I2C },  // 13
+    { GPIO_S0,    13,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 1, 0, 0, 0, FUNC_DIO | FUNC_I2S },  // 14
+    { GPIO_S0,    21,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_I2C },  // 15
+    { GPIO_S0,    12,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 1, 0, 0, 0, FUNC_DIO | FUNC_I2S },  // 16
+    { GPIO_S0,     7,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  // 17
+    { GPIO_S0,    14,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 1, 0, 0, 0, FUNC_DIO | FUNC_I2S },  // 18
+    { GPIO_S0,     6,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  // 19
+    { GPIO_S0,    15,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 1, 0, 0, 0, FUNC_DIO | FUNC_I2S },  // 20
+    { GPIO_S5,    29,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 21
+    { GPIO_S0,    10,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },  // 22
+    { GPIO_S5,    33,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 23
+    { GPIO_S0,    11,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },  // 24
+    { GPIO_S5,    30,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 25
+    { GPIO_S0,   103,    NO_X, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 1, 0, 0, FUNC_DIO | FUNC_SPK }   // 26
 };
 
 /// The global table of mux attributes for the MBM board.
@@ -331,43 +343,141 @@ mux number and specifies which port bit of which I/O Expander drives the mux sel
 */
 const BoardPinsClass::MUX_ATTRIBUTES g_MbmMuxAttributes[MAX_MUXES] =
 {
-	{ SOC,  0 }     ///< MUX0
+    { SOC,  0 },    ///< MUX0
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 }     // Not used on bare MBM
 };
 
-/// The global table of PWM information for the Galileo Gen2 board.
+/// The global table of PWM information for the MBM board.
 /**
 This table contains the information needed to drive the PWM channels.  It is indexed by the
 Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM for that pin.
 */
 const BoardPinsClass::PWM_CHANNEL g_MbmPwmChannels[] =
 {
-	{ NO_X, 0, 0, 0 },          ///<  0
-	{ NO_X, 0, 0, 0 },          ///<  1
-	{ NO_X, 0, 0, 0 },          ///<  2
-	{ NO_X, 0, 0, 0 },          ///<  3
-	{ NO_X, 0, 0, 0 },          ///<  4
-	{ NO_X, 0, 0, 0 },          ///<  5
-	{ NO_X, 0, 0, 0 },          ///<  6
-	{ NO_X, 0, 0, 0 },          ///<  7
-	{ NO_X, 0, 0, 0 },          ///<  8
-	{ NO_X, 0, 0, 0 },          ///<  9
-	{ NO_X, 0, 0, 0 },          ///< 10
-	{ NO_X, 0, 0, 0 },          ///< 11
-	{ NO_X, 0, 0, 0 },          ///< 12
-	{ NO_X, 0, 0, 0 },          ///< 13
-	{ NO_X, 0, 0, 0 },          ///< 14
-	{ NO_X, 0, 0, 0 },          ///< 15
-	{ NO_X, 0, 0, 0 },          ///< 16
-	{ NO_X, 0, 0, 0 },          ///< 17
-	{ NO_X, 0, 0, 0 },          ///< 18
-	{ NO_X, 0, 0, 0 },          ///< 19
-	{ NO_X, 0, 0, 0 },          ///< 20
-	{ NO_X, 0, 0, 0 },          ///< 21
-	{ SOC,  0, 0, 0 },          ///< 22
-	{ NO_X, 0, 0, 0 },          ///< 23
-	{ SOC,  1, 0, 0 },          ///< 24
-	{ NO_X, 0, 0, 0 },          ///< 25
-	{ NO_X, 0, 0, 0 }           ///< 26
+    { NO_X, 0, 0, 0 },          ///<  0
+    { NO_X, 0, 0, 0 },          ///<  1
+    { NO_X, 0, 0, 0 },          ///<  2
+    { NO_X, 0, 0, 0 },          ///<  3
+    { NO_X, 0, 0, 0 },          ///<  4
+    { NO_X, 0, 0, 0 },          ///<  5
+    { NO_X, 0, 0, 0 },          ///<  6
+    { NO_X, 0, 0, 0 },          ///<  7
+    { NO_X, 0, 0, 0 },          ///<  8
+    { NO_X, 0, 0, 0 },          ///<  9
+    { NO_X, 0, 0, 0 },          ///< 10
+    { NO_X, 0, 0, 0 },          ///< 11
+    { NO_X, 0, 0, 0 },          ///< 12
+    { NO_X, 0, 0, 0 },          ///< 13
+    { NO_X, 0, 0, 0 },          ///< 14
+    { NO_X, 0, 0, 0 },          ///< 15
+    { NO_X, 0, 0, 0 },          ///< 16
+    { NO_X, 0, 0, 0 },          ///< 17
+    { NO_X, 0, 0, 0 },          ///< 18
+    { NO_X, 0, 0, 0 },          ///< 19
+    { NO_X, 0, 0, 0 },          ///< 20
+    { NO_X, 0, 0, 0 },          ///< 21
+    { SOC,  0, 0, 0 },          ///< 22
+    { NO_X, 0, 0, 0 },          ///< 23
+    { SOC,  1, 0, 0 },          ///< 24
+    { NO_X, 0, 0, 0 },          ///< 25
+    { NO_X, 0, 0, 0 }           ///< 26
+};
+
+/// The global table of pin attributes for the MBM board with an Ika Lure attached.
+/**
+This table contains all the pin-specific attributes needed to configure and use an I/O pin.
+It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
+*/
+const BoardPinsClass::PORT_ATTRIBUTES g_MbmIkaPinAttributes[] =
+{
+    //gpioType           pullupExp   triStExp    muxA               Muxes (A,B) by function:    I2S  triStIn   Function_mask
+    //             portBit     pullupBit   triStBit      muxB     Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
+    { GPIO_S0,     6,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },            // D0
+    { GPIO_S0,     7,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },            // D1
+    { GPIO_S5,    33,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },                       // D2
+    { GPIO_S0,    10,    NO_X, 0,    NO_X, 0,    MUX6,   MUX0,    0,0, 0,1, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D3
+    { GPIO_S5,    29,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },                       // D4
+    { GPIO_S0,    11,    NO_X, 0,    NO_X, 0,    MUX6,   MUX1,    0,0, 0,1, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D5
+    { GPIO_S0,   103,    NO_X, 0,    NO_X, 0,    MUX6,   MUX2,    0,0, 0,1, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D6
+    { GPIO_S0,    15,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },                       // D7
+    { GPIO_S0,    14,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },                       // D8
+    { GPIO_S0,    13,    NO_X, 0,    NO_X, 0,    MUX6,   MUX3,    0,0, 0,1, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D9
+    { GPIO_S0,    17,    NO_X, 0,    NO_X, 0,    MUX6,   MUX4,    0,0, 0,1, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D10
+    { GPIO_S0,    19,    NO_X, 0,    NO_X, 0,    MUX6,   MUX5,    0,0, 0,1, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM | FUNC_SPI }, // D11
+    { GPIO_S0,    18,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },            // D12
+    { GPIO_S0,    16,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },            // D13
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A0
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A1
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A2
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A3
+    { GPIO_S0,    21,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_I2C },                       // A4
+    { GPIO_S0,    20,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_I2C }                        // A5
+};
+
+/// The global table of mux attributes for the MBM board with an Ika Lure attached.
+/**
+This table contains the information needed to set each mux to a desired state.  It is indexed by
+mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
+*/
+const BoardPinsClass::MUX_ATTRIBUTES g_MbmIkaMuxAttributes[MAX_MUXES] =
+{
+    { PWMI, LED6 },     ///< MUX0
+    { PWMI, LED7 },     ///< MUX1
+    { PWMI, LED8 },     ///< MUX2
+    { PWMI, LED9 },     ///< MUX3
+    { PWMI, LED10 },    ///< MUX4
+    { PWMI, LED11 },    ///< MUX5
+    { SOC,  0 },        ///< MUX6
+    { NO_X, 0 },		// Not used on Ika Lure
+    { NO_X, 0 },		// Not used on Ika Lure
+    { NO_X, 0 },		// Not used on Ika Lure
+    { NO_X, 0 },		// Not used on Ika Lure
+    { NO_X, 0 },		// Not used on Ika Lure
+    { NO_X, 0 },		// Not used on Ika Lure
+    { NO_X, 0 },		// Not used on Ika Lure
+    { NO_X, 0 }		    // Not used on Ika Lure
+};
+
+/// The global table of PWM information for the MBM board with an Ika Lure attached.
+/**
+This table contains the information needed to drive the PWM channels.  It is indexed by the
+Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM for that pin.
+*/
+const BoardPinsClass::PWM_CHANNEL g_MbmIkaPwmChannels[] =
+{
+    { NO_X, 0, 0, 0 },          ///< D0
+    { NO_X, 0, 0, 0 },          ///< D1
+    { NO_X, 0, 0, 0 },          ///< D2
+    { PWMI, LED0, LED0 , 0 },   ///< D3
+    { NO_X, 0, 0, 0 },          ///< D4
+    { PWMI, LED1, LED1, 0 },    ///< D5
+    { PWMI, LED2, LED2, 0 },    ///< D6
+    { NO_X, 0, 0, 0 },          ///< D7
+    { NO_X, 0, 0, 0 },          ///< D8
+    { PWMI, LED3, LED3, 0 },    ///< D9
+    { PWMI, LED4, LED4, 0 },    ///< D10
+    { PWMI, LED5, LED5, 0 },    ///< D11
+    { NO_X, 0, 0, 0 },          ///< D12
+    { NO_X, 0, 0, 0 },          ///< D13
+    { NO_X, 0, 0, 0 },          ///< A0
+    { NO_X, 0, 0, 0 },          ///< A1
+    { NO_X, 0, 0, 0 },          ///< A2
+    { NO_X, 0, 0, 0 },          ///< A3
+    { NO_X, 0, 0, 0 },          ///< A4
+    { NO_X, 0, 0, 0 }           ///< A5
 };
 
 /// The global table of Pin Function tracking structures.
@@ -376,33 +486,33 @@ This table tracks the currently configured function for each pin of the board.
 */
 BoardPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
 {
-	{ FUNC_NUL, false },    ///<  0 - (Galileo D0)
-	{ FUNC_NUL, false },    ///<  1 - (Galileo D1)
-	{ FUNC_NUL, false },    ///<  2 - (Galileo D2)
-	{ FUNC_NUL, false },    ///<  3 - (Galileo D3)
-	{ FUNC_NUL, false },    ///<  4 - (Galileo D4)
-	{ FUNC_NUL, false },    ///<  5 - (Galileo D5)
-	{ FUNC_NUL, false },    ///<  6 - (Galileo D6)
-	{ FUNC_NUL, false },    ///<  7 - (Galileo D7)
-	{ FUNC_NUL, false },    ///<  8 - (Galileo D8)
-	{ FUNC_NUL, false },    ///<  9 - (Galileo D9)
-	{ FUNC_NUL, false },    ///< 10 - (Galileo D10)
-	{ FUNC_NUL, false },    ///< 11 - (Galileo D11)
-	{ FUNC_NUL, false },    ///< 12 - (Galileo D12)
-	{ FUNC_NUL, false },    ///< 13 - (Galileo D13)
-	{ FUNC_NUL, false },    ///< 14 - (Galileo A0)
-	{ FUNC_NUL, false },    ///< 15 - (Galileo A1)
-	{ FUNC_NUL, false },    ///< 16 - (Galileo A2)
-	{ FUNC_NUL, false },    ///< 17 - (Galileo A3)
-	{ FUNC_NUL, false },    ///< 18 - (Galileo A4)
-	{ FUNC_NUL, false },    ///< 19 - (Galileo A5)
-	{ FUNC_NUL, false },    ///< 20
-	{ FUNC_NUL, false },    ///< 21
-	{ FUNC_NUL, false },    ///< 22
-	{ FUNC_NUL, false },    ///< 23
-	{ FUNC_NUL, false },    ///< 24
-	{ FUNC_NUL, false },    ///< 25
-	{ FUNC_NUL, false }     ///< 26
+    { FUNC_NUL, false },    ///<  0 - (Galileo D0)
+    { FUNC_NUL, false },    ///<  1 - (Galileo D1)
+    { FUNC_NUL, false },    ///<  2 - (Galileo D2)
+    { FUNC_NUL, false },    ///<  3 - (Galileo D3)
+    { FUNC_NUL, false },    ///<  4 - (Galileo D4)
+    { FUNC_NUL, false },    ///<  5 - (Galileo D5)
+    { FUNC_NUL, false },    ///<  6 - (Galileo D6)
+    { FUNC_NUL, false },    ///<  7 - (Galileo D7)
+    { FUNC_NUL, false },    ///<  8 - (Galileo D8)
+    { FUNC_NUL, false },    ///<  9 - (Galileo D9)
+    { FUNC_NUL, false },    ///< 10 - (Galileo D10)
+    { FUNC_NUL, false },    ///< 11 - (Galileo D11)
+    { FUNC_NUL, false },    ///< 12 - (Galileo D12)
+    { FUNC_NUL, false },    ///< 13 - (Galileo D13)
+    { FUNC_NUL, false },    ///< 14 - (Galileo A0)
+    { FUNC_NUL, false },    ///< 15 - (Galileo A1)
+    { FUNC_NUL, false },    ///< 16 - (Galileo A2)
+    { FUNC_NUL, false },    ///< 17 - (Galileo A3)
+    { FUNC_NUL, false },    ///< 18 - (Galileo A4)
+    { FUNC_NUL, false },    ///< 19 - (Galileo A5)
+    { FUNC_NUL, false },    ///< 20
+    { FUNC_NUL, false },    ///< 21
+    { FUNC_NUL, false },    ///< 22
+    { FUNC_NUL, false },    ///< 23
+    { FUNC_NUL, false },    ///< 24
+    { FUNC_NUL, false },    ///< 25
+    { FUNC_NUL, false }     ///< 26
 };
 
 /// Constructor.
@@ -410,15 +520,15 @@ BoardPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
 Initialize the data members that point to the global attributes tables.
 */
 BoardPinsClass::BoardPinsClass()
-	:
-	m_boardType(NOT_SET),
-	m_PinAttributes(NULL),
-	m_MuxAttributes(NULL),
-	m_ExpAttributes(g_GenxExpAttributes),
-	m_PinFunctions(g_GenxPinFunctions),
-	m_PinFunctionEntryCount(27),
+    :
+    m_boardType(NOT_SET),
+    m_PinAttributes(NULL),
+    m_MuxAttributes(NULL),
+    m_ExpAttributes(g_GenxExpAttributes),
+    m_PinFunctions(g_GenxPinFunctions),
+    m_PinFunctionEntryCount(27),
     m_PwmChannels(NULL),
-	m_GpioPinCount(0)
+    m_GpioPinCount(0)
 {
 }
 
@@ -437,11 +547,11 @@ BOOL BoardPinsClass::verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTI
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
 
-	if (pin >= m_PinFunctionEntryCount)
-	{
-		status = FALSE;
-		error = ERROR_INVALID_INDEX;
-	}
+    if (pin >= m_PinFunctionEntryCount)
+    {
+        status = FALSE;
+        error = ERROR_INVALID_INDEX;
+    }
 
     if (status && (lockAction == UNLOCK_FUNCTION))
     {
@@ -494,17 +604,17 @@ BOOL BoardPinsClass::_setPinFunction(ULONG pin, ULONG function)
     DWORD error = ERROR_SUCCESS;
 
 
-	// Make sure the pin attributes table is set up for the board generation.
-	status = _verifyBoardType();
-	if (!status) { error = GetLastError(); }
+    // Make sure the pin attributes table is set up for the board generation.
+    status = _verifyBoardType();
+    if (!status) { error = GetLastError(); }
 
-	if (status)
+    if (status)
     {
-		// Verify the pin number is in range.
-		status = _pinNumberIsSafe(pin);
-		if (!status) { error = ERROR_INVALID_PARAMETER; }
-	}
-	
+        // Verify the pin number is in range.
+        status = _pinNumberIsSafe(pin);
+        if (!status) { error = ERROR_INVALID_PARAMETER; }
+    }
+    
     // Verify the requsted function is supported on this pin.
     if (status && ((m_PinAttributes[pin].funcMask & function) == 0))
     {
@@ -832,30 +942,30 @@ BOOL BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
         if (!status) { error = GetLastError(); }
     }
 
-	if (status && !_pinNumberIsSafe(pin))
-	{
-		status = FALSE;
-		error = ERROR_INVALID_ADDRESS;
-	}
+    if (status && !_pinNumberIsSafe(pin))
+    {
+        status = FALSE;
+        error = ERROR_INVALID_ADDRESS;
+    }
 
-	if (status)
+    if (status)
     {
         // Set the pin direction on the device that supports this pin.
         switch (m_PinAttributes[pin].gpioType)
         {
-		case GPIO_FABRIC:
+        case GPIO_FABRIC:
             status = g_quarkFabricGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
-			if (!status) { error = GetLastError(); }
-			break;
-		case GPIO_S0:
-			status = g_btFabricGpio.setS0PinDirection(m_PinAttributes[pin].portBit, mode);
-			if (!status) { error = GetLastError(); }
-			break;
-		case GPIO_S5:
-			status = g_btFabricGpio.setS5PinDirection(m_PinAttributes[pin].portBit, mode);
-			if (!status) { error = GetLastError(); }
-			break;
-		case GPIO_LEGRES:
+            if (!status) { error = GetLastError(); }
+            break;
+        case GPIO_S0:
+            status = g_btFabricGpio.setS0PinDirection(m_PinAttributes[pin].portBit, mode);
+            if (!status) { error = GetLastError(); }
+            break;
+        case GPIO_S5:
+            status = g_btFabricGpio.setS5PinDirection(m_PinAttributes[pin].portBit, mode);
+            if (!status) { error = GetLastError(); }
+            break;
+        case GPIO_LEGRES:
             status = g_quarkLegacyGpio.setResumePinDirection(m_PinAttributes[pin].portBit, mode);
             if (!status) { error = GetLastError(); }
             break;
@@ -875,7 +985,7 @@ BOOL BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
             status = _setExpBitDirection(CY8, m_PinAttributes[pin].portBit, mode, pullup);
             if (!status) { error = GetLastError(); }
             break;
-		default:
+        default:
             status = FALSE;
             error = DNS_ERROR_INVALID_TYPE;
         }
@@ -970,54 +1080,53 @@ BOOL BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULON
     // Determine what type of I/O Expander we are dealing with.
     //
 
-	switch (m_ExpAttributes[expNo].Exp_Type)
-	{
-	case PCAL9535A:
-		// Set the bit of the I/O Expander chip to the desired state.
-		status = PCAL9535ADevice::SetBitState(i2cAdr, bitNo, state);
-		if (!status) { error = GetLastError(); }
+    switch (m_ExpAttributes[expNo].Exp_Type)
+    {
+    case PCAL9535A:
+        // Set the bit of the I/O Expander chip to the desired state.
+        status = PCAL9535ADevice::SetBitState(i2cAdr, bitNo, state);
+        if (!status) { error = GetLastError(); }
 
-		if (status)
-		{
-			// Set the bit of the I/O Expander chip to be an output.
-			status = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT);
-			if (!status) { error = GetLastError(); }
-		}
-		break;
-	case PCA9685:
-		// Set the bit of the PWM chip to the desired state.
-		status = PCA9685Device::SetBitState(i2cAdr, bitNo, state);
-		if (!status) { error = GetLastError(); }
-		break;
-	case CY8C9540A:
-		// Set the bit of a CY8 I/O Expander chip to the desired state.
-		status = CY8C9540ADevice::SetBitState(i2cAdr, bitNo, state);
-		if (!status) { error = GetLastError(); }
+        if (status)
+        {
+            // Set the bit of the I/O Expander chip to be an output.
+            status = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT);
+            if (!status) { error = GetLastError(); }
+        }
+        break;
+    case PCA9685:
+        // Set the bit of the PWM chip to the desired state.
+        status = PCA9685Device::SetBitState(i2cAdr, bitNo, state);
+        if (!status) { error = GetLastError(); }
+        break;
+    case CY8C9540A:
+        // Set the bit of a CY8 I/O Expander chip to the desired state.
+        status = CY8C9540ADevice::SetBitState(i2cAdr, bitNo, state);
+        if (!status) { error = GetLastError(); }
 
-		if (status)
-		{
-			// Set the bit of the I/O Expander chip to be an output.
-			status = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT, FALSE);
-			if (!status) { error = GetLastError(); }
-		}
-		break;
-	case BAYTRAIL:
-		if (m_PinAttributes[pin].gpioType == GPIO_S0)
-		{
-			status = g_btFabricGpio.setS0PinFunction(m_PinAttributes[pin].portBit, state);
-			if (!status) { error = GetLastError(); }
-		}
-		else
-		{
-			status = g_btFabricGpio.setS5PinFunction(m_PinAttributes[pin].portBit, state);
-			if (!status) { error = GetLastError(); }
-		}
-		// TODO: Add muxing code when needed for functions other than digitalIO.
-		break;
-	default:
-		status = FALSE;
-		error = ERROR_INVALID_ENVIRONMENT;
-	}
+        if (status)
+        {
+            // Set the bit of the I/O Expander chip to be an output.
+            status = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT, FALSE);
+            if (!status) { error = GetLastError(); }
+        }
+        break;
+    case BAYTRAIL:
+        if (m_PinAttributes[pin].gpioType == GPIO_S0)
+        {
+            status = g_btFabricGpio.setS0PinFunction(m_PinAttributes[pin].portBit, state);
+            if (!status) { error = GetLastError(); }
+        }
+        else
+        {
+            status = g_btFabricGpio.setS5PinFunction(m_PinAttributes[pin].portBit, state);
+            if (!status) { error = GetLastError(); }
+        }
+        break;
+    default:
+        status = FALSE;
+        error = ERROR_INVALID_ENVIRONMENT;
+    }
 
     if (!status) { SetLastError(error); }
     return status;
@@ -1194,11 +1303,11 @@ BOOL BoardPinsClass::setPinState(ULONG pin, ULONG state)
         if (!status) { error = GetLastError(); }
     }
 
-	if (status && !_pinNumberIsSafe(pin))
-	{
-		status = FALSE;
-		error = ERROR_INVALID_ADDRESS;
-	}
+    if (status && !_pinNumberIsSafe(pin))
+    {
+        status = FALSE;
+        error = ERROR_INVALID_ADDRESS;
+    }
 
     if (status)
     {
@@ -1207,10 +1316,10 @@ BOOL BoardPinsClass::setPinState(ULONG pin, ULONG state)
         {
         case GPIO_FABRIC:
             return g_quarkFabricGpio.setPinState(m_PinAttributes[pin].portBit, state);
-		case GPIO_S0:
-			return g_btFabricGpio.setS0PinState(m_PinAttributes[pin].portBit, state);
-		case GPIO_S5:
-			return g_btFabricGpio.setS5PinState(m_PinAttributes[pin].portBit, state);
+        case GPIO_S0:
+            return g_btFabricGpio.setS0PinState(m_PinAttributes[pin].portBit, state);
+        case GPIO_S5:
+            return g_btFabricGpio.setS5PinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGRES:
             return g_quarkLegacyGpio.setResumePinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGCOR:
@@ -1252,26 +1361,26 @@ BOOL BoardPinsClass::getPinState(ULONG pin, ULONG & state)
     DWORD error = ERROR_SUCCESS;
 
 
-	status = _verifyBoardType();
-	if (!status) { error = GetLastError(); }
+    status = _verifyBoardType();
+    if (!status) { error = GetLastError(); }
 
-	if (status && !_pinNumberIsSafe(pin))
-	{
-		status = FALSE;
-		error = ERROR_INVALID_ADDRESS;
-	}
-	
-	if (status)
+    if (status && !_pinNumberIsSafe(pin))
+    {
+        status = FALSE;
+        error = ERROR_INVALID_ADDRESS;
+    }
+    
+    if (status)
     {
         // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
         switch (m_PinAttributes[pin].gpioType)
         {
         case GPIO_FABRIC:
             return g_quarkFabricGpio.getPinState(m_PinAttributes[pin].portBit, state);
-		case GPIO_S0:
-			return g_btFabricGpio.getS0PinState(m_PinAttributes[pin].portBit, state);
-		case GPIO_S5:
-			return g_btFabricGpio.getS5PinState(m_PinAttributes[pin].portBit, state);
+        case GPIO_S0:
+            return g_btFabricGpio.getS0PinState(m_PinAttributes[pin].portBit, state);
+        case GPIO_S5:
+            return g_btFabricGpio.getS5PinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGRES:
             return g_quarkLegacyGpio.getResumePinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGCOR:
@@ -1357,113 +1466,150 @@ in the Registry.
 */
 BOOL BoardPinsClass::_determineBoardType()
 {
-	BOOL status = TRUE;
-	DWORD error = ERROR_SUCCESS;
-	HKEY baseKey = HKEY_LOCAL_MACHINE;
-	HKEY regKey = nullptr;
-	WCHAR subKey[] = L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0";
-	WCHAR valueName[] = L"Identifier";
-	PWCHAR value = NULL;
-	ULONG valueBytes = 0;
-	WCHAR galileoId[] = L"x86 Family 5";
-	WCHAR mbmId[] = L"Intel64 Family 6";
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    HKEY baseKey = HKEY_LOCAL_MACHINE;
+    HKEY regKey = nullptr;
+    WCHAR subKey[] = L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0";
+    WCHAR valueName[] = L"Identifier";
+    PWCHAR value = NULL;
+    ULONG valueBytes = 0;
+    WCHAR galileoId[] = L"x86 Family 5";
+    WCHAR mbmId[] = L"Intel64 Family 6";
 
-	error = RegOpenKeyEx(baseKey, subKey, 0, KEY_READ, &regKey);
-	if (error != ERROR_SUCCESS) { status = FALSE; }
+    error = RegOpenKeyEx(baseKey, subKey, 0, KEY_READ, &regKey);
+    if (error != ERROR_SUCCESS) { status = FALSE; }
 
-	if (status)
-	{
-		error = RegGetValue(regKey, NULL, valueName, RRF_RT_REG_SZ, NULL, NULL, &valueBytes);
-		if (error != ERROR_SUCCESS) { status = FALSE; }
+    if (status)
+    {
+        error = RegGetValue(regKey, NULL, valueName, RRF_RT_REG_SZ, NULL, NULL, &valueBytes);
+        if (error != ERROR_SUCCESS) { status = FALSE; }
 
-		if (status)
-		{
-			value = (PWCHAR) new UCHAR[valueBytes];
-			if (value == NULL)
-			{
-				status = FALSE;
-				error = ERROR_OUTOFMEMORY;
-			}
-		}
+        if (status)
+        {
+            value = (PWCHAR) new UCHAR[valueBytes];
+            if (value == NULL)
+            {
+                status = FALSE;
+                error = ERROR_OUTOFMEMORY;
+            }
+        }
 
-		if (status)
-		{
-			error = RegGetValue(regKey, NULL, valueName, RRF_RT_REG_SZ, NULL, value, &valueBytes);
-			if (error != ERROR_SUCCESS) { status = FALSE; }
+        if (status)
+        {
+            error = RegGetValue(regKey, NULL, valueName, RRF_RT_REG_SZ, NULL, value, &valueBytes);
+            if (error != ERROR_SUCCESS) { status = FALSE; }
 
-			if (status)
-			{
-				if ((wcslen(mbmId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, mbmId, wcslen(mbmId)) == 0))
-				{
-					status = setBoardType(MBM_BARE);
-					if (!status) { error = GetLastError(); }
-				}
-				else if ((wcslen(galileoId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, galileoId, wcslen(galileoId)) == 0))
-				{
-					status = _determineGalileoGen();
-					if (!status) { error = GetLastError(); }
-				}
-				else
-				{
-					m_boardType = NOT_SET;
-					status = FALSE;
-					error = ERROR_INVALID_ENVIRONMENT;
-				}
-			}
+            if (status)
+            {
+                if ((wcslen(mbmId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, mbmId, wcslen(mbmId)) == 0))
+                {
+                    status = _determineMbmConfig();
+                    if (!status) { error = GetLastError(); }
+                }
+                else if ((wcslen(galileoId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, galileoId, wcslen(galileoId)) == 0))
+                {
+                    status = _determineGalileoGen();
+                    if (!status) { error = GetLastError(); }
+                }
+                else
+                {
+                    m_boardType = NOT_SET;
+                    status = FALSE;
+                    error = ERROR_INVALID_ENVIRONMENT;
+                }
+            }
 
-			delete[] value;
-		}
+            delete[] value;
+        }
 
-		RegCloseKey(regKey);
-		regKey = nullptr;
-	}
+        RegCloseKey(regKey);
+        regKey = nullptr;
+    }
 
-	if (!status) { SetLastError(error); }
-	return status;
+    if (!status) { SetLastError(error); }
+    return status;
+}
+
+/**
+The Ika Lure has a ADC chip at address 0x48.  If this I2C address responds, 
+this code assumes an Ika Lure is attached to this MBM.
+\return TRUE success. FALSE failure, GetLastError() provides error code.
+*/
+BOOL BoardPinsClass::_determineMbmConfig()
+{
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+
+    // Start with the assumption this is a bare MBM board.  This is done so the
+    // I2C code will know how to configure the Bay Trail I2C controller so it can be used 
+    // to determine if the Ika Lure is attached.
+    status = setBoardType(MBM_BARE);
+    if (!status) { error = GetLastError(); }
+
+    if (status)
+    {
+        if (_testI2cAddress(MBM_IKA_LURE_ADC_ADR))
+        {
+            status = setBoardType(MBM_IKA_LURE);
+            if (!status) { error = GetLastError(); }
+        }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
 }
 
 /**
 The I/O Expanders on the Gen1 and Gen2 boards are at different I2C addresses.
-The generation of a Galileo Board is decided by determining which I/O Expander 
+The generation of a Galileo Board is decided by determining which I/O Expander
 I2C addresses are acknowledged and which are not.
 \return TRUE success. FALSE failure, GetLastError() provides error code.
 */
 BOOL BoardPinsClass::_determineGalileoGen()
 {
-	BOOL status = TRUE;
-	DWORD error = ERROR_SUCCESS;
-	ULONG expSig = 0;
-	int i;
+    BOOL status = TRUE;
+    DWORD error = ERROR_SUCCESS;
+    ULONG expSig = 0;
+    int i;
 
-	// Try to access each of the known I/O Expander chips.
-	for (i = 0; i < NUM_IO_EXP; i++)
-	{
-		if (_testI2cAddress(g_GenxExpAttributes[i].I2c_Address))
-		{
-			expSig = expSig | (1 << i);
-		}
-	}
+    // Start with the assumption this is a Galileo Gen2.  This is done so the 
+    // I2C code will know to configure the Quark I2C controller so it can be use to
+    // determine which generation of Galileo this really is.
+    status = setBoardType(GALILEO_GEN2);
+    if (!status) { error = GetLastError(); }
 
-	// Compare the signature of expanders found to the Gen1 and Gen2 signatures.
-	if ((expSig & (g_gen2ExpSig)) == g_gen2ExpSig)
-	{
-		status = setBoardType(GALILEO_GEN2);
-		if (!status) { error = GetLastError(); }
-	}
-	else if ((expSig & (g_gen1ExpSig)) == g_gen1ExpSig)
-	{
-		status = setBoardType(GALILEO_GEN1);
-		if (!status) { error = GetLastError(); }
-	}
-	else
-	{
-		m_boardType = NOT_SET;
-		status = FALSE;
-		error = ERROR_INVALID_ENVIRONMENT;
-	}
+    if (status)
+    {
+        for (i = 0; i < NUM_IO_EXP; i++)
+        {
+            if (_testI2cAddress(g_GenxExpAttributes[i].I2c_Address))
+            {
+                expSig = expSig | (1 << i);
+            }
+        }
 
-	if (!status) { SetLastError(error); }
-	return status;
+        // Compare the signature of expanders found to the Gen1 and Gen2 signatures.
+        if ((expSig & (g_gen2ExpSig)) == g_gen2ExpSig)
+        {
+            status = setBoardType(GALILEO_GEN2);
+            if (!status) { error = GetLastError(); }
+        }
+        else if ((expSig & (g_gen1ExpSig)) == g_gen1ExpSig)
+        {
+            status = setBoardType(GALILEO_GEN1);
+            if (!status) { error = GetLastError(); }
+        }
+        else
+        {
+            m_boardType = NOT_SET;
+            status = FALSE;
+            error = ERROR_INVALID_ENVIRONMENT;
+        }
+    }
+
+    if (!status) { SetLastError(error); }
+    return status;
 }
 
 /**
@@ -1478,29 +1624,35 @@ BOOL BoardPinsClass::setBoardType(BOARD_TYPE board)
     BOOL status = TRUE;
     DWORD error = ERROR_SUCCESS;
 
-	m_boardType = board;
+    m_boardType = board;
     if (board == GALILEO_GEN2)
     {
-		m_PinAttributes = g_Gen2PinAttributes;
-		m_MuxAttributes = g_Gen2MuxAttributes;
-		m_PwmChannels = g_Gen2PwmChannels;
-		m_GpioPinCount = NUM_ARDUINO_PINS;
-	}
+        m_PinAttributes = g_Gen2PinAttributes;
+        m_MuxAttributes = g_Gen2MuxAttributes;
+        m_PwmChannels = g_Gen2PwmChannels;
+        m_GpioPinCount = NUM_ARDUINO_PINS;
+    }
     else if (board == GALILEO_GEN1)
     {
-		m_PinAttributes = g_Gen1PinAttributes;
+        m_PinAttributes = g_Gen1PinAttributes;
         m_MuxAttributes = g_Gen1MuxAttributes;
         m_PwmChannels = g_Gen1PwmChannels;
-		m_GpioPinCount = NUM_ARDUINO_PINS;
-	}
-	else if (board == MBM_BARE)
-	{
-		m_boardType = MBM_BARE;
-		m_PinAttributes = g_MbmPinAttributes;
-		m_MuxAttributes = g_MbmMuxAttributes;
-		m_PwmChannels = g_MbmPwmChannels;
-		m_GpioPinCount = NUM_MBM_PINS;
-	}
+        m_GpioPinCount = NUM_ARDUINO_PINS;
+    }
+    else if (board == MBM_BARE)
+    {
+        m_PinAttributes = g_MbmPinAttributes;
+        m_MuxAttributes = g_MbmMuxAttributes;
+        m_PwmChannels = g_MbmPwmChannels;
+        m_GpioPinCount = NUM_MBM_PINS;
+    }
+    else if (board == MBM_IKA_LURE)
+    {
+        m_PinAttributes = g_MbmIkaPinAttributes;
+        m_MuxAttributes = g_MbmIkaMuxAttributes;
+        m_PwmChannels = g_MbmIkaPwmChannels;
+        m_GpioPinCount = NUM_ARDUINO_PINS;
+    }
     else
     {
         m_boardType = NOT_SET;
