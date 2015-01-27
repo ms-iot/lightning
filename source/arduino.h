@@ -495,7 +495,6 @@ void serialEvent1();
 inline int RunArduinoSketch()
 {
     int ret = 0;
-    BoardPinsClass::BOARD_TYPE board;
 
     try
     {

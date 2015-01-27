@@ -1305,6 +1305,7 @@ inline void BtFabricGpioControllerClass::_setS0PinInput(ULONG gpioNo)
     _PCONF0 padConfig;
     padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
     padConfig.BYPASS_FLOP = 1;			// Disable flop
+    padConfig.PULL_ASSIGN = 0;          // Disable pull-up
     m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
     _PAD_VAL padVal;
@@ -1324,6 +1325,7 @@ inline void BtFabricGpioControllerClass::_setS5PinInput(ULONG gpioNo)
     _PCONF0 padConfig;
     padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
     padConfig.BYPASS_FLOP = 1;			// Disable flop
+    padConfig.PULL_ASSIGN = 0;			// No pull resistor
     m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
     _PAD_VAL padVal;
