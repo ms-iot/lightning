@@ -15,15 +15,15 @@
 #include "ExpanderDefs.h"
 
 // Pin function type values.
-const UCHAR FUNC_NUL = 0x00;    ///< No function has been set
-const UCHAR FUNC_DIO = 0x01;    ///< Digital I/O function
-const UCHAR FUNC_PWM = 0x02;    ///< Pulse Width Modulation (PWM) function
-const UCHAR FUNC_AIN = 0x04;    ///< Analog In function
-const UCHAR FUNC_I2C = 0x08;    ///< I2C Bus function
-const UCHAR FUNC_SPI = 0x10;    ///< SPI Bus function
-const UCHAR FUNC_SER = 0x20;    ///< Hardware Serial function
-const UCHAR FUNC_I2S = 0x40;    ///< Hardware I2S function
-const UCHAR FUNC_SPK = 0X80;	///< Hardware 8254 speaker function
+const UCHAR FUNC_NUL = 0x00;   ///< No function has been set
+const UCHAR FUNC_DIO = 0x01;   ///< Digital I/O function
+const UCHAR FUNC_PWM = 0x02;   ///< Pulse Width Modulation (PWM) function
+const UCHAR FUNC_AIN = 0x04;   ///< Analog In function
+const UCHAR FUNC_I2C = 0x08;   ///< I2C Bus function
+const UCHAR FUNC_SPI = 0x10;   ///< SPI Bus function
+const UCHAR FUNC_SER = 0x20;   ///< Hardware Serial function
+const UCHAR FUNC_I2S = 0x40;   ///< Hardware I2S function
+const UCHAR FUNC_SPK = 0X80;   ///< Hardware 8254 speaker function
 
 /// The class used to configure and use GPIO pins.
 class BoardPinsClass
@@ -39,31 +39,31 @@ public:
     /** This struct contains all the attributes needed to configure and use one
         of the I/O pins. */
     typedef struct {
-        UCHAR gpioType;         ///< Fabric, Legacy Resume, Legacy Core, Expander, etc.
-        UCHAR portBit;          ///< Which bit on the port is attached to this pin
-        UCHAR pullupExp : 4;    ///< Number of I/O expander for pull-up control
-        UCHAR pullupBit : 4;    ///< Bit of I/O expander for pull-up control
-        UCHAR triStExp : 4;     ///< Number of I/O expander for tri-state control
-        UCHAR triStBit : 4;     ///< Bit of I/O expander for tri-state control
-        UCHAR muxA : 4;         ///< Number of first MUX for pin, if any
-        UCHAR muxB : 4;         ///< Number of second MUX for pin, if any
-        UCHAR digIoMuxA : 1;    ///< State of 1st MUX for digital I/O use of pin
-        UCHAR digIoMuxB : 1;    ///< State of 2nd MUX for digital I/O use of pin
-        UCHAR pwmMuxA : 1;      ///< State of 1st MUX for PWM use of pin
-        UCHAR pwmMuxB : 1;      ///< State of 2nd MUX for PWM use of pin
-        UCHAR anInMuxA : 1;     ///< State of 1st MUX for analog input use of pin
-        UCHAR anInMuxB : 1;     ///< State of 2nd MUX for analog input use of pin
-        UCHAR i2cMuxA : 1;      ///< State of 1st MUX for I2C use of pin
-        UCHAR i2cMuxB : 1;      ///< State of 2nd MUX for I2C use of pin
-        UCHAR spiMuxA : 1;      ///< State of 1st MUX for SPI use of pin
-        UCHAR spiMuxB : 1;      ///< State of 2nd MUX for SPI use of pin
-        UCHAR serMuxA : 1;      ///< State of 1st MUX for serial use of pin
-        UCHAR serMuxB : 1;      ///< State of 2nd MUX for serial use of pin
-        UCHAR i2SMux : 1;		///< State of MUX for I2S use of pin
-        UCHAR spkMux : 1;       ///< State of MUX for 8254 speaker use of pin
-        UCHAR triStIn : 1;      ///< Tri-state control bit state for input pin
-        UCHAR _pad : 1;         ///< Pad to byte boundary
-        UCHAR funcMask;         ///< Mask of functin types supported on the pin
+        UCHAR gpioType;        ///< Fabric, Legacy Resume, Legacy Core, Expander, etc.
+        UCHAR portBit;         ///< Which bit on the port is attached to this pin
+        UCHAR pullupExp : 4;   ///< Number of I/O expander for pull-up control
+        UCHAR pullupBit : 4;   ///< Bit of I/O expander for pull-up control
+        UCHAR triStExp : 4;    ///< Number of I/O expander for tri-state control
+        UCHAR triStBit : 4;    ///< Bit of I/O expander for tri-state control
+        UCHAR muxA : 4;        ///< Number of first MUX for pin, if any
+        UCHAR muxB : 4;        ///< Number of second MUX for pin, if any
+        UCHAR digIoMuxA : 1;   ///< State of 1st MUX for digital I/O use of pin
+        UCHAR digIoMuxB : 1;   ///< State of 2nd MUX for digital I/O use of pin
+        UCHAR pwmMuxA : 1;     ///< State of 1st MUX for PWM use of pin
+        UCHAR pwmMuxB : 1;     ///< State of 2nd MUX for PWM use of pin
+        UCHAR anInMuxA : 1;    ///< State of 1st MUX for analog input use of pin
+        UCHAR anInMuxB : 1;    ///< State of 2nd MUX for analog input use of pin
+        UCHAR i2cMuxA : 1;     ///< State of 1st MUX for I2C use of pin
+        UCHAR i2cMuxB : 1;     ///< State of 2nd MUX for I2C use of pin
+        UCHAR spiMuxA : 1;     ///< State of 1st MUX for SPI use of pin
+        UCHAR spiMuxB : 1;     ///< State of 2nd MUX for SPI use of pin
+        UCHAR serMuxA : 1;     ///< State of 1st MUX for serial use of pin
+        UCHAR serMuxB : 1;     ///< State of 2nd MUX for serial use of pin
+        UCHAR i2SMux : 1;      ///< State of MUX for I2S use of pin
+        UCHAR spkMux : 1;      ///< State of MUX for 8254 speaker use of pin
+        UCHAR triStIn : 1;     ///< Tri-state control bit state for input pin
+        UCHAR _pad : 1;        ///< Pad to byte boundary
+        UCHAR funcMask;        ///< Mask of functin types supported on the pin
     } PORT_ATTRIBUTES, *PPORT_ATTRIBUTES;
     
     /// Struct for mux-specific attributes.
@@ -112,11 +112,11 @@ public:
 
     /// Enum of board types.
     const enum BOARD_TYPE {
-        NOT_SET,				///< Indicates board type not yet set
-        GALILEO_GEN1,			///< Original Galileo board
-        GALILEO_GEN2,			///< Galileo Gen2 board
-        MBM_BARE,				///< MBM without Lure attached
-        MBM_IKA_LURE			///< MBM with Ika Lure attached
+        NOT_SET,               ///< Indicates board type not yet set
+        GALILEO_GEN1,          ///< Original Galileo board
+        GALILEO_GEN2,          ///< Galileo Gen2 board
+        MBM_BARE,              ///< MBM without Lure attached
+        MBM_IKA_LURE           ///< MBM with Ika Lure attached
     };
 
     /// Method to set an I/O pin to a state (HIGH or LOW).

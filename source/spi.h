@@ -38,14 +38,14 @@ public:
     SPIClass()
     {
         m_controller = nullptr;
-        m_bitOrder = MSBFIRST;			// Default bit order is MSB First
-        m_clockKHz = 4000;				// Default clock rate is 4 MHz
-        m_mode = SPI_MODE0;				// Default to Mode 0
-        m_dataWidth = DEFAULT_SPI_BITS;	// Default to one byte per SPI transfer
-        m_csPin = 0xFFFFFFFF;			// Start with invalid pin values
-        m_sckPin = 0xFFFFFFFF;			//   "
-        m_mosiPin = 0xFFFFFFFF;			//   "
-        m_misoPin = 0xFFFFFFFF;			//   "
+        m_bitOrder = MSBFIRST;             // Default bit order is MSB First
+        m_clockKHz = 4000;                 // Default clock rate is 4 MHz
+        m_mode = SPI_MODE0;                // Default to Mode 0
+        m_dataWidth = DEFAULT_SPI_BITS;    // Default to one byte per SPI transfer
+        m_csPin = 0xFFFFFFFF;              // Start with invalid pin values
+        m_sckPin = 0xFFFFFFFF;             //   "
+        m_mosiPin = 0xFFFFFFFF;            //   "
+        m_misoPin = 0xFFFFFFFF;            //   "
     }
 
     /// Destructor.

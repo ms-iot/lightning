@@ -279,11 +279,11 @@ private:
     // I2C Master Target Address Register.
     typedef union {
         struct {
-            ULONG IC_TAR : 10;              // Target slave address for an I2C transaction
-            ULONG GC_OR_START : 1;          // Reserved - see Quark datasheet 9.5.1.27
-            ULONG SPECIAL : 1;              // Reserved - see Quark datasheet 9.5.1.27
-            ULONG IC_10BITADDR_MASTER : 1;	// Clear for 7-bit addressing
-            ULONG _rsv : 19;                // Reserved
+            ULONG IC_TAR : 10;                 // Target slave address for an I2C transaction
+            ULONG GC_OR_START : 1;             // Reserved - see Quark datasheet 9.5.1.27
+            ULONG SPECIAL : 1;                 // Reserved - see Quark datasheet 9.5.1.27
+            ULONG IC_10BITADDR_MASTER : 1;     // Clear for 7-bit addressing
+            ULONG _rsv : 19;                   // Reserved
         };
         ULONG ALL_BITS;
     } _IC_TAR;

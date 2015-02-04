@@ -36,8 +36,6 @@ copy *.cpp nupkg\build\native\source /y || goto err
 copy avr\pgmspace.h nupkg\build\native\include\avr /y || goto err
 copy avr\interrupt.h nupkg\build\native\include\avr /y || goto err
 copy avr\macros.h nupkg\build\native\include\avr /y || goto err
-copy avr\pgmspace.h nupkg\build\native\include\avr /y || goto err
-copy *.cpp nupkg\build\native\source /y || goto err
 copy ..\license.txt nupkg /y || goto err
 
 :: skip packaging step if requested

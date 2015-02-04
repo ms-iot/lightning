@@ -243,7 +243,7 @@ BOOL QuarkSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz
         {
             // We now "own" the SPI controller, intialize it.
             m_controller->SSCR0.ALL_BITS = 0;              // Disable controller (and also clear other bits)
-            m_controller->SSCR0.DSS = dataBits - 1;		   // Use the specified data width
+            m_controller->SSCR0.DSS = dataBits - 1;        // Use the specified data width
 
             m_controller->SSCR1.ALL_BITS = 0;              // Clear all register bits
 
@@ -530,23 +530,23 @@ BOOL BtSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz, U
         {
             // We now "own" the SPI controller, intialize it.
             sscr0.ALL_BITS = 0;
-            m_controller->SSCR0.ALL_BITS = sscr0.ALL_BITS;	// Disable controller
+            m_controller->SSCR0.ALL_BITS = sscr0.ALL_BITS;  // Disable controller
 
-            sscr0.DSS = (dataBits - 1) & 0x0F;				// Data width ls4bits
-            sscr0.EDSS = ((dataBits - 1) >> 4) & 0x01;		// Data width msbit
-            sscr0.RIM = 1;									// Mask RX FIFO Over Run interrupts
-            sscr0.TIM = 1;									// Mask TX FIFO Under Run interrupts
+            sscr0.DSS = (dataBits - 1) & 0x0F;             // Data width ls4bits
+            sscr0.EDSS = ((dataBits - 1) >> 4) & 0x01;     // Data width msbit
+            sscr0.RIM = 1;                                 // Mask RX FIFO Over Run interrupts
+            sscr0.TIM = 1;                                 // Mask TX FIFO Under Run interrupts
             m_controller->SSCR0.ALL_BITS = sscr0.ALL_BITS;
 
-            m_controller->SSCR1.ALL_BITS = 0;				// Master mode, interrupts disabled
+            m_controller->SSCR1.ALL_BITS = 0;              // Master mode, interrupts disabled
 
             sssr.ALL_BITS = 0;
-            sssr.ROR = 1;									// Clear any Receive Overrun int
-            sssr.PINT = 1;									// Clear any Peripheral Trailing Byte int
-            sssr.TINT = 1;									// Clear any Receive Time-out int
-            sssr.EOC = 1;									// Clear any End of Chain int
-            sssr.TUR = 1;									// Clear any Transmit FIFO Under Run int
-            sssr.BCE = 1;									// Clear any Bit Count Error
+            sssr.ROR = 1;                                  // Clear any Receive Overrun int
+            sssr.PINT = 1;                                 // Clear any Peripheral Trailing Byte int
+            sssr.TINT = 1;                                 // Clear any Receive Time-out int
+            sssr.EOC = 1;                                  // Clear any End of Chain int
+            sssr.TUR = 1;                                  // Clear any Transmit FIFO Under Run int
+            sssr.BCE = 1;                                  // Clear any Bit Count Error
             m_controller->SSSR.ALL_BITS = sssr.ALL_BITS;
 
             status = _setMode(mode);
