@@ -419,10 +419,10 @@ const BoardPinsClass::PORT_ATTRIBUTES g_MbmIkaPinAttributes[] =
     { GPIO_S0,    19,    NO_X, 0,    NO_X, 0,    MUX6,   MUX5,    0,0, 0,1, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM | FUNC_SPI }, // D11
     { GPIO_S0,    18,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },            // D12
     { GPIO_S0,    16,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },            // D13
-    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A0
-    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A1
-    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A2
-    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A3
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_AIN },                       // A0
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_AIN },                       // A1
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_AIN },                       // A2
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_AIN },                       // A3
     { GPIO_S0,    21,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_I2C },                       // A4
     { GPIO_S0,    20,    NO_X, 0,    NO_X, 0,    MUX6,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_I2C }                        // A5
 };
@@ -985,6 +985,8 @@ BOOL BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
             status = _setExpBitDirection(CY8, m_PinAttributes[pin].portBit, mode, pullup);
             if (!status) { error = GetLastError(); }
             break;
+        case GPIO_NONE:
+            break;			// No actual GPIO pin here, nothing to do.
         default:
             status = FALSE;
             error = DNS_ERROR_INVALID_TYPE;

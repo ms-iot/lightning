@@ -398,7 +398,7 @@ private:
     }
 };
 
-/// The global object used to interact with the Lagacy GPIO hardware.
+/// The global object used to interact with the Legacy GPIO hardware.
 __declspec (selectany) QuarkLegacyGpioControllerClass g_quarkLegacyGpio;
 
 

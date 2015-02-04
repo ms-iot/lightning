@@ -8,6 +8,7 @@
 #include <Windows.h>
 #include "ADC108S102Support.h"
 #include "AD7298Support.h"
+#include "ADS1015Support.h"
 
 class AdcClass
 {
@@ -29,13 +30,17 @@ public:
         {
             m_gen1Adc.end();
         }
+        else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+        {
+            m_ikaLureAdc.end();
+        }
     }
 
     /// Take a reading with the ADC on the board.
     /**
     This method assumes the pin number passed in has been verified to be within 
     the range of analog inputs.
-    \param[in] pin Number of Galileo GPIO pin to read with the ADC.
+    \param[in] pin Number of GPIO pin to read with the ADC.
     \param[out] value The value read from the ADC.
     \param[out] bits The size of the reading in "value" in bits.
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
@@ -48,8 +53,8 @@ public:
 
 
         // Translate the pin number passed in analog channel 0-5.
-        // This calculation is based on both Galileo Gen1 and Gen2 having pins
-        // A0-A5 mapped to channels 0-5 on the ADC.
+        // This calculation is based on the fact that all the ADCs we work with
+        // have A0-An mapped to channels 0-n on the ADC.
         channel = pin - A0;
 
         // Verify we have initialized the correct ADC.
@@ -63,9 +68,14 @@ public:
                 status = m_gen2Adc.readValue(channel, value, bits);
                 if (!status) { error = GetLastError(); }
             }
-            else
+            else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
             {
                 status = m_gen1Adc.readValue(channel, value, bits);
+                if (!status) { error = GetLastError(); }
+            }
+            else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+            {
+                status = m_ikaLureAdc.readValue(channel, value, bits);
                 if (!status) { error = GetLastError(); }
             }
         }
@@ -85,6 +95,8 @@ private:
     /// Gen1 ADC device.
     AD7298Device m_gen1Adc;
 
+    ADS1015Device m_ikaLureAdc;
+
     /// Initialize this object if it has not already been done.
     inline BOOL _verifyAdcInitialized()
     {
@@ -93,7 +105,7 @@ private:
 
 
         // If the ADC has not yet been initialized:
-        if (m_boardType == 0)
+        if (m_boardType == BoardPinsClass::BOARD_TYPE::NOT_SET)
         {
             // Get the board generation.
             status = g_pins.getBoardType(m_boardType);
@@ -111,9 +123,15 @@ private:
                     status = m_gen1Adc.begin();
                     if (!status) { error = GetLastError(); }
                 }
+                else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+                {
+                    status = m_ikaLureAdc.begin();
+                    if (!status) { error = GetLastError(); }
+                }
                 else
                 {
-                    // If we have an unrecognized board generation, indicate ADC is uninitialized.
+                    // If we have an unrecognized board or one that does not support ADC,
+                    // indicate ADC is uninitialized.
                     m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
                 }
             }
