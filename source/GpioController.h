@@ -497,31 +497,31 @@ private:
     /// Pad Configuration Register.  Active high (1 enables) unless noted.
     typedef union {
         struct {
-            ULONG FUNC_PIN_MUX : 3;			///< Functional Pin Muxing
+            ULONG FUNC_PIN_MUX : 3;         ///< Functional Pin Muxing
             ULONG _rsv0 : 1;
-            ULONG IDYNWK2KEN : 1;			///< Reduce weak 2k contention current
+            ULONG IDYNWK2KEN : 1;           ///< Reduce weak 2k contention current
             ULONG _rsv1 : 2;
-            ULONG PULL_ASSIGN : 2;			///< Pull assignment: 0 - None, 1 - Up, 2 - Down
-            ULONG PULL_STR : 2;				///< Pull strength: 0 - 2k, 1 - 10k, 2 - 20k, 3 - 40k
-            ULONG BYPASS_FLOP : 1;			///< Bypass pad I/O flops: 0 - Flop enabled if exists
+            ULONG PULL_ASSIGN : 2;          ///< Pull assignment: 0 - None, 1 - Up, 2 - Down
+            ULONG PULL_STR : 2;             ///< Pull strength: 0 - 2k, 1 - 10k, 2 - 20k, 3 - 40k
+            ULONG BYPASS_FLOP : 1;          ///< Bypass pad I/O flops: 0 - Flop enabled if exists
             ULONG _rsv2 : 1;
-            ULONG IHYSCTL : 2;				///< Hysteresis control
-            ULONG IHYSENB : 1;				///< Hysteresis enable, active low
-            ULONG FAST_CLKGATE : 1;			///< 1 enables the glitch filter fast clock
-            ULONG SLOW_CLKGATE : 1;			///< 1 enables the glitch filter slow clock
-            ULONG FILTER_SLOW : 1;			///< Use RTC clock for unglitch filter
-            ULONG FILTER_EN : 1;			///< Enable the glitch filter
+            ULONG IHYSCTL : 2;              ///< Hysteresis control
+            ULONG IHYSENB : 1;              ///< Hysteresis enable, active low
+            ULONG FAST_CLKGATE : 1;         ///< 1 enables the glitch filter fast clock
+            ULONG SLOW_CLKGATE : 1;         ///< 1 enables the glitch filter slow clock
+            ULONG FILTER_SLOW : 1;          ///< Use RTC clock for unglitch filter
+            ULONG FILTER_EN : 1;            ///< Enable the glitch filter
             ULONG DEBOUNCE : 1;             ///< Enable debouncer (uses community debounce time)
             ULONG _rsv3 : 2;
-            ULONG STRAP_VAL : 1;			///< Reflect strap pin value even if overriden
-            ULONG GD_LEVEL : 1;				///< 1 - Use level IRQ, 0 - Edge triggered IRQ
-            ULONG GD_TPE : 1;				///< 1 - Enable positive edge/level detection
-            ULONG GD_TNE : 1;				///< 1 - Enable negative edge/level detection
-            ULONG DIRECT_IRQ_EN : 1;		///< Enable direct wire interrupt, not shared.
-            ULONG I25COMP : 1;				///< Enable 25 ohm compensation of hflvt buffers
-            ULONG DISABLE_SECOND_MASK : 1;	///< Disable second mask when PB_CONFIG ALL_FUNC_MASK used
+            ULONG STRAP_VAL : 1;            ///< Reflect strap pin value even if overriden
+            ULONG GD_LEVEL : 1;             ///< 1 - Use level IRQ, 0 - Edge triggered IRQ
+            ULONG GD_TPE : 1;               ///< 1 - Enable positive edge/level detection
+            ULONG GD_TNE : 1;               ///< 1 - Enable negative edge/level detection
+            ULONG DIRECT_IRQ_EN : 1;        ///< Enable direct wire interrupt, not shared.
+            ULONG I25COMP : 1;              ///< Enable 25 ohm compensation of hflvt buffers
+            ULONG DISABLE_SECOND_MASK : 1;  ///< Disable second mask when PB_CONFIG ALL_FUNC_MASK used
             ULONG _rsv4 : 1;
-            ULONG IODEN : 1;				///< Enable open drain.
+            ULONG IODEN : 1;                ///< Enable open drain.
         };
         ULONG ALL_BITS;
     } _PCONF0;
@@ -529,10 +529,10 @@ private:
     /// Delay Line Multiplexer Register.
     typedef union {
         struct {
-            ULONG DLL_STD_MUX : 5;			///< Delay standard mux
-            ULONG DLL_HGH_MUX : 5;			///< Delay high mux
-            ULONG DLL_DDR_MUX : 5;			///< Delay ddr mux
-            ULONG DLL_CF_OD : 1;			///< Cf values, software override enable
+            ULONG DLL_STD_MUX : 5;         ///< Delay standard mux
+            ULONG DLL_HGH_MUX : 5;         ///< Delay high mux
+            ULONG DLL_DDR_MUX : 5;         ///< Delay ddr mux
+            ULONG DLL_CF_OD : 1;           ///< Cf values, software override enable
             ULONG _rsv : 16;
         };
         ULONG ALL_BITS;
@@ -541,11 +541,11 @@ private:
     /// Pad Value Register.
     typedef union {
         struct {
-            ULONG PAD_VAL : 1;				///< Value read from or written to the I/O pad
-            ULONG IOUTENB : 1;				///< Output enable, active low
-            ULONG IINENB : 1;				///< Input enable, active low
-            ULONG FUNC_C_VAL : 15;			///< C value for function delay
-            ULONG FUNC_F_VAL : 4;			///< F value for function delay
+            ULONG PAD_VAL : 1;             ///< Value read from or written to the I/O pad
+            ULONG IOUTENB : 1;             ///< Output enable, active low
+            ULONG IINENB : 1;              ///< Input enable, active low
+            ULONG FUNC_C_VAL : 15;         ///< C value for function delay
+            ULONG FUNC_F_VAL : 4;          ///< F value for function delay
             ULONG _rsv : 10;
         };
         ULONG ALL_BITS;
@@ -556,10 +556,10 @@ private:
 
     /// Layout of the BayTrail GPIO Controller registers in memory for one pad.
     typedef struct _GPIO_PAD {
-        _PCONF0				PCONF0;			///< 0x00 - Pad Configuration
-        _PCONF1				PCONF1;			///< 0x04 - Delay Line Multiplexer
-        _PAD_VAL			PAD_VAL;		///< 0x08 - Pad Value
-        ULONG				_reserved;		///< 0x0C - 4 ULONG address space per register set
+        _PCONF0   PCONF0;          ///< 0x00 - Pad Configuration
+        _PCONF1   PCONF1;          ///< 0x04 - Delay Line Multiplexer
+        _PAD_VAL  PAD_VAL;         ///< 0x08 - Pad Value
+        ULONG     _reserved;       ///< 0x0C - 4 ULONG address space per register set
     } volatile GPIO_PAD, *PGPIO_PAD;
 
     //
@@ -1304,14 +1304,14 @@ inline void BtFabricGpioControllerClass::_setS0PinInput(ULONG gpioNo)
 {
     _PCONF0 padConfig;
     padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
-    padConfig.BYPASS_FLOP = 1;			// Disable flop
-    padConfig.PULL_ASSIGN = 0;          // Disable pull-up
+    padConfig.BYPASS_FLOP = 1;         // Disable flop
+    padConfig.PULL_ASSIGN = 0;         // Disable pull-up
     m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
     _PAD_VAL padVal;
     padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
-    padVal.IINENB = 0;					// Enable pad for input
-    padVal.IOUTENB = 1;					// Disable pad for output
+    padVal.IINENB = 0;                 // Enable pad for input
+    padVal.IOUTENB = 1;                // Disable pad for output
     m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
 
@@ -1324,14 +1324,14 @@ inline void BtFabricGpioControllerClass::_setS5PinInput(ULONG gpioNo)
 {
     _PCONF0 padConfig;
     padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
-    padConfig.BYPASS_FLOP = 1;			// Disable flop
-    padConfig.PULL_ASSIGN = 0;			// No pull resistor
+    padConfig.BYPASS_FLOP = 1;         // Disable flop
+    padConfig.PULL_ASSIGN = 0;         // No pull resistor
     m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
     _PAD_VAL padVal;
     padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
-    padVal.IINENB = 0;					// Enable pad for input
-    padVal.IOUTENB = 1;					// Disable pad for output
+    padVal.IINENB = 0;                 // Enable pad for input
+    padVal.IOUTENB = 1;                // Disable pad for output
     m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
 
@@ -1344,14 +1344,14 @@ inline void BtFabricGpioControllerClass::_setS0PinOutput(ULONG gpioNo)
 {
     _PCONF0 padConfig;
     padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
-    padConfig.BYPASS_FLOP = 0;			// Enable flop
-    padConfig.PULL_ASSIGN = 0;			// No pull resistor
+    padConfig.BYPASS_FLOP = 0;         // Enable flop
+    padConfig.PULL_ASSIGN = 0;         // No pull resistor
     m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
     _PAD_VAL padVal;
     padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
-    padVal.IOUTENB = 0;					// Enable pad for output
-    padVal.IINENB = 1;					// Disable pad for input
+    padVal.IOUTENB = 0;                // Enable pad for output
+    padVal.IINENB = 1;                 // Disable pad for input
     m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
 
@@ -1364,14 +1364,14 @@ inline void BtFabricGpioControllerClass::_setS5PinOutput(ULONG gpioNo)
 {
     _PCONF0 padConfig;
     padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
-    padConfig.BYPASS_FLOP = 0;			// Enable flop
-    padConfig.PULL_ASSIGN = 0;			// No pull resistor
+    padConfig.BYPASS_FLOP = 0;         // Enable flop
+    padConfig.PULL_ASSIGN = 0;         // No pull resistor
     m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
     _PAD_VAL padVal;
     padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
-    padVal.IOUTENB = 0;					// Enable pad for output
-    padVal.IINENB = 1;					// Disable pad for input
+    padVal.IOUTENB = 0;                // Enable pad for output
+    padVal.IINENB = 1;                 // Disable pad for input
     m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
 

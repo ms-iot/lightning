@@ -13,21 +13,21 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\eeprom.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Servo.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\HardwareSerial.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\NetworkSerial.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PulseIn.cpp" />    
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\arduino.cpp" />    
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\BoardPins.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\CY8C9540ASupport.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\DmapSupport.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\GalileoPins.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\eeprom.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\GpioController.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\HardwareSerial.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\I2cController.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\NetworkSerial.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PCA9685Support.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PCAL9535ASupport.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\CY8C9540ASupport.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PulseIn.cpp" />    
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Servo.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Spi.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\SpiController.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)\Source\WInterrupt.cpp" />    
-    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\arduino.cpp" />    
   </ItemGroup>
 </Project>

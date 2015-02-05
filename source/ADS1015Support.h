@@ -44,9 +44,9 @@ public:
     \param[out] value The value read from the ADC.
     \param[out] bits The size of the reading in "value" in bits.
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
-	\note This routine is not multi-thread safe.  If two or more threads access the 
-	ADC at the same time, each thread could be changing the other thread's configuration 
-	(such as channel number).  A global mutex could be added to fix this.
+    \note This routine is not multi-thread safe.  If two or more threads access the 
+    ADC at the same time, each thread could be changing the other thread's configuration 
+    (such as channel number).  A global mutex could be added to fix this.
     */
     inline BOOL readValue(ULONG channel, ULONG & value, ULONG & bits)
     {
@@ -174,11 +174,11 @@ public:
             if (!status) { error = GetLastError(); }
         }
 
-		if (status)
-		{
-			status = transaction.execute();
-			if (!status) { error = GetLastError(); }
-		}
+        if (status)
+        {
+            status = transaction.execute();
+            if (!status) { error = GetLastError(); }
+        }
         
         if (status)
         {

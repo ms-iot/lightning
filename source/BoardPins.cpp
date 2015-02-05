@@ -11,7 +11,7 @@
 // on the Ika Lure must be changed (by lifting the PWM chip pin #1 and tying it high,
 // setting the PWM chip address to 0x41, for example).  If you change the PWM chip address
 // by modifying the hardware, change the following #define to match.
-#define IKA_LURE_PWM_I2C_ADR 0x40
+#define IKA_LURE_PWM_I2C_ADR 0x41
 
 // GPIO type values.
 const UCHAR GPIO_FABRIC = 1;    ///< GPIO is from the Quark Fabric sub-system (memory mapped)
@@ -20,9 +20,9 @@ const UCHAR GPIO_LEGCOR = 3;    ///< GPIO is from the Quark Legacy sub-system th
 const UCHAR GPIO_EXP1 = 4;      ///< GPIO is from a port bit on I/O Expander 1
 const UCHAR GPIO_EXP2 = 5;      ///< GPIO is from a port bit on  I/O Expander 2
 const UCHAR GPIO_CY8 = 6;       ///< GPIO is from a port on the CY8 I/O Expander (on Gen1)
-const UCHAR GPIO_S0 = 7;		///< GPIO is from the MBM SOC S0 sub-system
-const UCHAR GPIO_S5 = 8;		///< GPIO is from the MBM SOC S5 sub-system
-const UCHAR GPIO_NONE = 255;	///< Specifies there is no GPIO pin with this number
+const UCHAR GPIO_S0 = 7;        ///< GPIO is from the MBM SOC S0 sub-system
+const UCHAR GPIO_S5 = 8;        ///< GPIO is from the MBM SOC S5 sub-system
+const UCHAR GPIO_NONE = 255;    ///< Specifies there is no GPIO pin with this number
 
 // GPIO pin driver selection values.
 const UCHAR GPIO_INPUT_DRIVER_SELECT = 1;   ///< Specify input circuitry should be enabled
@@ -43,7 +43,7 @@ const UCHAR NO_X       = 15;    ///< Value specifies that no I/O Expander is use
 const UCHAR PCAL9535A = 0;      ///< I/O Expander chip used on Gen2
 const UCHAR PCA9685 = 1;        ///< PWM chip used on Gen2 and Ika Lure
 const UCHAR CY8C9540A = 2;      ///< I/O Expander/PWM chip used on Gen1
-const UCHAR BAYTRAIL = 3;		///< Muxing is done within the SOC
+const UCHAR BAYTRAIL = 3;       ///< Muxing is done within the SOC
 const UCHAR NUM_EXP_TYPSES = 3; ///< The number of I/O Expanders types present
 
 // PWM chip bit values.
@@ -102,10 +102,10 @@ const UCHAR MUX_U9_2  = 14;     ///< Mux number 2 in package U9
 const UCHAR MAX_MUXES = 15;     ///< Maximum number of MUXes on a Gen1 or Gen2 board.
 
 // The number of GPIO pins on an MBM plus one (to allow for 0 not being used).
-const ULONG NUM_MBM_PINS = 27;	///< Number of entries in a zero based array indexed by MBM pin number.
+const ULONG NUM_MBM_PINS = 27;  ///< Number of entries in a zero based array indexed by MBM pin number.
 
 // The I2C Address of the MBM Ika Lure ADC.
-const ULONG MBM_IKA_LURE_ADC_ADR = 0x48;	///< I2C address of ADC on MBM Ika Lure
+const ULONG MBM_IKA_LURE_ADC_ADR = 0x48;    ///< I2C address of ADC on MBM Ika Lure
 
 /// The global table of pin attributes for the Galileo Gen2 board.
 /**
@@ -199,12 +199,12 @@ and the address on the I2C bus the chip responds to.
 */
 const BoardPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
 {
-    { PCAL9535A, 0x25 },					///< EXP0 - Galileo Gen2
-    { PCAL9535A, 0x26 },					///< EXP1 - Galileo Gen2
-    { PCAL9535A, 0x27 },					///< EXP2 - Galileo Gen2
-    { PCA9685,   0x47 },					///< PWMG - Galileo Gen2
-    { CY8C9540A, 0x20 },					///< CY8 - Galileo Gen1
-    { BAYTRAIL,  0x00 },					///< SOC - MBM
+    { PCAL9535A, 0x25 },                    ///< EXP0 - Galileo Gen2
+    { PCAL9535A, 0x26 },                    ///< EXP1 - Galileo Gen2
+    { PCAL9535A, 0x27 },                    ///< EXP2 - Galileo Gen2
+    { PCA9685,   0x47 },                    ///< PWMG - Galileo Gen2
+    { CY8C9540A, 0x20 },                    ///< CY8 - Galileo Gen1
+    { BAYTRAIL,  0x00 },                    ///< SOC - MBM
     { PCA9685,   IKA_LURE_PWM_I2C_ADR }     ///< PWMI - MGM with Ika Lure
 };
 
@@ -344,19 +344,19 @@ mux number and specifies which port bit of which I/O Expander drives the mux sel
 const BoardPinsClass::MUX_ATTRIBUTES g_MbmMuxAttributes[MAX_MUXES] =
 {
     { SOC,  0 },    ///< MUX0
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
-    { NO_X, 0 },	// Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
+    { NO_X, 0 },    // Not used on bare MBM
     { NO_X, 0 }     // Not used on bare MBM
 };
 
@@ -441,14 +441,14 @@ const BoardPinsClass::MUX_ATTRIBUTES g_MbmIkaMuxAttributes[MAX_MUXES] =
     { PWMI, LED10 },    ///< MUX4
     { PWMI, LED11 },    ///< MUX5
     { SOC,  0 },        ///< MUX6
-    { NO_X, 0 },		// Not used on Ika Lure
-    { NO_X, 0 },		// Not used on Ika Lure
-    { NO_X, 0 },		// Not used on Ika Lure
-    { NO_X, 0 },		// Not used on Ika Lure
-    { NO_X, 0 },		// Not used on Ika Lure
-    { NO_X, 0 },		// Not used on Ika Lure
-    { NO_X, 0 },		// Not used on Ika Lure
-    { NO_X, 0 }		    // Not used on Ika Lure
+    { NO_X, 0 },        // Not used on Ika Lure
+    { NO_X, 0 },        // Not used on Ika Lure
+    { NO_X, 0 },        // Not used on Ika Lure
+    { NO_X, 0 },        // Not used on Ika Lure
+    { NO_X, 0 },        // Not used on Ika Lure
+    { NO_X, 0 },        // Not used on Ika Lure
+    { NO_X, 0 },        // Not used on Ika Lure
+    { NO_X, 0 }         // Not used on Ika Lure
 };
 
 /// The global table of PWM information for the MBM board with an Ika Lure attached.
@@ -986,7 +986,7 @@ BOOL BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
             if (!status) { error = GetLastError(); }
             break;
         case GPIO_NONE:
-            break;			// No actual GPIO pin here, nothing to do.
+            break;             // No actual GPIO pin here, nothing to do.
         default:
             status = FALSE;
             error = DNS_ERROR_INVALID_TYPE;
