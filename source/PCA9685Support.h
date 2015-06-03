@@ -12,13 +12,13 @@ class PCA9685Device
 public:
 
     /// Set a PWM chip output to constant on or constant off.
-    static BOOL SetBitState(ULONG i2cAdr, ULONG bit, ULONG state);
+    static HRESULT SetBitState(ULONG i2cAdr, ULONG bit, ULONG state);
 
     /// Get the current state of a PWM chip output.
-    static BOOL GetBitState(ULONG i2cAdr, ULONG bit, ULONG & state);
+    static HRESULT GetBitState(ULONG i2cAdr, ULONG bit, ULONG & state);
 
     /// Set the PWM pulse width.
-    static BOOL SetPwmDutyCycle(ULONG i2cAdr, ULONG bit, ULONG pulseWidth);
+    static HRESULT SetPwmDutyCycle(ULONG i2cAdr, ULONG bit, ULONG pulseWidth);
 
     /// Method to get the resolution of this PWM chip.
     static ULONG GetResolution()
@@ -83,7 +83,7 @@ private:
     static UCHAR m_freqPreScale;
 
     /// Method to take any necessary actions to initialize the PWM chip.
-    static BOOL _InitializeChip(ULONG i2cAdr);
+    static HRESULT _InitializeChip(ULONG i2cAdr);
 };
 
 #endif  // _PCA9685_SUPPORT_H_

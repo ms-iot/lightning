@@ -34,13 +34,13 @@ public:
 
     // This method is used to prepare to use the I2C bus to communicate with devices
     // that are external to the board.
-    BOOL beginExternal();
+    HRESULT beginExternal();
 
     // This method returns the external I2C bus pins to their default configurations.
     void endExternal();
 
     // This method maps the I2C controller if needed.
-    inline BOOL mapIfNeeded();
+    inline HRESULT mapIfNeeded();
 
     // This method records that the controller has been initialized.
     inline void setInitialized()
@@ -635,7 +635,7 @@ private:
     BOOL m_controllerInitialized;
 
     // Method to map the I2C controller into this process' virtual address space.
-    BOOL _mapController();
+    HRESULT _mapController();
 };
 
 __declspec (selectany) I2cControllerClass g_i2c;
@@ -744,20 +744,20 @@ public:
     inline PUCHAR getNextReadLocation();
 
     // Method to associate a callback routine with this transfer.
-    BOOL setCallback(std::function<BOOL()> callBack)
+    HRESULT setCallback(std::function<HRESULT()> callBack)
     {
         m_callBack = callBack;
         return TRUE;
     }
 
     // Method to invoke any callback routine associated with this transfer.
-    inline BOOL invokeCallback()
+    inline HRESULT invokeCallback()
     {
         if (hasCallback())
         {
             return m_callBack();
         }
-        return TRUE;
+        return S_OK;
     }
 
     // Return TRUE if this transfer specifies a callback function.
@@ -797,7 +797,7 @@ private:
     BOOL m_preRestart;
 
     // Pointer to any callback function associated with this transfer.
-    std::function<BOOL()> m_callBack;
+    std::function<HRESULT()> m_callBack;
 };
 
 //
@@ -842,7 +842,7 @@ public:
     void reset();
 
     // Sets the 7-bit address of the slave for this transaction.
-    BOOL setAddress(ULONG slaveAdr);
+    HRESULT setAddress(ULONG slaveAdr);
 
     // Gets the 7-bit address of the slave for this transaction.
     ULONG getAddress()
@@ -851,26 +851,26 @@ public:
     }
 
     // Add a write transfer to the transaction.
-    BOOL queueWrite(PUCHAR buffer, const ULONG bufferBytes)
+    HRESULT queueWrite(PUCHAR buffer, const ULONG bufferBytes)
     {
         return queueWrite(buffer, bufferBytes, FALSE);
     }
 
-    BOOL queueWrite(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
+    HRESULT queueWrite(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
 
     // Add a read transfer to the transaction.
-    BOOL queueRead(PUCHAR buffer, const ULONG bufferBytes)
+    HRESULT queueRead(PUCHAR buffer, const ULONG bufferBytes)
     {
         return queueRead(buffer, bufferBytes, FALSE);
     }
 
-    BOOL queueRead(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
+    HRESULT queueRead(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
 
     // Method to queue a callback routine at the current point in the transaction.
-    BOOL queueCallback(const std::function<BOOL()> callBack);
+    HRESULT queueCallback(const std::function<HRESULT()> callBack);
 
     // Method to perform the transfers associated with this transaction.
-    BOOL execute();
+    HRESULT execute();
 
     // Method to get the number of 1 mSec ticsk that occurred while waiting for outstanding reads.
     inline void getReadWaitTicks(ULONG & waits) const
@@ -970,23 +970,23 @@ private:
     void _queueTransfer(I2cTransferClass* pXfr);
 
     // Method to initialize the I2C Controller at the start of a transaction.
-    BOOL _initializeI2cForTransaction();
+    HRESULT _initializeI2cForTransaction();
 
     // Method to process each transfer in this transaction.
-    BOOL _processTransfers();
+    HRESULT _processTransfers();
 
     // Method to perform a set of transfers that happen together on the I2C bus.
-    BOOL _performContiguousTransfers(I2cTransferClass* & pXfr);
+    HRESULT _performContiguousTransfers(I2cTransferClass* & pXfr);
 
     // Method to shut down the I2C Controller after a transaction is done with it.
-    BOOL _shutDownI2cAfterTransaction();
+    HRESULT _shutDownI2cAfterTransaction();
 
     // Method to calculate the command and read counts for the current section
     // of the transaction.
-    BOOL _calculateCurrentCounts(I2cTransferClass* nextXfr);
+    HRESULT _calculateCurrentCounts(I2cTransferClass* nextXfr);
 
     /// Method to handle any errors that occured during this transaction.
-    BOOL _handleErrors();
+    HRESULT _handleErrors();
 };
 
 #endif // _I2C_CONTROLLER_H_

@@ -35,24 +35,24 @@ public:
     /// Initialize the specified SPI bus, using the default mode and clock rate.
     /**
     \param[in] busNumber The number of the SPI bus to open (0 or 1)
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
-    BOOL _begin(ULONG busNumber)
+    HRESULT _begin(ULONG busNumber)
     {
         return _begin(busNumber, DEFAULT_SPI_MODE, DEFAULT_SPI_CLOCK_KHZ, DEFAULT_SPI_BITS);
     }
 
     /// Initialize the specified SPI bus for use.
-    BOOL _begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits);
+    HRESULT _begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits);
 
     /// Finish using an SPI controller.
     void _end();
 
     /// Set the SPI clock rate to one of the values we support on this SPI controller.
-    BOOL _setClockRate(ULONG clockKhz);
+    HRESULT _setClockRate(ULONG clockKhz);
 
     /// Set the SPI mode (clock polarity and phase).
-    BOOL _setMode(ULONG mode);
+    HRESULT _setMode(ULONG mode);
 
     /// Perform a transfer on the SPI bus.
     /**
@@ -60,7 +60,7 @@ public:
     \param[out] datIn The data received on the SPI bus
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
     */
-    inline BOOL _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits);
+    inline HRESULT _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits);
 
 private:
 
@@ -193,22 +193,22 @@ public:
     \param[in] busNumber The number of the SPI bus to open (0 or 1)
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
     */
-    BOOL _begin(ULONG busNumber)
+    HRESULT _begin(ULONG busNumber)
     {
         return _begin(busNumber, DEFAULT_SPI_MODE, DEFAULT_SPI_CLOCK_KHZ, DEFAULT_SPI_BITS);
     }
 
     /// Initialize the specified SPI bus for use.
-    BOOL _begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits);
+    HRESULT _begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits);
 
     /// Finish using an SPI controller.
     void _end();
 
     /// Set the SPI clock rate to one of the values we support on this SPI controller.
-    BOOL _setClockRate(ULONG clockKhz);
+    HRESULT _setClockRate(ULONG clockKhz);
 
     /// Set the SPI mode (clock polarity and phase).
-    BOOL _setMode(ULONG mode);
+    HRESULT _setMode(ULONG mode);
 
     /// Perform a transfer on the SPI bus.
     /**
@@ -216,7 +216,7 @@ public:
     \param[out] datIn The data received on the SPI bus
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
     */
-    inline BOOL _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits);
+    inline HRESULT _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits);
 
 private:
 
@@ -571,13 +571,13 @@ public:
     \param[in] busNumber The number of the SPI bus to open (0 or 1)
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
     */
-    BOOL begin(ULONG busNumber)
+    HRESULT begin(ULONG busNumber)
     {
         return begin(busNumber, DEFAULT_SPI_MODE, DEFAULT_SPI_CLOCK_KHZ, m_dataBits);
     }
 
     /// Initialize the specified SPI bus for use.
-    BOOL begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits);
+    HRESULT begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits);
 
     /// Finish using the SPI controller associated with this object.
     void end();
@@ -595,13 +595,13 @@ public:
     }
 
     /// Set the SPI clock rate.
-    BOOL setClock(ULONG clockKhz);
+    HRESULT setClock(ULONG clockKhz);
 
     /// Set the SPI mode (clock polarity and phase).
-    BOOL setMode(ULONG mode);
+    HRESULT setMode(ULONG mode);
 
     /// Set the number of bits in an SPI transfer.
-    BOOL setDataWidth(ULONG bits)
+    HRESULT setDataWidth(ULONG bits)
     {
         if ((bits < MIN_SPI_BITS) || (bits > MAX_SPI_BITS))
         {
@@ -618,9 +618,9 @@ public:
     \param[out] datIn The byte of data received on the SPI bus
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
     */
-    inline BOOL transfer8(ULONG dataOut, ULONG & dataIn)
+    inline HRESULT transfer8(ULONG dataOut, ULONG & dataIn)
     {
-        BOOL status = TRUE;
+        HRESULT hr = S_OK;
         ULONG tmpData = dataOut & 0xFF;
 
         if (m_flipBitOrder)
@@ -628,7 +628,7 @@ public:
             tmpData = m_byteFlips[tmpData];
         }
 
-        status = _transfer(tmpData, tmpData, 8);
+        hr = _transfer(tmpData, tmpData, 8);
 
         tmpData = tmpData & 0xFF;
         if (m_flipBitOrder)
@@ -637,7 +637,7 @@ public:
         }
         dataIn = tmpData;
 
-        return status;
+        return hr;
     }
 
     /// Transfer a word of data on the SPI bus.
@@ -646,9 +646,9 @@ public:
     \param[out] datIn The word of data received on the SPI bus
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
     */
-    inline BOOL transfer16(ULONG dataOut, ULONG & dataIn)
+    inline HRESULT transfer16(ULONG dataOut, ULONG & dataIn)
     {
-        BOOL status = TRUE;
+        HRESULT hr = S_OK;
         ULONG tmpData = dataOut & 0xFFFF;
 
         if (m_flipBitOrder)
@@ -657,7 +657,7 @@ public:
             tmpData = (tmpData << 8) | m_byteFlips[(dataOut >> 8) & 0xFF];
         }
 
-        status = _transfer(tmpData, tmpData, 16);
+        hr = _transfer(tmpData, tmpData, 16);
 
         if (m_flipBitOrder)
         {
@@ -669,7 +669,7 @@ public:
             dataIn = tmpData & 0xFFFF;
         }
 
-        return status;
+        return hr;
     }
 
     /// Transfer three bytes of data on the SPI bus.
@@ -678,9 +678,9 @@ public:
     \param[out] datIn The three bytes of data received on the SPI bus
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
     */
-    inline BOOL transfer24(ULONG dataOut, ULONG & dataIn)
+    inline HRESULT transfer24(ULONG dataOut, ULONG & dataIn)
     {
-        BOOL status = TRUE;
+        HRESULT hr = S_OK;
         ULONG tmpData = dataOut & 0xFFFFFF;
 
         if (m_flipBitOrder)
@@ -690,7 +690,7 @@ public:
             tmpData = (tmpData << 8) | m_byteFlips[(dataOut >> 16) & 0xFF];
         }
 
-        status = _transfer(tmpData, tmpData, 24);
+        hr = _transfer(tmpData, tmpData, 24);
 
         if (m_flipBitOrder)
         {
@@ -703,7 +703,7 @@ public:
             dataIn = tmpData & 0xFFFF;
         }
 
-        return status;
+        return hr;
     }
 
     /// Transfer a longword of data on the SPI bus.
@@ -712,9 +712,9 @@ public:
     \param[out] datIn The longword of data received on the SPI bus
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
     */
-    inline BOOL transfer32(ULONG dataOut, ULONG & dataIn)
+    inline HRESULT transfer32(ULONG dataOut, ULONG & dataIn)
     {
-        BOOL status = TRUE;
+        HRESULT hr = S_OK;
         ULONG tmpData = dataOut;
 
         if (m_flipBitOrder)
@@ -725,7 +725,7 @@ public:
             tmpData = (tmpData << 8) | m_byteFlips[(dataOut >> 24) & 0xFF];
         }
 
-        status = _transfer(tmpData, tmpData, 32);
+        hr = _transfer(tmpData, tmpData, 32);
 
         if (m_flipBitOrder)
         {
@@ -739,7 +739,7 @@ public:
             dataIn = tmpData;
         }
 
-        return status;
+        return hr;
     }
 
     /// Perform a non-bytesized transfer on the SPI bus.
@@ -749,9 +749,9 @@ public:
     \param[in] bits The number of bits to transfer
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
     */
-    inline BOOL transferN(ULONG dataOut, ULONG & dataIn, ULONG bits)
+    inline HRESULT transferN(ULONG dataOut, ULONG & dataIn, ULONG bits)
     {
-        BOOL status = TRUE;
+        HRESULT hr = S_OK;
         ULONG tmpData = dataOut;
         ULONG txData = dataOut;
         ULONG rxData = 0;
@@ -768,7 +768,7 @@ public:
             }
         }
 
-        status = _transfer(tmpData, rxData, bits);
+        hr = _transfer(tmpData, rxData, bits);
 
         tmpData = rxData;
         // Flip the received data bit order if needed.
@@ -783,7 +783,7 @@ public:
         }
         dataIn = tmpData & (0xFFFFFFFF >> (32 - bits));
 
-        return status;
+        return hr;
     }
 
 
@@ -811,42 +811,42 @@ private:
     \param[in] bits The number of bits to transfer
     \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
     */
-    inline BOOL _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits)
+    inline HRESULT _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits)
     {
-        BOOL status = TRUE;
-        ULONG error = ERROR_SUCCESS;
+        HRESULT hr = S_OK;
+        
         BoardPinsClass::BOARD_TYPE board;
 
-        if (status && (m_dataBits != bits))
+        if (SUCCEEDED(hr) && (m_dataBits != bits))
         {
-            status = FALSE;
+            hr = FALSE;
             error = ERROR_INVALID_DATATYPE;
         }
 
-        status = g_pins.getBoardType(board);
-        if (!status) { error = GetLastError(); }
+        hr = g_pins.getBoardType(board);
+        
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             switch (board)
             {
             case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
             case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
-                status = m_quarkController._transfer(dataOut, dataIn, bits);
-                if (!status) { error = GetLastError(); }
+                hr = m_quarkController._transfer(dataOut, dataIn, bits);
+                
                 break;
             case BoardPinsClass::BOARD_TYPE::MBM_BARE:
-                status = m_btController._transfer(dataOut, dataIn, bits);
-                if (!status) { error = GetLastError(); }
+                hr = m_btController._transfer(dataOut, dataIn, bits);
+                
                 break;
             default:
-                status = FALSE;
+                hr = FALSE;
                 error = ERROR_UNKNOWN_PRODUCT;
             }
         }
 
-        if (!status) { SetLastError(error); }
-        return status;
+        
+        return hr;
     }
 
 };
@@ -859,20 +859,20 @@ Transfer a number of bits on the SPI bus.
 the data width set previously.
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-inline BOOL QuarkSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, ULONG bits)
+inline HRESULT QuarkSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, ULONG bits)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     ULONG txData;
     ULONG rxData;
 
     if (m_controller == nullptr)
     {
-        status = FALSE;
+        hr = FALSE;
         error = ERROR_NOT_READY;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         txData = dataOut;
         txData = txData & (0xFFFFFFFF >> (32 - bits));
@@ -895,11 +895,7 @@ inline BOOL QuarkSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, UL
         dataIn = rxData & (0xFFFFFFFF >> (32 - bits));
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -910,10 +906,10 @@ Transfer a number of bits on the SPI bus.
 the data width set previously.
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-inline BOOL BtSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, ULONG bits)
+inline HRESULT BtSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, ULONG bits)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     ULONG txData;
     ULONG rxData;
     _SSCR0 sscr0;
@@ -921,11 +917,11 @@ inline BOOL BtSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, ULONG
 
     if (m_controller == nullptr)
     {
-        status = FALSE;
+        hr = FALSE;
         error = ERROR_NOT_READY;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         txData = dataOut;
         txData = txData & (0xFFFFFFFF >> (32 - bits));
@@ -950,9 +946,9 @@ inline BOOL BtSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, ULONG
         dataIn = rxData & (0xFFFFFFFF >> (32 - bits));
     }
 
-    if (!status) { SetLastError(error); }
+    
 
-    return status;
+    return hr;
 }
 
 #endif  // _SPI_CONTROLLER_H_

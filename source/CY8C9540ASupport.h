@@ -12,25 +12,25 @@ class CY8C9540ADevice
 public:
 
     /// Set an I/O Expander output to be high or low.
-    static BOOL SetBitState(ULONG i2cAdr, ULONG bit, ULONG state);
+    static HRESULT SetBitState(ULONG i2cAdr, ULONG bit, ULONG state);
 
     /// Get the current state of an I/O Expander chip output.
-    static BOOL GetBitState(ULONG i2cAdr, ULONG bit, ULONG & state);
+    static HRESULT GetBitState(ULONG i2cAdr, ULONG bit, ULONG & state);
 
     /// Set the direction of a pin on the I/O Expander.
-    static BOOL SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG direction, BOOL pullup);
+    static HRESULT SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG direction, BOOL pullup);
 
     /// Get the direction of a pin on the I/O Expander.
-    static BOOL GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direction);
+    static HRESULT GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direction);
 
     /// Configure a port bit as a PWM output.
-    static BOOL SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmChan);
+    static HRESULT SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmChan);
 
     /// Configure a port bit for Digital I/O use.
-    static BOOL SetPortbitDio(ULONG i2cAdr, ULONG portBit);
+    static HRESULT SetPortbitDio(ULONG i2cAdr, ULONG portBit);
 
     /// Set the PWM pulse width.
-    static BOOL SetPwmDutyCycle(ULONG i2cAdr, ULONG chan, ULONG pulseWidth);
+    static HRESULT SetPwmDutyCycle(ULONG i2cAdr, ULONG chan, ULONG pulseWidth);
 
     /// Method to get the resolution of this PWM chip.
     static  ULONG GetResolution()
@@ -114,7 +114,7 @@ private:
     }
 
     /// Configure the PWM frequency on a channel.
-    static BOOL _configurePwmChannelFrequency(ULONG i2cAdr, ULONG chan);
+    static HRESULT _configurePwmChannelFrequency(ULONG i2cAdr, ULONG chan);
 
 };
 

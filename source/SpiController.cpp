@@ -12,43 +12,43 @@
 \param[in] dataBits The number of data bits in each transfer (4-32)
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-BOOL SpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits)
+HRESULT SpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     BoardPinsClass::BOARD_TYPE board;
 
-    status = g_pins.getBoardType(board);
-    if (!status) { error = GetLastError(); }
+    hr = g_pins.getBoardType(board);
+    
 
-    if (status && ((dataBits < MIN_SPI_BITS) || (dataBits > MAX_SPI_BITS)))
+    if (SUCCEEDED(hr) && ((dataBits < MIN_SPI_BITS) || (dataBits > MAX_SPI_BITS)))
     {
-        status = FALSE;
+        hr = FALSE;
         SetLastError(ERROR_INVALID_DATATYPE);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         m_dataBits = dataBits;
         switch (board)
         {
         case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
         case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
-            status = m_quarkController._begin(busNumber, mode, clockKhz, dataBits);
-            if (!status) { error = GetLastError(); }
+            hr = m_quarkController._begin(busNumber, mode, clockKhz, dataBits);
+            
             break;
         case BoardPinsClass::BOARD_TYPE::MBM_BARE:
-            status = m_btController._begin(busNumber, mode, clockKhz, dataBits);
-            if (!status) { error = GetLastError(); }
+            hr = m_btController._begin(busNumber, mode, clockKhz, dataBits);
+            
             break;
         default:
-            status = FALSE;
+            hr = FALSE;
             error = ERROR_UNKNOWN_PRODUCT;
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 void SpiControllerClass::end()
@@ -77,36 +77,36 @@ void SpiControllerClass::end()
 \param[in] clockKhz The SPI bit rate clock to set.
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-BOOL SpiControllerClass::setClock(ULONG clockKhz)
+HRESULT SpiControllerClass::setClock(ULONG clockKhz)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     BoardPinsClass::BOARD_TYPE board;
 
-    status = g_pins.getBoardType(board);
-    if (!status) { error = GetLastError(); }
+    hr = g_pins.getBoardType(board);
+    
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         switch (board)
         {
         case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
         case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
-            status = m_quarkController._setClockRate(clockKhz);
-            if (!status) { error = GetLastError(); }
+            hr = m_quarkController._setClockRate(clockKhz);
+            
             break;
         case BoardPinsClass::BOARD_TYPE::MBM_BARE:
-            status = m_btController._setClockRate(clockKhz);
-            if (!status) { error = GetLastError(); }
+            hr = m_btController._setClockRate(clockKhz);
+            
             break;
         default:
-            status = FALSE;
+            hr = FALSE;
             error = ERROR_UNKNOWN_PRODUCT;
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 /**
@@ -115,36 +115,36 @@ The SPI mode specifies the clock polarity and phase.
 \param[in] mode The mode to set for the SPI bus (0, 1, 2 or 3)
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-BOOL SpiControllerClass::setMode(ULONG mode)
+HRESULT SpiControllerClass::setMode(ULONG mode)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     BoardPinsClass::BOARD_TYPE board;
 
-    status = g_pins.getBoardType(board);
-    if (!status) { error = GetLastError(); }
+    hr = g_pins.getBoardType(board);
+    
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         switch (board)
         {
         case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
         case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
-            status = m_quarkController._setMode(mode);
-            if (!status) { error = GetLastError(); }
+            hr = m_quarkController._setMode(mode);
+            
             break;
         case BoardPinsClass::BOARD_TYPE::MBM_BARE:
-            //status = m_btController._setMode(mode);
-            if (!status) { error = GetLastError(); }
+            //hr = m_btController._setMode(mode);
+            
             break;
         default:
-            status = FALSE;
+            hr = FALSE;
             error = ERROR_UNKNOWN_PRODUCT;
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 /// Table of bytes with bit order reversed.
@@ -200,10 +200,10 @@ QuarkSpiControllerClass::QuarkSpiControllerClass()
 \param[in] dataBits The size of an SPI transfer in bits
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-BOOL QuarkSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits)
+HRESULT QuarkSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     PWCHAR deviceName = nullptr;
     PVOID baseAddress = nullptr;
 
@@ -221,25 +221,22 @@ BOOL QuarkSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz
             deviceName = galileoSpi1DeviceName;
             break;
         default:    // Only support the two SPI busses
-            status = FALSE;
+            hr = FALSE;
             error = ERROR_INVALID_PARAMETER;
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Open the Dmap device for the SPI controller.
-            status = GetControllerBaseAddress(deviceName, m_hController, baseAddress);
-            if (!status)
-            {
-                error = GetLastError();
-            }
-            else
-            {
+            hr = GetControllerBaseAddress(deviceName, m_hController, baseAddress);
+
+			if (SUCCEEDED(hr))
+			{
                 m_controller = (PSPI_CONTROLLER)baseAddress;
             }
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // We now "own" the SPI controller, intialize it.
             m_controller->SSCR0.ALL_BITS = 0;              // Disable controller (and also clear other bits)
@@ -251,25 +248,21 @@ BOOL QuarkSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz
 
             if (!_setMode(mode))
             {
-                status = FALSE;
+                hr = FALSE;
                 error = GetLastError();
             }
         }
-        if (status)
+        if (SUCCEEDED(hr))
         {
             if (!_setClockRate(clockKhz))
             {
-                status = FALSE;
+                hr = FALSE;
                 error = GetLastError();
             }
         }
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -298,10 +291,10 @@ The SPI mode specifies the clock polarity and phase.
 \param[in] mode The mode to set for the SPI bus (0, 1, 2 or 3)
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-BOOL QuarkSpiControllerClass::_setMode(ULONG mode)
+HRESULT QuarkSpiControllerClass::_setMode(ULONG mode)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     ULONG polarity = 0;
     ULONG phase = 0;
 
@@ -309,11 +302,11 @@ BOOL QuarkSpiControllerClass::_setMode(ULONG mode)
     // If we don't have the controller registers mapped, fail.
     if (m_controller == nullptr)
     {
-        status = FALSE;
+        hr = FALSE;
         error = ERROR_NOT_READY;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Determine the clock phase and polarity settings for the requested mode.
         switch (mode)
@@ -335,23 +328,19 @@ BOOL QuarkSpiControllerClass::_setMode(ULONG mode)
             phase = 1;      // Sample data on inactive going clock edge
             break;
         default:
-            status = FALSE;
+            hr = FALSE;
             error = ERROR_INVALID_PARAMETER;
         }
     }
 
     // Set the SPI phase and polarity values in the SPI controller registers.
-    if (status)
+    if (SUCCEEDED(hr))
     {
         m_controller->SSCR1.SPO = polarity;
         m_controller->SSCR1.SPH = phase;
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -359,21 +348,21 @@ This method sets one of the SPI clock rates we support: 1 khz - 20 mhz.
 \param[in] clockKhz Desired clock rate in Khz.
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-BOOL QuarkSpiControllerClass::_setClockRate(ULONG clockKhz)
+HRESULT QuarkSpiControllerClass::_setClockRate(ULONG clockKhz)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     PSPI_BUS_SPEED pSpeed = &spiSpeed4mhz;
 
 
     // If we don't have the controller registers mapped, fail.
     if (m_controller == nullptr)
     {
-        status = FALSE;
+        hr = FALSE;
         error = ERROR_NOT_READY;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Round down to the closest clock rate we support.
         if (clockKhz >= 20000)
@@ -438,20 +427,20 @@ BOOL QuarkSpiControllerClass::_setClockRate(ULONG clockKhz)
         }
         else
         {
-            status = FALSE;
+            hr = FALSE;
             error = ERROR_INVALID_PARAMETER;
         }
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Set the clock rate.
         m_controller->SSCR0.SCR = pSpeed->scr;
         m_controller->DDS_RATE.DDS_CLK_RATE = pSpeed->dds_clk_rate;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 /**
@@ -487,10 +476,10 @@ BtSpiControllerClass::BtSpiControllerClass()
 \param[in] dataBits The size of an SPI transfer in bits
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-BOOL BtSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits)
+HRESULT BtSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     PWCHAR deviceName = nullptr;
     PVOID baseAddress = nullptr;
     _SSCR0 sscr0;
@@ -507,26 +496,22 @@ BOOL BtSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz, U
             deviceName = mbmSpiDeviceName;
             break;
         default:    // Only support one SPI bus
-            status = FALSE;
+            hr = FALSE;
             error = ERROR_INVALID_PARAMETER;
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Open the Dmap device for the SPI controller.
-            status = GetControllerBaseAddress(deviceName, m_hController, baseAddress);
-            if (!status)
-            {
-                error = GetLastError();
-            }
-            else
+            hr = GetControllerBaseAddress(deviceName, m_hController, baseAddress);
+			if (SUCCEEDED(hr))
             {
                 m_controller = (PSPI_CONTROLLER)baseAddress;
                 m_controllerUpper = (PSPI_CONTROLLER_UPPER)(((PBYTE)baseAddress) + SPI_CONTROLLER_UPPER_OFFSET);
             }
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // We now "own" the SPI controller, intialize it.
             sscr0.ALL_BITS = 0;
@@ -549,22 +534,18 @@ BOOL BtSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz, U
             sssr.BCE = 1;                                  // Clear any Bit Count Error
             m_controller->SSSR.ALL_BITS = sssr.ALL_BITS;
 
-            status = _setMode(mode);
-            if (!status) { error = GetLastError(); }
+            hr = _setMode(mode);
+            
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
-            status = _setClockRate(clockKhz);
-            if (!status) { error = GetLastError(); }
+            hr = _setClockRate(clockKhz);
+            
         }
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -594,10 +575,10 @@ The SPI mode specifies the clock polarity and phase.
 \param[in] mode The mode to set for the SPI bus (0, 1, 2 or 3)
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-BOOL BtSpiControllerClass::_setMode(ULONG mode)
+HRESULT BtSpiControllerClass::_setMode(ULONG mode)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     ULONG polarity = 0;
     ULONG phase = 0;
     _SSCR1 sscr1;
@@ -606,11 +587,11 @@ BOOL BtSpiControllerClass::_setMode(ULONG mode)
     // If we don't have the controller registers mapped, fail.
     if (m_controller == nullptr)
     {
-        status = FALSE;
+        hr = FALSE;
         error = ERROR_NOT_READY;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Determine the clock phase and polarity settings for the requested mode.
         switch (mode)
@@ -632,13 +613,13 @@ BOOL BtSpiControllerClass::_setMode(ULONG mode)
             phase = 1;      // Sample data on inactive going clock edge
             break;
         default:
-            status = FALSE;
+            hr = FALSE;
             error = ERROR_INVALID_PARAMETER;
         }
     }
 
     // Set the SPI phase and polarity values in the SPI controller registers.
-    if (status)
+    if (SUCCEEDED(hr))
     {
         sscr1.ALL_BITS = m_controller->SSCR1.ALL_BITS;
         sscr1.SPO = polarity;
@@ -646,11 +627,7 @@ BOOL BtSpiControllerClass::_setMode(ULONG mode)
         m_controller->SSCR1.ALL_BITS = sscr1.ALL_BITS;
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -658,10 +635,10 @@ This method sets one of the SPI clock rates we support: 1 khz - 15 mhz.
 \param[in] clockKhz Desired clock rate in Khz.
 \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
 */
-BOOL BtSpiControllerClass::_setClockRate(ULONG clockKhz)
+HRESULT BtSpiControllerClass::_setClockRate(ULONG clockKhz)
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     PSPI_BUS_SPEED pSpeed = &spiSpeed4mhz;
     _SSCR0 sscr0;
     _PRV_CLOCK_PARAMS prvClockParams;
@@ -670,11 +647,11 @@ BOOL BtSpiControllerClass::_setClockRate(ULONG clockKhz)
     // If we don't have the controller registers mapped, fail.
     if (m_controller == nullptr)
     {
-        status = FALSE;
+        hr = FALSE;
         error = ERROR_NOT_READY;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Round down to the closest clock rate we support.
         if (clockKhz >= 15000)
@@ -739,12 +716,12 @@ BOOL BtSpiControllerClass::_setClockRate(ULONG clockKhz)
         }
         else
         {
-            status = FALSE;
+            hr = FALSE;
             error = ERROR_INVALID_PARAMETER;
         }
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Set the clock rate.
         sscr0.ALL_BITS = m_controller->SSCR0.ALL_BITS;
@@ -759,6 +736,6 @@ BOOL BtSpiControllerClass::_setClockRate(ULONG clockKhz)
         m_controllerUpper->PRV_CLOCK_PARAMS.ALL_BITS = prvClockParams.ALL_BITS;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }

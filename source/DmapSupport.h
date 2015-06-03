@@ -27,12 +27,12 @@
 #define mbmI2cDeviceName      L"\\\\.\\ACPI#80860F41#6#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
 
 /// Routine to get the base address of a memory mapped controller with no sharing allowed.
-BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress);
+HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress);
 
 /// Routine to get the base address of a memory mapped controller with a sharing specification.
-BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode);
+HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode);
 
 /// Routine to open a controller device in the SOC.
-BOOL OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode);
+HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode);
 
 #endif // _DMAP_SUPPORT_H_

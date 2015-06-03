@@ -12,7 +12,7 @@ access to the controller is requested.
 \param[out] baseAddress Base address of the controller in question.
 \return TRUE success, FALSE failure, GetLastError() provides the error code.
 */
-BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress)
+HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress)
 {
     return GetControllerBaseAddress(deviceName, handle, baseAddress, 0);
 }
@@ -25,20 +25,20 @@ Get the base address of a memory mapped controller in the SOC.
 \param[in] shareMode Sharing specifier as specified to CreateFile().
 \return TRUE success, FALSE failure, GetLastError() provides the error code.
 */
-BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode)
+HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode)
 {
-    BOOL status = TRUE;
+    HRESULT hr = S_OK;
     DWORD error = ERROR_SUCCESS;
     DMAP_MAPMEMORY_OUTPUT_BUFFER buf = { 0 };
     DWORD bytesReturned = 0;
 
-    status = OpenControllerDevice(deviceName, handle, shareMode);
-    if (!status) { error = GetLastError(); }
+    hr = OpenControllerDevice(deviceName, handle, shareMode);
+    
 
-    if (status && (baseAddress == nullptr))
+    if (SUCCEEDED(hr) && (baseAddress == nullptr))
     {
         // Retrieve the base address of controller registers.
-        status = DeviceIoControl(
+        hr = DeviceIoControl(
             handle,
             IOCTL_DMAP_MAPMEMORY,
             nullptr,
@@ -47,22 +47,23 @@ BOOL GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAd
             sizeof(buf),
             &bytesReturned,
             nullptr);
-        if (!status)
+
+		if (FAILED(hr))
         {
             error = GetLastError();
             CloseHandle(handle);
             handle = INVALID_HANDLE_VALUE;
             baseAddress = nullptr;
         }
-        else
+
+		if (SUCCEEDED(hr))
         {
             // Pass back the base address of the controller registers to the caller.
             baseAddress = buf.Address;
         }
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 /**
@@ -73,9 +74,9 @@ IO mapped controllers.
 \param[in] shareMode Sharing specifier as specified to CreateFile().
 \return TRUE success, FALSE failure, GetLastError() provides the error code.
 */
-BOOL OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode)
+HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode)
 {
-    BOOL status = TRUE;
+    HRESULT hr = S_OK;
     DWORD error = ERROR_SUCCESS;
 
     if (handle == INVALID_HANDLE_VALUE)
@@ -92,11 +93,11 @@ BOOL OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode)
 
         if (handle == INVALID_HANDLE_VALUE)
         {
-            status = FALSE;
+            hr = FALSE;
             error = GetLastError();
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }

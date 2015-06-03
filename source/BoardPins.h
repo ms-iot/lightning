@@ -120,25 +120,25 @@ public:
     };
 
     /// Method to set an I/O pin to a state (HIGH or LOW).
-    BOOL setPinState(ULONG pin, ULONG state);
+    HRESULT setPinState(ULONG pin, ULONG state);
 
     /// Method to read the state of an I/O pin.
-    BOOL getPinState(ULONG pin, ULONG & state);
+    HRESULT getPinState(ULONG pin, ULONG & state);
 
     /// Method to set the direction of a pin (DIRECTION_IN or DIRECTION_OUT).
-    BOOL setPinMode(ULONG pin, ULONG mode, BOOL pullUp);
+    HRESULT setPinMode(ULONG pin, ULONG mode, BOOL pullUp);
 
     /// Method to verify that a pin is configured for the desired function.
-    BOOL verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction);
+    HRESULT verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction);
 
     /// Method to set the PWM duty cycle for a pin.
-    BOOL setPwmDutyCycle(ULONG pin, ULONG dutyCycle);
+    HRESULT setPwmDutyCycle(ULONG pin, ULONG dutyCycle);
 
     /// Method to override auto-detection of board type.
-    BOOL setBoardType(BOARD_TYPE board);
+    HRESULT setBoardType(BOARD_TYPE board);
 
     /// Method to get the board type.
-    inline BOOL getBoardType(BOARD_TYPE & board);
+    inline HRESULT getBoardType(BOARD_TYPE & board);
 
 private:
 
@@ -167,58 +167,58 @@ private:
     BOARD_TYPE m_boardType;
 
     /// Method to configure an I/O Pin for one of the functions it suppports.
-    BOOL _setPinFunction(ULONG pin, ULONG function);
+    HRESULT _setPinFunction(ULONG pin, ULONG function);
 
     /// Method to configure an I/O Pin for Digital I/O use.
-    BOOL _setPinDigitalIo(ULONG pin);
+    HRESULT _setPinDigitalIo(ULONG pin);
 
     /// Method to configure an I/O Pin for PWM use.
-    BOOL _setPinPwm(ULONG pin);
+    HRESULT _setPinPwm(ULONG pin);
 
     /// Method to configure an I/O Pin for Analog Input use.
-    BOOL _setPinAnalogInput(ULONG pin);
+    HRESULT _setPinAnalogInput(ULONG pin);
 
     /// Method to configure an I/O Pin for I2C Bus use.
-    BOOL _setPinI2c(ULONG pin);
+    HRESULT _setPinI2c(ULONG pin);
 
     /// Method to configure an I/O Pin for SPI Bus use.
-    BOOL _setPinSpi(ULONG pin);
+    HRESULT _setPinSpi(ULONG pin);
 
     /// Method to configure an I/O Pin for Hardware Serial use.
-    BOOL _setPinHwSerial(ULONG pin);
+    HRESULT _setPinHwSerial(ULONG pin);
 
     /// Method to choose between the input driver and output driver for an I/O pin.
-    BOOL _configurePinDrivers(ULONG pin, ULONG mode);
+    HRESULT _configurePinDrivers(ULONG pin, ULONG mode);
 
     /// Method to turn the pullup resistor on or off for an I/O pin.
-    BOOL _configurePinPullup(ULONG pin, BOOL pullUp);
+    HRESULT _configurePinPullup(ULONG pin, BOOL pullUp);
 
     /// Method to set a mux to a desired state.
-    BOOL _setMux(ULONG pin, ULONG mux, ULONG selection);
+    HRESULT _setMux(ULONG pin, ULONG mux, ULONG selection);
 
     /// Method to set the direction on an I/O Expander port pin.
-    BOOL _setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG directin, BOOL pullup);
+    HRESULT _setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG directin, BOOL pullup);
 
     /// Method to set the state of an I/O Expander port pin.
-    BOOL _setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state);
+    HRESULT _setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state);
 
     /// Method to test whether a pin number is safe to use as an array index.
     inline BOOL _pinNumberIsSafe(ULONG pin);
 
     /// Method to verify the board type has been configured.
-    BOOL _verifyBoardType();
+    HRESULT _verifyBoardType();
 
     /// Method to determine what type of board we are running on.
-    BOOL _determineBoardType();
+    HRESULT _determineBoardType();
 
     /// Method to determine the generation of a Galileo board.
-    BOOL _determineGalileoGen();
+    HRESULT _determineGalileoGen();
 
     /// Method to determine the configuration of an MBM board.
-    BOOL _determineMbmConfig();
+    HRESULT _determineMbmConfig();
 
     /// Test an I2C address to see if a slave is present on it.
-    BOOL _testI2cAddress(ULONG i2cAdr);
+    HRESULT _testI2cAddress(ULONG i2cAdr);
 };
 
 /// Global object used to configure and use the I/O pins.
@@ -227,23 +227,20 @@ __declspec (selectany) BoardPinsClass g_pins;
 /**
 This method determines the board type if it is not yet known.
 \param[out] gen The type of the board we are currently running on.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT error or success code.
 */
-inline BOOL BoardPinsClass::getBoardType(BOARD_TYPE & board)
+inline HRESULT BoardPinsClass::getBoardType(BOARD_TYPE & board)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
 
-    status = _verifyBoardType();
-    if (!status) { error = GetLastError(); }
+    hr = _verifyBoardType();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         board = m_boardType;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
@@ -259,13 +256,13 @@ inline BOOL BoardPinsClass::_pinNumberIsSafe(ULONG pin)
 /**
 Determine if the board generation has been determined yet, and if not, determine the
 board generation and configure the code for that generation.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT error or success code.
 */
-inline BOOL BoardPinsClass::_verifyBoardType()
+inline HRESULT BoardPinsClass::_verifyBoardType()
 {
     if (m_boardType != NOT_SET)
     {
-        return TRUE;
+        return S_OK;
     }
     else
     {

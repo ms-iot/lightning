@@ -18,13 +18,13 @@ public:
     {
     }
 
-    static BOOL SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state);
+    static HRESULT SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state);
 
-    static BOOL GetBitState(ULONG i2cAdr, ULONG portbit, ULONG & state);
+    static HRESULT GetBitState(ULONG i2cAdr, ULONG portbit, ULONG & state);
 
-    static BOOL SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG direction);
+    static HRESULT SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG direction);
 
-    static BOOL GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direction);
+    static HRESULT GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direction);
 
 private:
 };
