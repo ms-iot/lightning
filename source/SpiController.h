@@ -58,7 +58,7 @@ public:
     /**
     \param[in] dataOut The data to send on the SPI bus
     \param[out] datIn The data received on the SPI bus
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     inline HRESULT _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits);
 
@@ -191,7 +191,7 @@ public:
     /// Initialize the specified SPI bus, using the default mode and clock rate.
     /**
     \param[in] busNumber The number of the SPI bus to open (0 or 1)
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     HRESULT _begin(ULONG busNumber)
     {
@@ -214,7 +214,7 @@ public:
     /**
     \param[in] dataOut The data to send on the SPI bus
     \param[out] datIn The data received on the SPI bus
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     inline HRESULT _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits);
 
@@ -569,7 +569,7 @@ public:
     /// Initialize the specified SPI bus, using the default mode and clock rate.
     /**
     \param[in] busNumber The number of the SPI bus to open (0 or 1)
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     HRESULT begin(ULONG busNumber)
     {
@@ -605,18 +605,17 @@ public:
     {
         if ((bits < MIN_SPI_BITS) || (bits > MAX_SPI_BITS))
         {
-            SetLastError(ERROR_INVALID_DATATYPE);
-            return FALSE;
+            return DMAP_E_SPI_DATA_WIDTH_SPECIFIED_IS_INVALID;
         }
         m_dataBits = bits;
-        return TRUE;
+        return S_OK;
     }
 
     /// Transfer a byte of data on the SPI bus.
     /**
     \param[in] dataOut A byte of data to send on the SPI bus
     \param[out] datIn The byte of data received on the SPI bus
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     inline HRESULT transfer8(ULONG dataOut, ULONG & dataIn)
     {
@@ -644,7 +643,7 @@ public:
     /**
     \param[in] dataOut A word of data to send on the SPI bus
     \param[out] datIn The word of data received on the SPI bus
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     inline HRESULT transfer16(ULONG dataOut, ULONG & dataIn)
     {
@@ -676,7 +675,7 @@ public:
     /**
     \param[in] dataOut Three bytes of data to send on the SPI bus
     \param[out] datIn The three bytes of data received on the SPI bus
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     inline HRESULT transfer24(ULONG dataOut, ULONG & dataIn)
     {
@@ -710,7 +709,7 @@ public:
     /**
     \param[in] dataOut A longword of data to send on the SPI bus
     \param[out] datIn The longword of data received on the SPI bus
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     inline HRESULT transfer32(ULONG dataOut, ULONG & dataIn)
     {
@@ -747,7 +746,7 @@ public:
     \param[in] dataOut The data to send on the SPI bus
     \param[out] datIn The data received on the SPI bus
     \param[in] bits The number of bits to transfer
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     inline HRESULT transferN(ULONG dataOut, ULONG & dataIn, ULONG bits)
     {
@@ -809,22 +808,22 @@ private:
     \param[in] dataOut The data to send on the SPI bus
     \param[out] datIn The data received on the SPI bus
     \param[in] bits The number of bits to transfer
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     inline HRESULT _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits)
     {
         HRESULT hr = S_OK;
-        
         BoardPinsClass::BOARD_TYPE board;
 
         if (SUCCEEDED(hr) && (m_dataBits != bits))
         {
-            hr = FALSE;
-            error = ERROR_INVALID_DATATYPE;
+			hr = DMAP_E_SPI_DATA_WIDTH_MISMATCH;
         }
 
-        hr = g_pins.getBoardType(board);
-        
+		if (SUCCEEDED(hr))
+		{
+			hr = g_pins.getBoardType(board);
+		}
 
         if (SUCCEEDED(hr))
         {
@@ -840,15 +839,12 @@ private:
                 
                 break;
             default:
-                hr = FALSE;
-                error = ERROR_UNKNOWN_PRODUCT;
+				hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
             }
         }
-
         
         return hr;
     }
-
 };
 
 /**
@@ -857,19 +853,17 @@ Transfer a number of bits on the SPI bus.
 \param[out] datIn The data reaceived on the SPI bus
 \param[in] bits The number of bits to transfer in each direction on the bus.  This must agree with
 the data width set previously.
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 inline HRESULT QuarkSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, ULONG bits)
 {
     HRESULT hr = S_OK;
-    
     ULONG txData;
     ULONG rxData;
 
     if (m_controller == nullptr)
     {
-        hr = FALSE;
-        error = ERROR_NOT_READY;
+		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
     if (SUCCEEDED(hr))
@@ -904,7 +898,7 @@ Transfer a number of bits on the SPI bus.
 \param[out] datIn The data reaceived on the SPI bus
 \param[in] bits The number of bits to transfer in each direction on the bus.  This must agree with
 the data width set previously.
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 inline HRESULT BtSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, ULONG bits)
 {
@@ -917,8 +911,7 @@ inline HRESULT BtSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, UL
 
     if (m_controller == nullptr)
     {
-        hr = FALSE;
-        error = ERROR_NOT_READY;
+		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
     if (SUCCEEDED(hr))

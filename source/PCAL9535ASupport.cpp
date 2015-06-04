@@ -9,24 +9,20 @@
 HRESULT PCAL9535ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     UCHAR outPortBuf[1] = { 0x02 };         // Address of Output port, starts at Port 0
     UCHAR dataBuf[1] = { 0 };
     ULONG bit = portBit;
 
-
     if (portBit > P1_7)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     //
@@ -47,14 +43,12 @@ HRESULT PCAL9535ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 
         // Send the address of the output port to the I/O Expander chip.
         hr = transaction.queueWrite(outPortBuf, 1);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Read the port contents from the I/O Expander chip.
         hr = transaction.queueRead(dataBuf, sizeof(dataBuf));
-        
     }
 
     if (SUCCEEDED(hr))
@@ -64,7 +58,7 @@ HRESULT PCAL9535ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
         {
             dataBuf[0] = dataBuf[0] & (~(1 << bit));
             dataBuf[0] = dataBuf[0] | ((state & 0x01) << bit);
-            return TRUE;
+            return S_OK;
         }
         );
     }
@@ -73,23 +67,19 @@ HRESULT PCAL9535ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
     {
         // Send the address of the output port to the I/O Expander chip.
         hr = transaction.queueWrite(outPortBuf, 1, TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Send the desired state of the port bit to the I/O Expander chip.
         hr = transaction.queueWrite(dataBuf, sizeof(dataBuf));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
         hr = transaction.execute();
-        
     }
-
     
     return hr;
 }
@@ -97,7 +87,6 @@ HRESULT PCAL9535ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 HRESULT PCAL9535ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     UCHAR inPortBuf[1] = { 0x00 };         // Address of Input port, starts at Port 0
     UCHAR dataBuf[1] = { 0 };
@@ -106,15 +95,13 @@ HRESULT PCAL9535ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 
     if (portBit > P1_7)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     if (SUCCEEDED(hr))
@@ -131,21 +118,18 @@ HRESULT PCAL9535ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 
         // Queue sending the address of the input port to the I/O Expander chip.
         hr = transaction.queueWrite(inPortBuf, 1);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue reading the port contents from the I/O Expander chip.
         hr = transaction.queueRead(dataBuf, sizeof(dataBuf));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Perform the I2C transfers queued above.
         hr = transaction.execute();
-        
     }
 
     if (SUCCEEDED(hr))
@@ -153,7 +137,6 @@ HRESULT PCAL9535ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
         // Pass back the bit value read from the port.
         state = (dataBuf[0] >> bit) & 0x01;
     }
-
     
     return hr;
 }
@@ -161,25 +144,21 @@ HRESULT PCAL9535ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 HRESULT PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG direction)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     UCHAR configAdrBuf[1] = { 0x06 };       // Address of config register, initially Port 0
     UCHAR dataBuf[1] = { 0 };
     ULONG bit = portBit;
     UCHAR newData = 1;                      // Default to input direction
 
-
     if (portBit > P1_7)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     // Change to OUTPUT direction if that was specified.
@@ -206,14 +185,12 @@ HRESULT PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
 
         // Send the address of the configuration register to the I/O Expander chip.
         hr = transaction.queueWrite(configAdrBuf, 1);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Read the configuration register contents from the I/O Expander chip.
         hr = transaction.queueRead(dataBuf, sizeof(dataBuf));
-        
     }
 
     //
@@ -227,7 +204,7 @@ HRESULT PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
         {
             dataBuf[0] = dataBuf[0] & (~(1 << bit));
             dataBuf[0] = dataBuf[0] | (newData << bit);
-            return TRUE;
+            return S_OK;
         }
         );
     }
@@ -240,14 +217,12 @@ HRESULT PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
     {
         // Send the address of the configuration register to the I/O Expander chip.
         hr = transaction.queueWrite(configAdrBuf, 1, TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Send the desired configuration to the I/O Expander chip.
         hr = transaction.queueWrite(dataBuf, sizeof(dataBuf));
-        
     }
 
     //
@@ -258,9 +233,7 @@ HRESULT PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
     {
         // Actually perform the transfers.
         hr = transaction.execute();
-        
     }
-
     
     return hr;
 }
@@ -268,24 +241,20 @@ HRESULT PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
 HRESULT PCAL9535ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direction)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     UCHAR configAdrBuf[1] = { 0x06 };       // Address of config register, initially Port 0
     UCHAR dataBuf[1] = { 0 };
     ULONG bit = portBit;
 
-
     if (portBit > P1_7)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     //
@@ -306,14 +275,12 @@ HRESULT PCAL9535ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & di
 
         // Send the address of the configuration register to the I/O Expander chip.
         hr = transaction.queueWrite(configAdrBuf, 1);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Read the configuration register contents from the I/O Expander chip.
         hr = transaction.queueRead(dataBuf, sizeof(dataBuf));
-        
     }
 
     //
@@ -323,7 +290,6 @@ HRESULT PCAL9535ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & di
     {
         // Actually perform the transfers.
         hr = transaction.execute();
-        
     }
 
     //
@@ -340,7 +306,6 @@ HRESULT PCAL9535ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & di
             direction = DIRECTION_IN;
         }
     }
-
     
     return hr;
 }

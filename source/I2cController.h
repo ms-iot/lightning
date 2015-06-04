@@ -747,7 +747,7 @@ public:
     HRESULT setCallback(std::function<HRESULT()> callBack)
     {
         m_callBack = callBack;
-        return TRUE;
+        return S_OK;
     }
 
     // Method to invoke any callback routine associated with this transfer.

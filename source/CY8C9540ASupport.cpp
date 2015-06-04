@@ -56,18 +56,16 @@ This method takes the actions needed to set a port bit of the I/O Expander chip 
 \param[in] i2cAdr The I2C address of the chip.
 \param[in] portBit The number of the port bit to modify.
 \param[in] state The state to set the port bit to: HIGH or LOW.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
 HRESULT CY8C9540ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     ULONG port;                             // Number of the port we are modifying
     ULONG bit;                              // Number of the bit to modify within the port
     UCHAR portRegAdr[1] = { 0 };            // Buffer for port output register address
     UCHAR dataBuf[1] = { 0 };               // Buffer for port data
-
 
     // Calculate the number of the port and the bit we are modifying.
     port = portBit >> 3;
@@ -75,14 +73,12 @@ HRESULT CY8C9540ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 
     if (port >= PORT_COUNT)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr) && (state != HIGH) && (state != LOW))
     {
-        hr = FALSE;
-        error = ERROR_INVALID_STATE;
+        hr = DMAP_E_INVALID_PIN_STATE_SPECIFIED;
     }
 
     // Calculate the address of the output register for the port in question.
@@ -99,7 +95,6 @@ HRESULT CY8C9540ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
     {
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     if (SUCCEEDED(hr))
@@ -113,7 +108,6 @@ HRESULT CY8C9540ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
     {
         // Read the port contents from the I/O Expander chip.
         hr = transaction.queueRead(dataBuf, sizeof(dataBuf));
-        
     }
 
     if (SUCCEEDED(hr))
@@ -123,7 +117,7 @@ HRESULT CY8C9540ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
         {
             dataBuf[0] = dataBuf[0] & (~(1 << bit));
             dataBuf[0] = dataBuf[0] | ((state & 0x01) << bit);
-            return TRUE;
+            return S_OK;
         }
         );
     }
@@ -132,23 +126,19 @@ HRESULT CY8C9540ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
     {
         // Send the address of the output port to the I/O Expander chip.
         hr = transaction.queueWrite(portRegAdr, 1, TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Send the desired state of the port bit to the I/O Expander chip.
         hr = transaction.queueWrite(dataBuf, sizeof(dataBuf));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
         hr = transaction.execute();
-        
     }
-
     
     return hr;
 }
@@ -157,18 +147,16 @@ HRESULT CY8C9540ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] portBit The number of the port bit to read.
 \param[out] state The state of the port bit: HIGH or LOW.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
 HRESULT CY8C9540ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     ULONG port;                             // Number of the port we are reading
     ULONG bit;                              // Number of the bit to read on the port
     UCHAR portRegAdr[1] = { 0 };            // Buffer for port input register address
     UCHAR dataBuf[1] = { 0 };               // Buffer for port data
-
 
     // Calculate the number of the port and the bit we are reading.
     port = portBit >> 3;
@@ -176,8 +164,7 @@ HRESULT CY8C9540ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 
     if (port >= PORT_COUNT)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     // Calculate the address of the input register for the port in question.
@@ -194,28 +181,24 @@ HRESULT CY8C9540ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
     {
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Send the address of the input port to the I/O Expander chip.
         hr = transaction.queueWrite(portRegAdr, 1);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Read the port contents from the I/O Expander chip.
         hr = transaction.queueRead(dataBuf, sizeof(dataBuf));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Perform the I2C transfers specified above.
         hr = transaction.execute();
-        
     }
 
     if (SUCCEEDED(hr))
@@ -223,7 +206,6 @@ HRESULT CY8C9540ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
         // Extract the bit we want from the input port data.
         state = (dataBuf[0] >> bit) & 0x01;
     }
-
     
     return hr;
 }
@@ -234,12 +216,11 @@ This method sets the direction and drive characterics of a port bit of the I/O E
 \param[in] portBit The number of the port bit to modify.
 \param[in] direction The direction to configure for the pin (DIRECTION_IN or DIRECTION_OUT).
 \param[in] pullup TRUE - enable the pullup resistor on the pin, FALSE - disable pullup.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
 HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG direction, BOOL pullup)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     ULONG port;                                     // Number of the port we are modifying
     ULONG bit;                                      // Number of the bit to modify within the port
@@ -260,15 +241,13 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
 
     if (port >= PORT_COUNT)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     //
@@ -279,7 +258,6 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
     {
         // Queue a write of the port select register address.
         hr = transaction.queueWrite(portSelectAdr, sizeof(portSelectAdr));
-        
     }
 
     if (SUCCEEDED(hr))
@@ -287,7 +265,6 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
         // Queue a write of the port select data.
         portSelectData[0] = (UCHAR) port;
         hr = transaction.queueWrite(portSelectData, sizeof(portSelectData));
-        
     }
 
     //
@@ -298,14 +275,12 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
     {
         // Queue a write of the port direction register address.
         hr = transaction.queueWrite(directionAdr, sizeof(directionAdr), TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a read of the direction register.
         hr = transaction.queueRead(directionData, sizeof(directionData));
-        
     }
 
     if (SUCCEEDED(hr))
@@ -322,7 +297,7 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
         {
             directionData[0] = directionData[0] & (~(1 << bit));
             directionData[0] = directionData[0] | ((state & 0x01) << bit);
-            return TRUE;
+            return S_OK;
         }
         );
     }
@@ -331,14 +306,12 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
     {
         // Queue a write of the address of the Direction register to the I/O Expander chip.
         hr = transaction.queueWrite(directionAdr, sizeof(directionAdr), TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a write to send the modified value back to the direction register.
         hr = transaction.queueWrite(directionData, sizeof(directionData));
-        
     }
 
     //
@@ -363,14 +336,12 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
 
         // Queue a write of the pin drive register address.
         hr = transaction.queueWrite(driveAdr, sizeof(driveAdr), TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a read of the drive register.
         hr = transaction.queueRead(driveData, sizeof(driveData));
-        
     }
 
     if (SUCCEEDED(hr))
@@ -379,7 +350,7 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
         hr = transaction.queueCallback([&driveData, bit]()
         {
             driveData[0] = driveData[0] | (0x01U << bit);
-            return TRUE;
+            return S_OK;
         }
         );
     }
@@ -388,14 +359,12 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
     {
         // Queue a write of pin drive register address.
         hr = transaction.queueWrite(driveAdr, sizeof(driveAdr), TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a write to send the modified data back to the port drive register.
         hr = transaction.queueWrite(driveData, sizeof(driveData));
-        
     }
 
     //
@@ -407,13 +376,11 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
         // Queue a write of the port output register address.
         outAdr[0] = (UCHAR)(OUT_BASE_ADR + port);
         hr = transaction.queueWrite(outAdr, sizeof(outAdr), TRUE);
-        
 
         if (SUCCEEDED(hr))
         {
             // Queue a read of the port output register.
             hr = transaction.queueRead(outData, sizeof(outData));
-            
         }
 
         if (SUCCEEDED(hr))
@@ -422,7 +389,7 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
             hr = transaction.queueCallback([&outData, bit]()
             {
                 outData[0] = outData[0] | (0x01U << bit);
-                return TRUE;
+                return S_OK;
             }
             );
         }
@@ -431,14 +398,12 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
         {
             // Queue a write of port output register address.
             hr = transaction.queueWrite(outAdr, sizeof(outAdr), TRUE);
-            
         }
 
         if (SUCCEEDED(hr))
         {
             // Queue a write to send the modified data back to the port drive register.
             hr = transaction.queueWrite(outData, sizeof(outData));
-            
         }
     }
 
@@ -448,9 +413,7 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
     if (SUCCEEDED(hr))
     {
         hr = transaction.execute();
-        
     }
-
     
     return hr;
 }
@@ -459,8 +422,6 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
 HRESULT CY8C9540ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & direction)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
-
     
     return hr;
 }
@@ -469,12 +430,11 @@ HRESULT CY8C9540ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & di
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] portBit The number of the port bit to configure as a PWM output.
 \param[in] pwmChan The PWM channel associated with the port bit.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
 HRESULT CY8C9540ADevice::SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmChan)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     ULONG port;                                     // Number of the port we are modifying
     ULONG bit;                                      // Number of the bit to modify within the port
@@ -483,29 +443,25 @@ HRESULT CY8C9540ADevice::SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmCha
     UCHAR selectPwmAdr[1] = { SEL_PWM_ADR };        // Address of Select PWM register
     UCHAR selectPwmData[1] = { 0 };                 // Data buffer for writing Select PWM register
 
-
     // Calculate the number of the port and the bit we are dealing with.
     port = portBit >> 3;
     bit = portBit & 0x07;
 
     if (port >= PORT_COUNT)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the expander bit to be an output with strong drive.
         hr = SetBitDirection(i2cAdr, portBit, DIRECTION_OUT, FALSE);
-        
     }
 
     // Select PWM to output on the pin.
@@ -513,7 +469,6 @@ HRESULT CY8C9540ADevice::SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmCha
     {
         // Queue a write of the port select register address.
         hr = transaction.queueWrite(portSelectAdr, sizeof(portSelectAdr));
-        
     }
 
     if (SUCCEEDED(hr))
@@ -521,21 +476,18 @@ HRESULT CY8C9540ADevice::SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmCha
         // Queue a write of the port select data.
         portSelectData[0] = (UCHAR)port;
         hr = transaction.queueWrite(portSelectData, sizeof(portSelectData));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a write of the Select PWM register address.
         hr = transaction.queueWrite(selectPwmAdr, sizeof(selectPwmAdr), TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a read of the Select PWM register.
         hr = transaction.queueRead(selectPwmData, sizeof(selectPwmData));
-        
     }
 
     if (SUCCEEDED(hr))
@@ -544,7 +496,7 @@ HRESULT CY8C9540ADevice::SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmCha
         hr = transaction.queueCallback([&selectPwmData, bit]()
         {
             selectPwmData[0] = selectPwmData[0] | (0x01 << bit);
-            return TRUE;
+            return S_OK;
         }
         );
     }
@@ -553,37 +505,31 @@ HRESULT CY8C9540ADevice::SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmCha
     {
         // Queue a write of the Select PWM register address.
         hr = transaction.queueWrite(selectPwmAdr, sizeof(selectPwmAdr), TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a write to send the modified value back to the Select PWM register.
         hr = transaction.queueWrite(selectPwmData, sizeof(selectPwmData));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         //  Perform the I2C transfers specified above.
         hr = transaction.execute();
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the expander port bit high.
         hr = SetBitState(i2cAdr, portBit, 1);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the PWM frequency.
         hr = _configurePwmChannelFrequency(i2cAdr, pwmChan);
-        
     }
-
     
     return hr;
 }
@@ -591,12 +537,11 @@ HRESULT CY8C9540ADevice::SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmCha
 /**
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] portBit The number of the port bit to configure for Digital I/O.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
 HRESULT CY8C9540ADevice::SetPortbitDio(ULONG i2cAdr, ULONG portBit)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     ULONG port;                                     // Number of the port we are modifying
     ULONG bit;                                      // Number of the bit to modify within the port
@@ -605,22 +550,19 @@ HRESULT CY8C9540ADevice::SetPortbitDio(ULONG i2cAdr, ULONG portBit)
     UCHAR selectPwmAdr[1] = { SEL_PWM_ADR };        // Address of Select PWM register
     UCHAR selectPwmData[1] = { 0 };                 // Data buffer for writing Select PWM register
 
-
     // Calculate the number of the port and the bit we are dealing with.
     port = portBit >> 3;
     bit = portBit & 0x07;
 
     if (port >= PORT_COUNT)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     // De-select PWM for the pin.
@@ -628,7 +570,6 @@ HRESULT CY8C9540ADevice::SetPortbitDio(ULONG i2cAdr, ULONG portBit)
     {
         // Queue a write of the port select register address.
         hr = transaction.queueWrite(portSelectAdr, sizeof(portSelectAdr));
-        
     }
 
     if (SUCCEEDED(hr))
@@ -636,21 +577,18 @@ HRESULT CY8C9540ADevice::SetPortbitDio(ULONG i2cAdr, ULONG portBit)
         // Queue a write of the port select data.
         portSelectData[0] = (UCHAR)port;
         hr = transaction.queueWrite(portSelectData, sizeof(portSelectData));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a write of the Select PWM register address.
         hr = transaction.queueWrite(selectPwmAdr, sizeof(selectPwmAdr), TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a read of the Select PWM register.
         hr = transaction.queueRead(selectPwmData, sizeof(selectPwmData));
-        
     }
 
     if (SUCCEEDED(hr))
@@ -659,7 +597,7 @@ HRESULT CY8C9540ADevice::SetPortbitDio(ULONG i2cAdr, ULONG portBit)
         hr = transaction.queueCallback([&selectPwmData, bit]()
         {
             selectPwmData[0] = selectPwmData[0] & ~(0x01 << bit);
-            return TRUE;
+            return S_OK;
         }
         );
     }
@@ -668,23 +606,19 @@ HRESULT CY8C9540ADevice::SetPortbitDio(ULONG i2cAdr, ULONG portBit)
     {
         // Queue a write of the Select PWM register address.
         hr = transaction.queueWrite(selectPwmAdr, sizeof(selectPwmAdr), TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a write to send the modified value back to the Select PWM register.
         hr = transaction.queueWrite(selectPwmData, sizeof(selectPwmData));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         //  Perform the I2C transfers specified above.
         hr = transaction.execute();
-        
     }
-
     
     return hr;
 }
@@ -694,12 +628,11 @@ Set the width of the positive pulses on one of the PWM channels.
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] channel The channel on the PWM chip for which to set the pulse width.
 \param[in] dutyCycle The desired duty-cycle of the positive pulses (0-0xFFFFFFFF for 0-100%).
-\return TRUE success.FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
 HRESULT CY8C9540ADevice::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCycle)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     ULONGLONG pulseWidth = 0;
     UCHAR chanSelectAdr[1] = { PWM_SELECT_ADR };    // Address of PWM Channel Select register
@@ -707,11 +640,9 @@ HRESULT CY8C9540ADevice::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG duty
     UCHAR pulseWidthAdr[1] = { PULSE_WIDTH_ADR };   // Address of PWM Pulsewidth register
     UCHAR pulseWidthData[1] = { 0 };                // Data buffer for writing Select PWM register
 
-
     if (channel >= PWM_CHAN_COUNT)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
@@ -725,14 +656,12 @@ HRESULT CY8C9540ADevice::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG duty
     {
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a write of the PWM Select register address.
         hr = transaction.queueWrite(chanSelectAdr, sizeof(chanSelectAdr));
-        
     }
 
     if (SUCCEEDED(hr))
@@ -740,30 +669,25 @@ HRESULT CY8C9540ADevice::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG duty
         // Queue a write of the PWM channel number data.
         chanSelectData[0] = (UCHAR)channel;
         hr = transaction.queueWrite(chanSelectData, sizeof(chanSelectData));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a write of the PWM Period register address.
         hr = transaction.queueWrite(pulseWidthAdr, sizeof(pulseWidthAdr), TRUE);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a write of the PWM Period data.
         hr = transaction.queueWrite(pulseWidthData, sizeof(pulseWidthData));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         //  Perform the I2C transfers specified above.
         hr = transaction.execute();
-        
     }
-
     
     return hr;
 }
@@ -773,22 +697,19 @@ This method gets the desired frequency from the array of frequencies by channel
 number.  The only frequency currently supported i 367 hz.
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] channel The channel on the PWM chip for which to set the frequencey.
-\return TRUE success.FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
 HRESULT CY8C9540ADevice::_configurePwmChannelFrequency(ULONG i2cAdr, ULONG channel)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     ULONGLONG pulseWidth = 0;
     UCHAR pwmRegBaseAdr[1] = { PWM_SELECT_ADR };    // Address of PWM Channel Select register
     UCHAR pwmRegData[3] = { 0, PWM_CLK_94K, 0xFF }; // Data buffer for writing to PWM registers
 
-
     if (channel >= PWM_CHAN_COUNT)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
@@ -798,26 +719,19 @@ HRESULT CY8C9540ADevice::_configurePwmChannelFrequency(ULONG i2cAdr, ULONG chann
 
         // Set the I2C address of the I/O Expander we want to talk to.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue a write of the PWM register data.
         hr = transaction.queueWrite(pwmRegData, sizeof(pwmRegData));
-        
     }
 
     if (SUCCEEDED(hr))
     {
         //  Perform the I2C transfer specified above.
         hr = transaction.execute();
-        
     }
-
     
     return hr;
 }
-
-
-

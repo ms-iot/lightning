@@ -69,6 +69,36 @@ attempting to use the ADC at the same time.
 */
 #define DMAP_E_ADC_DATA_FROM_WRONG_CHANNEL 0x80040212
 
+/// The width of data sent does not match the data width set on the SPI controller.
+/**
+The SPI data width must be set before begin() is called since the controller
+data width can't be changed while the controller is running.  Call SPI.end(), 
+set the desired width, then call SPI.begin() to start the contrller again.
+*/
+#define DMAP_E_SPI_DATA_WIDTH_MISMATCH 0x80040213
+
+/// The ADC does not have the channel that has been requested.
+#define DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL 0x80040214
+
+/// The specified BUS number does not exist on this board.
+#define DMAP_E_SPI_BUS_REQUESTED_DOES_NOT_EXIST 0x80040215
+
+/// The SPI mode specified is not a legal SPI mode value (0-3).
+#define DMAP_E_SPI_MODE_SPECIFIED_IS_INVALID 0x80042016
+
+/// The SPI speed specified is not in the supported range.
+#define DMAP_E_SPI_SPEED_SPECIFIED_IS_INVALID 0x80040217
+
+/// The port/bit specified does not exist on the device.
+#define DMAP_E_INVALID_PORT_BIT_FOR_DEVICE 0x80040218
+
+/// A GPIO operation was performed on a pin configured as a PWM output.
+#define DMAP_E_GPIO_PIN_IS_SET_TO_PWM 0x80040219
+
+/// The specified number of bits per transfer is not supported by the SPI controller.
+#define DMAP_E_SPI_DATA_WIDTH_SPECIFIED_IS_INVALID 0x8004021A
+
+
 
 // TODO: Tests for build types.  Here for convenience, no other reason.
 #include <winapifamily.h>

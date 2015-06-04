@@ -397,7 +397,7 @@ private:
     inline HRESULT _setResumePinOutput(ULONG portBit)
     {
 		// TODO:
-		return TRUE;
+		return S_OK;
         //QUARKLGPIO_INPUT_BUFFER inp;
         //DWORD bytesReturned;
 

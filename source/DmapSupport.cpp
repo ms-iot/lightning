@@ -10,7 +10,7 @@ access to the controller is requested.
 \param[in] deviceName The name of the PCI device used to map the controller in question.
 \param[out] handle Handle opened to the device specified by deviceName.
 \param[out] baseAddress Base address of the controller in question.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT success or error code.
 */
 HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress)
 {
@@ -23,38 +23,34 @@ Get the base address of a memory mapped controller in the SOC.
 \param[out] handle Handle opened to the device specified by deviceName.
 \param[out] baseAddress Base address of the controller in question.
 \param[in] shareMode Sharing specifier as specified to CreateFile().
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT success or error code.
 */
 HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     DMAP_MAPMEMORY_OUTPUT_BUFFER buf = { 0 };
     DWORD bytesReturned = 0;
 
     hr = OpenControllerDevice(deviceName, handle, shareMode);
     
-
     if (SUCCEEDED(hr) && (baseAddress == nullptr))
     {
         // Retrieve the base address of controller registers.
-        hr = DeviceIoControl(
-            handle,
-            IOCTL_DMAP_MAPMEMORY,
-            nullptr,
-            0,
-            &buf,
-            sizeof(buf),
-            &bytesReturned,
-            nullptr);
-
-		if (FAILED(hr))
-        {
-            error = GetLastError();
-            CloseHandle(handle);
-            handle = INVALID_HANDLE_VALUE;
-            baseAddress = nullptr;
-        }
+		if (!DeviceIoControl(
+			handle,
+			IOCTL_DMAP_MAPMEMORY,
+			nullptr,
+			0,
+			&buf,
+			sizeof(buf),
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+			CloseHandle(handle);
+			handle = INVALID_HANDLE_VALUE;
+			baseAddress = nullptr;
+		}
 
 		if (SUCCEEDED(hr))
         {
@@ -72,12 +68,11 @@ IO mapped controllers.
 \param[in] deviceName The name of the PCI device used to map the controller in question.
 \param[out] handle Handle opened to the device specified by deviceName.
 \param[in] shareMode Sharing specifier as specified to CreateFile().
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT success or error code.
 */
 HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
 
     if (handle == INVALID_HANDLE_VALUE)
     {
@@ -93,11 +88,9 @@ HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode
 
         if (handle == INVALID_HANDLE_VALUE)
         {
-            hr = FALSE;
-            error = GetLastError();
+            hr = HRESULT_FROM_WIN32(GetLastError());
         }
     }
-
     
     return hr;
 }

@@ -43,7 +43,7 @@ public:
     \param[in] pin Number of GPIO pin to read with the ADC.
     \param[out] value The value read from the ADC.
     \param[out] bits The size of the reading in "value" in bits.
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     inline HRESULT readValue(ULONG pin, ULONG & value, ULONG & bits)
     {

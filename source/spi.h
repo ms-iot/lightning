@@ -60,11 +60,14 @@ public:
     */
     void begin()
     {
+		HRESULT hr;
         BoardPinsClass::BOARD_TYPE board;
 
-        if (!g_pins.getBoardType(board))
+		hr = g_pins.getBoardType(board);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred determining board type: %08x", GetLastError());
+            ThrowError("An error occurred determining board type: %08x", hr);
         }
 
         if (board == BoardPinsClass::BOARD_TYPE::MBM_BARE)
@@ -87,62 +90,84 @@ public:
         }
 
         // Set SCK and MOSI as outputs dedicated to SPI, and pulled LOW.
-        if (!g_pins.verifyPinFunction(m_sckPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION))
+		hr = g_pins.verifyPinFunction(m_sckPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred configuring SCK pin for SPI use: %08x", GetLastError());
+            ThrowError("An error occurred configuring SCK pin for SPI use: %08x", hr);
         }
 
-        if (!g_pins.setPinState(m_sckPin, LOW))
+		hr = g_pins.setPinState(m_sckPin, LOW);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred setting SCK pin LOW: %08x", GetLastError());
+            ThrowError("An error occurred setting SCK pin LOW: %08x", hr);
         }
 
-        if (!g_pins.setPinMode(m_sckPin, DIRECTION_OUT, FALSE))
+		hr = g_pins.setPinMode(m_sckPin, DIRECTION_OUT, FALSE);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred setting SCK pin as output: %08x", GetLastError());
+            ThrowError("An error occurred setting SCK pin as output: %08x", hr);
         }
 
-        if (!g_pins.verifyPinFunction(m_mosiPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION))
+		hr = g_pins.verifyPinFunction(m_mosiPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred configuring MOSI pin for SPI use: %08x", GetLastError());
+            ThrowError("An error occurred configuring MOSI pin for SPI use: %08x", hr);
         }
 
-        if (!g_pins.setPinState(m_mosiPin, LOW))
+		hr = g_pins.setPinState(m_mosiPin, LOW);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred setting MOSI pin LOW: %08x", GetLastError());
+            ThrowError("An error occurred setting MOSI pin LOW: %08x", hr);
         }
 
-        if (!g_pins.setPinMode(m_mosiPin, DIRECTION_OUT, FALSE))
+		hr = g_pins.setPinMode(m_mosiPin, DIRECTION_OUT, FALSE);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred setting MOSI pin as output: %08x", GetLastError());
+            ThrowError("An error occurred setting MOSI pin as output: %08x", hr);
         }
 
         // Set MISO as an input dedicated to SPI.
-        if (!g_pins.verifyPinFunction(m_misoPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION))
+		hr = g_pins.verifyPinFunction(m_misoPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred configuring MISO pin for SPI use: %08x", GetLastError());
+            ThrowError("An error occurred configuring MISO pin for SPI use: %08x", hr);
         }
 
-        if (!g_pins.setPinMode(m_misoPin, DIRECTION_IN, FALSE))
+		hr = g_pins.setPinMode(m_misoPin, DIRECTION_IN, FALSE);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred setting MISO pin as output: %08x", GetLastError());
+            ThrowError("An error occurred setting MISO pin as output: %08x", hr);
         }
 
         if (board == BoardPinsClass::BOARD_TYPE::MBM_BARE)
         {
-            if (!g_pins.verifyPinFunction(m_csPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION))
+			hr = g_pins.verifyPinFunction(m_csPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION);
+
+			if (FAILED(hr))
             {
-                ThrowError("An error occurred configuring CS pin for SPI use: %08x", GetLastError());
+                ThrowError("An error occurred configuring CS pin for SPI use: %08x", hr);
             }
 
-            if (!g_pins.setPinState(m_csPin, HIGH))
+			hr = g_pins.setPinState(m_csPin, HIGH);
+
+			if (FAILED(hr))
             {
-                ThrowError("An error occurred setting CS pin HIGH: %08x", GetLastError());
+                ThrowError("An error occurred setting CS pin HIGH: %08x", hr);
             }
 
-            if (!g_pins.setPinMode(m_csPin, DIRECTION_OUT, FALSE))
+			hr = g_pins.setPinMode(m_csPin, DIRECTION_OUT, FALSE);
+
+			if (FAILED(hr))
             {
-                ThrowError("An error occurred setting CS pin as output: %08x", GetLastError());
+                ThrowError("An error occurred setting CS pin as output: %08x", hr);
             }
         }
 
@@ -157,9 +182,11 @@ public:
         }
 
         // Map the SPI1 controller registers into memory.
-        if (!m_controller->begin(EXTERNAL_SPI_BUS, m_mode, m_clockKHz, m_dataWidth))
+		hr = m_controller->begin(EXTERNAL_SPI_BUS, m_mode, m_clockKHz, m_dataWidth);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred initializing the SPI controller: %08x", GetLastError());
+            ThrowError("An error occurred initializing the SPI controller: %08x", hr);
         }
     }
 
@@ -169,23 +196,33 @@ public:
     */
     void end()
     {
+		HRESULT hr;
+
         if (m_controller != nullptr)
         {
             delete m_controller;
             m_controller = nullptr;
 
             // Set all SPI pins as digitial I/O.
-            if (!g_pins.verifyPinFunction(m_sckPin, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION))
+			hr = g_pins.verifyPinFunction(m_sckPin, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
+
+			if (FAILED(hr))
             {
-                ThrowError("An error occurred reverting SCK pin from SPI use: %08x", GetLastError());
+                ThrowError("An error occurred reverting SCK pin from SPI use: %08x", hr);
             }
-            if (!g_pins.verifyPinFunction(m_mosiPin, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION))
+
+			hr = g_pins.verifyPinFunction(m_mosiPin, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
+
+			if (FAILED(hr))
             {
-                ThrowError("An error occurred reverting MOSI pin from SPI use: %08x", GetLastError());
+                ThrowError("An error occurred reverting MOSI pin from SPI use: %08x", hr);
             }
-            if (!g_pins.verifyPinFunction(m_misoPin, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION))
+
+			hr = g_pins.verifyPinFunction(m_misoPin, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
+
+			if (FAILED(hr))
             {
-                ThrowError("An error occurred reverting MISO pin from SPI use: %08x", GetLastError());
+                ThrowError("An error occurred reverting MISO pin from SPI use: %08x", hr);
             }
         }
     }
@@ -242,13 +279,17 @@ public:
     */
     void setClockDivider(ULONG clockKHz)
     {
+		HRESULT hr;
+
         m_clockKHz = clockKHz;
 
         if (m_controller != nullptr)
         {
-            if (!m_controller->setClock(clockKHz))
+			hr = m_controller->setClock(clockKHz);
+
+			if (FAILED(hr))
             {
-                ThrowError("An error occurred setting the SPI clock rate: %d", GetLastError());
+                ThrowError("An error occurred setting the SPI clock rate: %d", hr);
             }
         }
     }
@@ -261,6 +302,8 @@ public:
     */
     void setDataMode(UINT mode)
     {
+		HRESULT hr;
+
         if ((mode != SPI_MODE0) && (mode != SPI_MODE1) && (mode != SPI_MODE2) && (mode != SPI_MODE3))
         {
             ThrowError("Spi Mode must be SPI_MODE0, SPI_MODE1, SPI_MODE2 or SPI_MODE3.");
@@ -269,9 +312,11 @@ public:
 
         if (m_controller != nullptr)
         {
-            if (!m_controller->setMode(mode))
+			hr = m_controller->setMode(mode);
+
+			if (FAILED(hr))
             {
-                ThrowError("An error occurred setting the SPI mode: %d", GetLastError());
+                ThrowError("An error occurred setting the SPI mode: %d", hr);
             }
         }
     }
@@ -295,6 +340,7 @@ public:
     */
     inline ULONG transfer(ULONG val)
     {
+		HRESULT hr;
         ULONG dataReturn = 0;
 
         if (m_controller == nullptr)
@@ -303,10 +349,13 @@ public:
         }
 
         // Transfer the data.
-        if (!m_controller->transfer8(val, dataReturn))
+		hr = m_controller->transfer8(val, dataReturn);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred atempting to transfer SPI data: %d", GetLastError());
+            ThrowError("An error occurred atempting to transfer SPI data: %d", hr);
         }
+
         return dataReturn;
     }
 
@@ -318,6 +367,7 @@ public:
     */
     inline ULONG transfer24(ULONG val)
     {
+		HRESULT hr;
         ULONG dataReturn = 0;
 
         if (m_controller == nullptr)
@@ -326,10 +376,13 @@ public:
         }
 
         // Transfer the data.
-        if (!m_controller->transfer24(val, dataReturn))
+		hr = m_controller->transfer24(val, dataReturn);
+
+		if (FAILED(hr))
         {
-            ThrowError("An error occurred atempting to transfer SPI data: %d", GetLastError());
+            ThrowError("An error occurred atempting to transfer SPI data: %d", hr);
         }
+
         return dataReturn;
     }
 

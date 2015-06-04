@@ -10,7 +10,7 @@
 \param[in] mode The SPI mode to use (0-3)
 \param[in] clkcKhz The SPI bit clock rate to configure in Khz (1 or greater)
 \param[in] dataBits The number of data bits in each transfer (4-32)
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 HRESULT SpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits)
 {
@@ -42,8 +42,7 @@ HRESULT SpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz, U
             
             break;
         default:
-            hr = FALSE;
-            error = ERROR_UNKNOWN_PRODUCT;
+			hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
         }
     }
 
@@ -75,7 +74,7 @@ void SpiControllerClass::end()
 
 /**
 \param[in] clockKhz The SPI bit rate clock to set.
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 HRESULT SpiControllerClass::setClock(ULONG clockKhz)
 {
@@ -100,8 +99,7 @@ HRESULT SpiControllerClass::setClock(ULONG clockKhz)
             
             break;
         default:
-            hr = FALSE;
-            error = ERROR_UNKNOWN_PRODUCT;
+			hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
         }
     }
 
@@ -113,7 +111,7 @@ HRESULT SpiControllerClass::setClock(ULONG clockKhz)
 This method follows the Arduino conventions for SPI mode settings.
 The SPI mode specifies the clock polarity and phase.
 \param[in] mode The mode to set for the SPI bus (0, 1, 2 or 3)
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 HRESULT SpiControllerClass::setMode(ULONG mode)
 {
@@ -138,8 +136,7 @@ HRESULT SpiControllerClass::setMode(ULONG mode)
             
             break;
         default:
-            hr = FALSE;
-            error = ERROR_UNKNOWN_PRODUCT;
+			hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
         }
     }
 
@@ -198,7 +195,7 @@ QuarkSpiControllerClass::QuarkSpiControllerClass()
 \param[in] mode The SPI mode (clock polarity and phase: 0, 1, 2 or 3)
 \param[in] clockKhz The clock speed to use for the SPI bus
 \param[in] dataBits The size of an SPI transfer in bits
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 HRESULT QuarkSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits)
 {
@@ -221,8 +218,7 @@ HRESULT QuarkSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clock
             deviceName = galileoSpi1DeviceName;
             break;
         default:    // Only support the two SPI busses
-            hr = FALSE;
-            error = ERROR_INVALID_PARAMETER;
+			hr = DMAP_E_SPI_BUS_REQUESTED_DOES_NOT_EXIST;
         }
 
         if (SUCCEEDED(hr))
@@ -246,19 +242,11 @@ HRESULT QuarkSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clock
 
             m_controller->SSSR.ROR = 1;                    // Clear any RX Overrun Status bit currently set
 
-            if (!_setMode(mode))
-            {
-                hr = FALSE;
-                error = GetLastError();
-            }
+			hr = _setMode(mode);
         }
         if (SUCCEEDED(hr))
         {
-            if (!_setClockRate(clockKhz))
-            {
-                hr = FALSE;
-                error = GetLastError();
-            }
+			hr = _setClockRate(clockKhz);
         }
     }
 
@@ -289,7 +277,7 @@ void QuarkSpiControllerClass::_end()
 This method follows the Arduino conventions for SPI mode settings.
 The SPI mode specifies the clock polarity and phase.
 \param[in] mode The mode to set for the SPI bus (0, 1, 2 or 3)
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 HRESULT QuarkSpiControllerClass::_setMode(ULONG mode)
 {
@@ -302,8 +290,7 @@ HRESULT QuarkSpiControllerClass::_setMode(ULONG mode)
     // If we don't have the controller registers mapped, fail.
     if (m_controller == nullptr)
     {
-        hr = FALSE;
-        error = ERROR_NOT_READY;
+        hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
     if (SUCCEEDED(hr))
@@ -328,8 +315,7 @@ HRESULT QuarkSpiControllerClass::_setMode(ULONG mode)
             phase = 1;      // Sample data on inactive going clock edge
             break;
         default:
-            hr = FALSE;
-            error = ERROR_INVALID_PARAMETER;
+            hr = DMAP_E_SPI_MODE_SPECIFIED_IS_INVALID;
         }
     }
 
@@ -346,7 +332,7 @@ HRESULT QuarkSpiControllerClass::_setMode(ULONG mode)
 /**
 This method sets one of the SPI clock rates we support: 1 khz - 20 mhz.
 \param[in] clockKhz Desired clock rate in Khz.
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 HRESULT QuarkSpiControllerClass::_setClockRate(ULONG clockKhz)
 {
@@ -358,8 +344,7 @@ HRESULT QuarkSpiControllerClass::_setClockRate(ULONG clockKhz)
     // If we don't have the controller registers mapped, fail.
     if (m_controller == nullptr)
     {
-        hr = FALSE;
-        error = ERROR_NOT_READY;
+        hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
     if (SUCCEEDED(hr))
@@ -427,8 +412,7 @@ HRESULT QuarkSpiControllerClass::_setClockRate(ULONG clockKhz)
         }
         else
         {
-            hr = FALSE;
-            error = ERROR_INVALID_PARAMETER;
+            hr = DMAP_E_SPI_SPEED_SPECIFIED_IS_INVALID;
         }
     }
 
@@ -474,7 +458,7 @@ BtSpiControllerClass::BtSpiControllerClass()
 \param[in] mode The SPI mode (clock polarity and phase: 0, 1, 2 or 3)
 \param[in] clockKhz The clock speed to use for the SPI bus
 \param[in] dataBits The size of an SPI transfer in bits
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 HRESULT BtSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits)
 {
@@ -496,8 +480,7 @@ HRESULT BtSpiControllerClass::_begin(ULONG busNumber, ULONG mode, ULONG clockKhz
             deviceName = mbmSpiDeviceName;
             break;
         default:    // Only support one SPI bus
-            hr = FALSE;
-            error = ERROR_INVALID_PARAMETER;
+            hr = DMAP_E_SPI_BUS_REQUESTED_DOES_NOT_EXIST;
         }
 
         if (SUCCEEDED(hr))
@@ -573,7 +556,7 @@ void BtSpiControllerClass::_end()
 This method follows the Arduino conventions for SPI mode settings.
 The SPI mode specifies the clock polarity and phase.
 \param[in] mode The mode to set for the SPI bus (0, 1, 2 or 3)
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 HRESULT BtSpiControllerClass::_setMode(ULONG mode)
 {
@@ -587,8 +570,7 @@ HRESULT BtSpiControllerClass::_setMode(ULONG mode)
     // If we don't have the controller registers mapped, fail.
     if (m_controller == nullptr)
     {
-        hr = FALSE;
-        error = ERROR_NOT_READY;
+		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
     if (SUCCEEDED(hr))
@@ -613,8 +595,7 @@ HRESULT BtSpiControllerClass::_setMode(ULONG mode)
             phase = 1;      // Sample data on inactive going clock edge
             break;
         default:
-            hr = FALSE;
-            error = ERROR_INVALID_PARAMETER;
+            hr = DMAP_E_SPI_MODE_SPECIFIED_IS_INVALID;
         }
     }
 
@@ -633,7 +614,7 @@ HRESULT BtSpiControllerClass::_setMode(ULONG mode)
 /**
 This method sets one of the SPI clock rates we support: 1 khz - 15 mhz.
 \param[in] clockKhz Desired clock rate in Khz.
-\return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+\return HRESULT success or error code.
 */
 HRESULT BtSpiControllerClass::_setClockRate(ULONG clockKhz)
 {
@@ -647,8 +628,7 @@ HRESULT BtSpiControllerClass::_setClockRate(ULONG clockKhz)
     // If we don't have the controller registers mapped, fail.
     if (m_controller == nullptr)
     {
-        hr = FALSE;
-        error = ERROR_NOT_READY;
+        hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
     if (SUCCEEDED(hr))
@@ -716,8 +696,7 @@ HRESULT BtSpiControllerClass::_setClockRate(ULONG clockKhz)
         }
         else
         {
-            hr = FALSE;
-            error = ERROR_INVALID_PARAMETER;
+            hr = DMAP_E_SPI_SPEED_SPECIFIED_IS_INVALID;
         }
     }
 

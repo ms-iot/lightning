@@ -31,42 +31,36 @@ This method takes the actions needed to set a port bit of the PWM chip to the de
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] portBit The number of the port bit to modify.
 \param[in] state The state to set the port bit to: HIGH or LOW.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
 HRESULT PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     UCHAR bitRegsAdr = 0;                       // Address of start of registers for bit in question
     UCHAR lowBitData[REGS_PER_LED] = { 0x00, 0x00, 0x00, 0x10 };    // Registers data to set bit low
     UCHAR highBitData[REGS_PER_LED] = { 0x00, 0x10, 0x00, 0x00 };   // Registers data to set bit high
 
-
     if (portBit >= LED_COUNT)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr) && (state != HIGH) && (state != LOW))
     {
-        hr = FALSE;
-        error = ERROR_INVALID_STATE;
+        hr = DMAP_E_INVALID_PIN_STATE_SPECIFIED;
     }
 
     if (SUCCEEDED(hr))
     {
         // Make sure the PWM chip is initialized.
-        hr = _InitializeChip(i2cAdr);
-        
-    }
+		hr = _InitializeChip(i2cAdr);
+	}
 
     if (SUCCEEDED(hr))
     {
         // Set the I2C address of the PWM chip.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     if (SUCCEEDED(hr))
@@ -79,7 +73,6 @@ HRESULT PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 
         // Queue sending the base address of the port registers to the chip.
         hr = transaction.queueWrite(&bitRegsAdr, 1);
-        
     }
 
     if (SUCCEEDED(hr))
@@ -100,9 +93,7 @@ HRESULT PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
     {
         // Actually perform the I2C transfers specified above.
         hr = transaction.execute();
-        
     }
-
     
     return hr;
 }
@@ -111,13 +102,12 @@ HRESULT PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 This expects the port bit to be configured to be constantly on or off.
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] portBit The number of the port bit to read.
-\param[out] state The state of the port bit to: HIGH or LOW.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\param[out] state The state of the port bit: HIGH or LOW.
+\return HRESULT success or error code.
 */
 HRESULT PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     UCHAR bitRegsAdr = 0;                       // Address of start of registers for bit in question
     UCHAR bitData[REGS_PER_LED] = { 0 };        // Buffer for bit register contents
@@ -125,31 +115,19 @@ HRESULT PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 
     if (portBit >= LED_COUNT)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_ADDRESS;
-    }
-
-    if (SUCCEEDED(hr) && (state != HIGH) && (state != LOW))
-    {
-        hr = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
     {
-        // If the chip is not initialized, the ports don't work.
-        if (!m_chipIsInitialized)
-        {
-            hr = FALSE;
-            error = ERROR_INVALID_ENVIRONMENT;
-        }
+		// Make sure the PWM chip is initialized.
+		hr = _InitializeChip(i2cAdr);
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the I2C address of the PWM chip.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     if (SUCCEEDED(hr))
@@ -162,21 +140,18 @@ HRESULT PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 
         // Queue sending the base address of the port registers to the chip.
         hr = transaction.queueWrite(&bitRegsAdr, 1);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Queue reading the registers for the bit in question.
         hr = transaction.queueRead(bitData, REGS_PER_LED);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
         hr = transaction.execute();
-        
     }
 
     if (SUCCEEDED(hr))
@@ -193,12 +168,9 @@ HRESULT PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
         }
         // If both constant state bits are zero, the port bit is not in a constant state.
         {
-            hr = FALSE;
-            error = ERROR_INVALID_STATE;
-
+            hr = DMAP_E_GPIO_PIN_IS_SET_TO_PWM;
         }
     }
-
     
     return hr;
 }
@@ -208,12 +180,11 @@ Set the width of the positive pulses on one of the PWM channels.
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] channel The channel on the PWM chip for which to set the pulse width.
 \param[in] dutyCycle The desired duty-cycle of the positive pulses (0-0xFFFFFFFF for 0-100%).
-\return TRUE success.FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
 HRESULT PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCycle)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
     I2cTransactionClass transaction;
     ULONGLONG tmpPulsetime = 0;
     UCHAR bitRegsAdr = 0;                       // Address of start of registers for bit in question
@@ -222,22 +193,19 @@ HRESULT PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCy
 
     if (channel >= LED_COUNT)
     {
-        hr = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+		hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
     {
         // Make sure the PWM chip is initialized.
         hr = _InitializeChip(i2cAdr);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Set the I2C address of the PWM chip.
         hr = transaction.setAddress(i2cAdr);
-        
     }
 
     if (SUCCEEDED(hr))
@@ -250,7 +218,6 @@ HRESULT PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCy
 
         // Queue sending the base address of the port registers to the chip.
         hr = transaction.queueWrite(&bitRegsAdr, 1);
-        
     }
 
     if (SUCCEEDED(hr))
@@ -263,16 +230,13 @@ HRESULT PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCy
 
         // Queue sending the registers contents for the desired pulse width.
         hr = transaction.queueWrite(pulseData, REGS_PER_LED);
-        
     }
 
     if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
         hr = transaction.execute();
-        
     }
-
     
     return hr;
 }
@@ -284,12 +248,11 @@ If the chip has already been initialized it does nothing, otherwise it sets the 
 prescale value, turns on the chip and sets the mode registers for how other methods access 
 the chip.
 \param[in] i2cAdr The I2C address of the PWM chip.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
 HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
 {
     HRESULT hr = S_OK;
-    DWORD error = ERROR_SUCCESS;
 
     // If we don't know that the chip is already initialized:
     if (!m_chipIsInitialized)
@@ -308,7 +271,6 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
 
         // Set the I2C address of the PWM chip.
         hr = transaction.setAddress(i2cAdr);
-        
 
         if (SUCCEEDED(hr))
         {
@@ -317,14 +279,12 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
 
             // Queue sending the address of the MODE1 regeister to the PWM chip.
             hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1Reg));
-            
         }
 
         if (SUCCEEDED(hr))
         {
             // Queue reading the contents of the MODE1 register.
             hr = transaction.queueRead(readBuf, sizeof(readBuf));
-            
         }
 
         //
@@ -341,7 +301,7 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
                 {
                     transaction.abort();
                 }
-                return TRUE;
+                return S_OK;
             }
             );
         }
@@ -354,28 +314,24 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
         {
             // Queue sending the address of the PRE_SCALE register to the PWM chip.
             hr = transaction.queueWrite(preScaleAdr, sizeof(preScaleAdr), TRUE);
-            
         }
 
         if (SUCCEEDED(hr))
         {
             // Queue sendng the prescale value.
             hr = transaction.queueWrite(&m_freqPreScale, 1);
-            
         }
 
         if (SUCCEEDED(hr))
         {
             // Queue sending the address of the MODE1 register to the PWM chip.
             hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1RegAdr), TRUE);
-            
         }
 
         if (SUCCEEDED(hr))
         {
             // Queue sending the contents of MODE1 register.
             hr = transaction.queueWrite((PUCHAR)&mode1Reg, 1);
-            
         }
 
         if (SUCCEEDED(hr))
@@ -392,14 +348,12 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
         {
             // Queue RESTART and sending the address of the MODE2 register to the PWM chip.
             hr = transaction.queueWrite(mode2RegAdr, sizeof(mode2RegAdr), TRUE);
-            
         }
 
         if (SUCCEEDED(hr))
         {
             // Queue sending the contents of MODE2 register.
             hr = transaction.queueWrite((PUCHAR)&mode2Reg, 1);
-            
         }
 
         //
@@ -410,7 +364,6 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
         {
             // Actually perform the I2C transfers specified above.
             hr = transaction.execute();
-            
         }
 
         //
@@ -423,7 +376,6 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
             m_chipIsInitialized = TRUE;
         }
     }
-
     
     return hr;
 }

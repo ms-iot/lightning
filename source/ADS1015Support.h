@@ -23,7 +23,7 @@ public:
 
     /// Prepare to use this ADC.
     /**
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
     inline HRESULT begin()
     {
@@ -43,7 +43,7 @@ public:
     \param[in] channel Number of channel on ADC to read.
     \param[out] value The value read from the ADC.
     \param[out] bits The size of the reading in "value" in bits.
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     \note This routine is not multi-thread safe.  If two or more threads access the 
     ADC at the same time, each thread could be changing the other thread's configuration 
     (such as channel number).  A global mutex could be added to fix this.
@@ -82,8 +82,7 @@ public:
             configH.MUX = ANI3;
             break;
         default:
-            hr = FALSE;
-            error = ERROR_INVALID_PARAMETER;
+			hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
         }
 
         if (SUCCEEDED(hr))

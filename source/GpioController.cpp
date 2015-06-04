@@ -29,7 +29,7 @@ HRESULT QuarkFabricGpioControllerClass::_mapController()
 }
 
 /**
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT success or error code.
 */
 HRESULT BtFabricGpioControllerClass::_mapS0Controller()
 {
@@ -51,7 +51,7 @@ HRESULT BtFabricGpioControllerClass::_mapS0Controller()
 }
 
 /**
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT success or error code.
 */
 HRESULT BtFabricGpioControllerClass::_mapS5Controller()
 {
@@ -75,7 +75,7 @@ HRESULT BtFabricGpioControllerClass::_mapS5Controller()
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT success or error code.
 */
 HRESULT QuarkLegacyGpioControllerClass::_openController()
 {
