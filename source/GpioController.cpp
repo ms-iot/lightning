@@ -6,6 +6,7 @@
 
 #include "GpioController.h"
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 \return HRESULT error or success code.
 */
@@ -27,6 +28,7 @@ HRESULT QuarkFabricGpioControllerClass::_mapController()
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 /**
 \return HRESULT success or error code.

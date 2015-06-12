@@ -103,9 +103,9 @@ set the desired width, then call SPI.begin() to start the contrller again.
 // TODO: Tests for build types.  Here for convenience, no other reason.
 #include <winapifamily.h>
 
-// For UWP app:
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)       // If building a UWP app:
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
+// For UWP app: (This form is used because WINAPI_PARTITION_APP is always true in 8.1 SDK.)
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)       // If building a UWP app:
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 // For Win32 app:
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:

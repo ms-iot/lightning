@@ -10,8 +10,12 @@
 
 #include "ArduinoCommon.h"
 #include "DmapSupport.h"
-#include "quarklgpio.h"
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+#include "quarklgpio.h"
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// Class used to interact with the Quark Fabric GPIO hardware.
 class QuarkFabricGpioControllerClass
 {
@@ -235,11 +239,15 @@ private:
         _bittestandset((LONG*)&m_controller->GPIO_SWPORTA_DDR.ALL_BITS, portBit);
     }
 };
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// The global object used to interact with the Fabric GPIO hardware.
 __declspec (selectany) QuarkFabricGpioControllerClass g_quarkFabricGpio;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// Class used to interact with the Quark Legacy GPIO hardware.
 class QuarkLegacyGpioControllerClass
 {
@@ -266,8 +274,6 @@ public:
 	*/
     inline HRESULT openIfNeeded()
     {
-
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// TODO: This whole routine can probably eventually be removed for UWP build
         if (m_hController == INVALID_HANDLE_VALUE)
         {
             return _openController();
@@ -276,12 +282,6 @@ public:
         {
 			return S_OK;
         }
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
-		return S_OK;
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
-
 	}
 
     /// Method to set the state of a Legacy Core Well GPIO port bit.
@@ -330,94 +330,117 @@ private:
     /// Method to set a Legacy Core Well GPIO pin as an input.
     inline HRESULT _setCorePinInput(ULONG portBit)
     {
-		// TODO:
-		return S_OK;
-        //QUARKLGPIO_INPUT_BUFFER inp;
-        //DWORD bytesReturned;
+        QUARKLGPIO_INPUT_BUFFER inp;
+        DWORD bytesReturned;
 
-        //inp.Bank = QUARKLGPIO_BANK_COREWELL;
-        //inp.Mask = 0x1 << portBit;
+        inp.Bank = QUARKLGPIO_BANK_COREWELL;
+        inp.Mask = 0x1 << portBit;
 
-        //return DeviceIoControl(
-        //    m_hController,
-        //    IOCTL_QUARKLGPIO_SET_DIR_INPUT,
-        //    &inp,
-        //    sizeof(inp),
-        //    nullptr,
-        //    0,
-        //    &bytesReturned,
-        //    nullptr);
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_SET_DIR_INPUT,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		else
+		{
+			return S_OK;
+		}
     }
 
     /// Method to set a Legacy Core Well GPIO pin as an output
     inline HRESULT _setCorePinOutput(ULONG portBit)
     {
-		// TODO:
-		return S_OK;
-        //QUARKLGPIO_INPUT_BUFFER inp;
-        //DWORD bytesReturned;
+        QUARKLGPIO_INPUT_BUFFER inp;
+        DWORD bytesReturned;
 
-        //inp.Bank = QUARKLGPIO_BANK_COREWELL;
-        //inp.Mask = 0x1 << portBit;
+        inp.Bank = QUARKLGPIO_BANK_COREWELL;
+        inp.Mask = 0x1 << portBit;
 
-        //return DeviceIoControl(
-        //    m_hController,
-        //    IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
-        //    &inp,
-        //    sizeof(inp),
-        //    nullptr,
-        //    0,
-        //    &bytesReturned,
-        //    nullptr);
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		else
+		{
+			return S_OK;
+		}
     }
 
     /// Method to set a Legacy Resume Well GPIO pin as an input.
     inline HRESULT _setResumePinInput(ULONG portBit)
     {
-		// TODO:
-		return S_OK;
-        //QUARKLGPIO_INPUT_BUFFER inp;
-        //DWORD bytesReturned;
+        QUARKLGPIO_INPUT_BUFFER inp;
+        DWORD bytesReturned;
 
-        //inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
-        //inp.Mask = 0x1 << portBit;
+        inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
+        inp.Mask = 0x1 << portBit;
 
-        //return DeviceIoControl(
-        //    m_hController,
-        //    IOCTL_QUARKLGPIO_SET_DIR_INPUT,
-        //    &inp,
-        //    sizeof(inp),
-        //    nullptr,
-        //    0,
-        //    &bytesReturned,
-        //    nullptr);
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_SET_DIR_INPUT,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		else
+		{
+			return S_OK;
+		}
     }
 
     /// Method to set a Legacy Resume Well GPIO pin as an output
     inline HRESULT _setResumePinOutput(ULONG portBit)
     {
-		// TODO:
-		return S_OK;
-        //QUARKLGPIO_INPUT_BUFFER inp;
-        //DWORD bytesReturned;
+        QUARKLGPIO_INPUT_BUFFER inp;
+        DWORD bytesReturned;
 
-        //inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
-        //inp.Mask = 0x1 << portBit;
+        inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
+        inp.Mask = 0x1 << portBit;
 
-        //return DeviceIoControl(
-        //    m_hController,
-        //    IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
-        //    &inp,
-        //    sizeof(inp),
-        //    nullptr,
-        //    0,
-        //    &bytesReturned,
-        //    nullptr);
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		else
+		{
+			return S_OK;
+		}
     }
 };
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// The global object used to interact with the Legacy GPIO hardware.
 __declspec (selectany) QuarkLegacyGpioControllerClass g_quarkLegacyGpio;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 
 /// Class used to interact with the BayTrail Fabric GPIO hardware.
@@ -639,6 +662,7 @@ private:
 __declspec (selectany) BtFabricGpioControllerClass g_btFabricGpio;
 
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has verified the input parameters.
 \param[in] portBit The number of the bit to set. Range: 0-7.
@@ -665,7 +689,9 @@ inline HRESULT QuarkFabricGpioControllerClass::setPinState(ULONG portBit, ULONG 
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 If the port bit is configured as in input, the state passed back is the state of the external
 signal connnected to the bit.  If the port bit is configured as an output, the state passed
@@ -688,7 +714,9 @@ inline HRESULT QuarkFabricGpioControllerClass::getPinState(ULONG portBit, ULONG 
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-7.
@@ -716,7 +744,9 @@ inline HRESULT QuarkFabricGpioControllerClass::setPinDirection(ULONG portBit, UL
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-7.
@@ -743,7 +773,9 @@ inline HRESULT QuarkFabricGpioControllerClass::getPinDirection(ULONG portBit, UL
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-7.
@@ -753,10 +785,9 @@ This method assumes the caller has checked the input parameters.
 inline HRESULT QuarkLegacyGpioControllerClass::setCorePinState(ULONG portBit, ULONG state)
 {
     HRESULT hr = S_OK;
-    
     QUARKLGPIO_INPUT_BUFFER inp;
     DWORD ioCtl;
-//    DWORD bytesReturned;
+    DWORD bytesReturned;
 
     hr = openIfNeeded();
 
@@ -774,22 +805,25 @@ inline HRESULT QuarkLegacyGpioControllerClass::setCorePinState(ULONG portBit, UL
             ioCtl = IOCTL_QUARKLGPIO_SET_PINS_HIGH;
         }
 
-		// TODO:
-        //hr = DeviceIoControl(
-        //    m_hController,
-        //    ioCtl,
-        //    &inp,
-        //    sizeof(inp),
-        //    nullptr,
-        //    0,
-        //    &bytesReturned,
-        //    nullptr);
-        //
+		if (!DeviceIoControl(
+			m_hController,
+			ioCtl,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
     }
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to read. Range: 0-7.
@@ -799,39 +833,41 @@ This method assumes the caller has checked the input parameters.
 inline HRESULT QuarkLegacyGpioControllerClass::getCorePinState(ULONG portBit, ULONG & state)
 {
     HRESULT hr = S_OK;
-    
-//    QUARKLGPIO_INPUT_BUFFER inp;
-//    DWORD bytesReturned;
-//    DWORD portContents;
+    QUARKLGPIO_INPUT_BUFFER inp;
+    DWORD bytesReturned;
+    DWORD portContents;
 
     hr = openIfNeeded();
 
-// TODO:
-//if (SUCCEEDED(hr))
-//{
-//    inp.Bank = QUARKLGPIO_BANK_COREWELL;
-//    inp.Mask = 0x1 << portBit;
-//
-//	hr = DeviceIoControl(
-//        m_hController,
-//        IOCTL_QUARKLGPIO_READ_PINS,
-//        &inp,
-//        sizeof(inp),
-//        &portContents,
-//        sizeof(portContents),
-//        &bytesReturned,
-//        nullptr);
-//    
-//}
-//
-//if (SUCCEEDED(hr))
-//{
-//    state = (portContents >> portBit) & 0x01;
-//}
+	if (SUCCEEDED(hr))
+	{
+		inp.Bank = QUARKLGPIO_BANK_COREWELL;
+		inp.Mask = 0x1 << portBit;
+
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_READ_PINS,
+			&inp,
+			sizeof(inp),
+			&portContents,
+			sizeof(portContents),
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		state = (portContents >> portBit) & 0x01;
+	}
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-1.
@@ -859,7 +895,9 @@ inline HRESULT QuarkLegacyGpioControllerClass::setCorePinDirection(ULONG portBit
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.  This method is largely
 intended for testing use--it is more efficient to just set the desired direction rather
@@ -874,7 +912,7 @@ inline HRESULT QuarkLegacyGpioControllerClass::getCorePinDirection(ULONG portBit
     
     QUARKLGPIO_INPUT_BUFFER inp;
     DWORD readValue;
-//    DWORD bytesReturned;
+    DWORD bytesReturned;
 
     hr = openIfNeeded();
 
@@ -884,17 +922,18 @@ inline HRESULT QuarkLegacyGpioControllerClass::getCorePinDirection(ULONG portBit
         inp.Bank = QUARKLGPIO_BANK_COREWELL;
         inp.Mask = 0xFF;                // Not used, but if it were, we would want all 8 bits
 
-		// TODO:
-        //hr = DeviceIoControl(
-        //    m_hController,
-        //    IOCTL_QUARKLGPIO_GET_DIR,
-        //    &inp,
-        //    sizeof(inp),
-        //    &readValue,
-        //    sizeof(readValue),
-        //    &bytesReturned,
-        //    nullptr);
-        //
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_GET_DIR,
+			&inp,
+			sizeof(inp),
+			&readValue,
+			sizeof(readValue),
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
 
         if (SUCCEEDED(hr))
         {
@@ -911,7 +950,9 @@ inline HRESULT QuarkLegacyGpioControllerClass::getCorePinDirection(ULONG portBit
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.  This method is largely
 intended for testing use--it is more efficient to just set the desired direction rather
@@ -926,7 +967,7 @@ inline HRESULT QuarkLegacyGpioControllerClass::getResumePinDirection(ULONG portB
     
     QUARKLGPIO_INPUT_BUFFER inp;
     DWORD readValue;
-//    DWORD bytesReturned;
+    DWORD bytesReturned;
 
     hr = openIfNeeded();
 
@@ -936,17 +977,18 @@ inline HRESULT QuarkLegacyGpioControllerClass::getResumePinDirection(ULONG portB
         inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
         inp.Mask = 0xFF;                // Not used, but if it were, we would want all 8 bits
 
-        // TODO:
-		//hr = DeviceIoControl(
-        //    m_hController,
-        //    IOCTL_QUARKLGPIO_GET_DIR,
-        //    &inp,
-        //    sizeof(inp),
-        //    &readValue,
-        //    sizeof(readValue),
-        //    &bytesReturned,
-        //    nullptr);
-        //
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_GET_DIR,
+			&inp,
+			sizeof(inp),
+			&readValue,
+			sizeof(readValue),
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
 
         if (SUCCEEDED(hr))
         {
@@ -963,7 +1005,9 @@ inline HRESULT QuarkLegacyGpioControllerClass::getResumePinDirection(ULONG portB
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-5.
@@ -991,7 +1035,9 @@ inline HRESULT QuarkLegacyGpioControllerClass::setResumePinDirection(ULONG portB
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-7.
@@ -1004,7 +1050,7 @@ inline HRESULT QuarkLegacyGpioControllerClass::setResumePinState(ULONG portBit, 
     
     QUARKLGPIO_INPUT_BUFFER inp;
     DWORD ioCtl;
-//    DWORD bytesReturned;
+    DWORD bytesReturned;
 
     hr = openIfNeeded();
 
@@ -1022,22 +1068,25 @@ inline HRESULT QuarkLegacyGpioControllerClass::setResumePinState(ULONG portBit, 
             ioCtl = IOCTL_QUARKLGPIO_SET_PINS_HIGH;
         }
 
-        // TODO:
-		//hr = DeviceIoControl(
-        //    m_hController,
-        //    ioCtl,
-        //    &inp,
-        //    sizeof(inp),
-        //    nullptr,
-        //    0,
-        //    &bytesReturned,
-        //    nullptr);
-        //
+		if (!DeviceIoControl(
+			m_hController,
+			ioCtl,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
     }
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to read. Range: 0-7.
@@ -1046,39 +1095,40 @@ This method assumes the caller has checked the input parameters.
 */
 inline HRESULT QuarkLegacyGpioControllerClass::getResumePinState(ULONG portBit, ULONG & state)
 {
-    HRESULT hr = S_OK;
-    
-//    QUARKLGPIO_INPUT_BUFFER inp;
-//    DWORD bytesReturned;
-//    DWORD portContents;
+    HRESULT hr = S_OK;  
+    QUARKLGPIO_INPUT_BUFFER inp;
+    DWORD bytesReturned;
+    DWORD portContents;
 
     hr = openIfNeeded();
 
-	// TODO:
-  //  if (SUCCEEDED(hr))
-  //  {
-  //      inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
-  //      inp.Mask = 0x1 << portBit;
+    if (SUCCEEDED(hr))
+    {
+        inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
+        inp.Mask = 0x1 << portBit;
 
-		//hr = DeviceIoControl(
-  //          m_hController,
-  //          IOCTL_QUARKLGPIO_READ_PINS,
-  //          &inp,
-  //          sizeof(inp),
-  //          &portContents,
-  //          sizeof(portContents),
-  //          &bytesReturned,
-  //          nullptr);
-  //      
-  //  }
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_READ_PINS,
+			&inp,
+			sizeof(inp),
+			&portContents,
+			sizeof(portContents),
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
+    }
 
-  //  if (SUCCEEDED(hr))
-  //  {
-  //      state = (portContents >> portBit) & 0x01;
-  //  }
+    if (SUCCEEDED(hr))
+    {
+        state = (portContents >> portBit) & 0x01;
+    }
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 /**
 This method assumes the caller has checked the input parameters.

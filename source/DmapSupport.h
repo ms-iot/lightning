@@ -32,7 +32,9 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 /// Routine to get the base address of a memory mapped controller with a sharing specification.
 HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode);
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	//	If building a Win32 app:
 /// Routine to open a controller device in the SOC.
 HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode);
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #endif // _DMAP_SUPPORT_H_
