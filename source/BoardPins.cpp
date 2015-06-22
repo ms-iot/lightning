@@ -2,10 +2,7 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-//#include <Windows.h>
-// TODO: #include "pch.h"
 #include "ErrorCodes.h"
-
 #include "BoardPins.h"
 // TODO: #include "I2cController.h"
 
@@ -885,22 +882,26 @@ HRESULT BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
         // Set the pin direction on the device that supports this pin.
         switch (m_PinAttributes[pin].gpioType)
         {
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
         case GPIO_FABRIC:
             hr = g_quarkFabricGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
             break;
-        case GPIO_S0:
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		case GPIO_S0:
             hr = g_btFabricGpio.setS0PinDirection(m_PinAttributes[pin].portBit, mode);
             break;
         case GPIO_S5:
             hr = g_btFabricGpio.setS5PinDirection(m_PinAttributes[pin].portBit, mode);
             break;
-        case GPIO_LEGRES:
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_LEGRES:
             hr = g_quarkLegacyGpio.setResumePinDirection(m_PinAttributes[pin].portBit, mode);
             break;
-        case GPIO_LEGCOR:
+		case GPIO_LEGCOR:
             hr = g_quarkLegacyGpio.setCorePinDirection(m_PinAttributes[pin].portBit, mode);
             break;
-        case GPIO_EXP1:
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		case GPIO_EXP1:
             hr = _setExpBitDirection(EXP1, m_PinAttributes[pin].portBit, mode, pullup);
             break;
         case GPIO_EXP2:
@@ -1195,17 +1196,21 @@ HRESULT BoardPinsClass::setPinState(ULONG pin, ULONG state)
         // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
         switch (m_PinAttributes[pin].gpioType)
         {
-        case GPIO_FABRIC:
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_FABRIC:
             return g_quarkFabricGpio.setPinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_S0:
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		case GPIO_S0:
             return g_btFabricGpio.setS0PinState(m_PinAttributes[pin].portBit, state);
         case GPIO_S5:
             return g_btFabricGpio.setS5PinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_LEGRES:
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_LEGRES:
             return g_quarkLegacyGpio.setResumePinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGCOR:
             return g_quarkLegacyGpio.setCorePinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_EXP1:
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		case GPIO_EXP1:
 			// TODO:
 			return S_OK;
 			//return PCAL9535ADevice::SetBitState(
@@ -1256,17 +1261,21 @@ HRESULT BoardPinsClass::getPinState(ULONG pin, ULONG & state)
         // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
         switch (m_PinAttributes[pin].gpioType)
         {
-        case GPIO_FABRIC:
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_FABRIC:
             return g_quarkFabricGpio.getPinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_S0:
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		case GPIO_S0:
             return g_btFabricGpio.getS0PinState(m_PinAttributes[pin].portBit, state);
         case GPIO_S5:
             return g_btFabricGpio.getS5PinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_LEGRES:
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_LEGRES:
             return g_quarkLegacyGpio.getResumePinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGCOR:
             return g_quarkLegacyGpio.getCorePinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_EXP1:
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		case GPIO_EXP1:
 			// TODO:
 			return S_OK;
 			//return PCAL9535ADevice::GetBitState(

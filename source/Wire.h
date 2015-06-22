@@ -312,7 +312,7 @@ public:
     */
     size_t write(const uint8_t *data, size_t cbData)
     {
-        uint8_t length = this->m_writeBuff.size();
+        size_t length = this->m_writeBuff.size();
         this->m_writeBuff.resize(this->m_writeBuff.size() + cbData);
         auto it = this->m_writeBuff.begin();
         advance(it, length);
@@ -327,7 +327,7 @@ public:
     */
     size_t write(PCHAR string)
     {
-        uint8_t length = this->m_writeBuff.size();
+        size_t length = this->m_writeBuff.size();
         this->m_writeBuff.resize(this->m_writeBuff.size() + strlen(string));
         auto it = this->m_writeBuff.begin();
         advance(it, length);

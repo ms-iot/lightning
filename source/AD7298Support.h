@@ -6,6 +6,9 @@
 #define _AD7298_SUPPORT_H_
 
 #include <Windows.h>
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+
 #include "SpiController.h"
 #include "GpioController.h"
 
@@ -245,5 +248,6 @@ private:
     /// The Fabric GPIO bit that controls the chip select signal.
     const ULONG m_csFabricBit = 0;
 };
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #endif  // _AD7298_SUPPORT_H_

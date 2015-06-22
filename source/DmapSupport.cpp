@@ -2,11 +2,6 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-#include <windows.h>
-#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a UWP app
-#include "pch.h"
-#endif	// !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-
 #include <ppltasks.h>
 
 #include "ErrorCodes.h"
@@ -63,7 +58,6 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 	HRESULT hr = S_OK;
 
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a UWP app
-	UNREFERENCED_PARAMETER(handle);
 
 	Platform::Guid myGuid = Platform::Guid({ 0x109b86ad, 0xf53d, 0x4b76, 0xaa, 0x5f, 0x82, 0x1e, 0x2d, 0xdf, 0x21, 0x41 });
 	Platform::String^ myAqs = CustomDevice::GetDeviceSelector(myGuid);
@@ -157,6 +151,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 	}).wait();
 
 	baseAddress = (PVOID)controllerAddress;
+	handle = 0;			// Indicate we have the device open.
 #endif	// !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a Win32 app

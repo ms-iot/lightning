@@ -204,6 +204,7 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
     }
 
 	hr = g_pins.setPinState(pin, state);
+	if (FAILED(hr))
     {
         ThrowError("Error occurred setting pin: %d to state: %d, Error: %08x", pin, state, hr);
     }
