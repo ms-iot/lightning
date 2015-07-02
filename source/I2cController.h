@@ -816,12 +816,8 @@ public:
         m_pXfrQueueTail = nullptr;
         m_cmdsOutstanding = 0;
         m_readsOutstanding = 0;
-        m_hI2cLock = CreateMutex(NULL, FALSE, L"Global\\I2c_Controller_Mutex");
-        if (m_hI2cLock == NULL)
-        {
-            m_hI2cLock = INVALID_HANDLE_VALUE;
-        }
-        m_abort = FALSE;
+		m_hI2cLock = INVALID_HANDLE_VALUE;
+		m_abort = FALSE;
         m_error = SUCCESS;
         m_isIncomplete = FALSE;
         m_useHighSpeed = FALSE;
@@ -987,6 +983,12 @@ private:
 
     /// Method to handle any errors that occured during this transaction.
     HRESULT _handleErrors();
+
+	/// Method to acquire the I2C Controller lock for this transaction.
+	HRESULT _acquireI2cLock();
+
+	/// Method to release this transaction's lock on the I2C Controller.
+	HRESULT _releaseI2cLock();
 };
 
 #endif // _I2C_CONTROLLER_H_

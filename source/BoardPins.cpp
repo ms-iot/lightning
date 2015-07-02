@@ -4,7 +4,7 @@
 
 #include "ErrorCodes.h"
 #include "BoardPins.h"
-// TODO: #include "I2cController.h"
+#include "I2cController.h"
 
 // The default PWM chip I2C address on the Ika Lure is 0x40.  To use the Ika Lure with a 
 // Weather Shield which has a humidity sensor at addresss 0x40 the address of the PWM chip
@@ -107,6 +107,7 @@ const ULONG NUM_MBM_PINS = 27;  ///< Number of entries in a zero based array ind
 // The I2C Address of the MBM Ika Lure ADC.
 const ULONG MBM_IKA_LURE_ADC_ADR = 0x48;    ///< I2C address of ADC on MBM Ika Lure
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// The global table of pin attributes for the Galileo Gen2 board.
 /**
 This table contains all the pin-specific attributes needed to configure and use an I/O pin.
@@ -189,23 +190,6 @@ const BoardPinsClass::PWM_CHANNEL g_Gen2PwmChannels[] =
     { NO_X, 0, 0, 0 },          ///< A3
     { NO_X, 0, 0, 0 },          ///< A4
     { NO_X, 0, 0, 0 }           ///< A5
-};
-
-/// The global table of I/O Expander attributes for the boards.
-/**
-This table contains the information needed to communicate with each I/O Expander chip.
-It is indexed by Expander number and contains the type of chip used for that I/O Expander
-and the address on the I2C bus the chip responds to.
-*/
-const BoardPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
-{
-    { PCAL9535A, 0x25 },                    ///< EXP0 - Galileo Gen2
-    { PCAL9535A, 0x26 },                    ///< EXP1 - Galileo Gen2
-    { PCAL9535A, 0x27 },                    ///< EXP2 - Galileo Gen2
-    { PCA9685,   0x47 },                    ///< PWMG - Galileo Gen2
-    { CY8C9540A, 0x20 },                    ///< CY8 - Galileo Gen1
-    { BAYTRAIL,  0x00 },                    ///< SOC - MBM
-    { PCA9685,   IKA_LURE_PWM_I2C_ADR }     ///< PWMI - MGM with Ika Lure
 };
 
 /// The Gen2 I/O expander signature.
@@ -297,6 +281,7 @@ const BoardPinsClass::PWM_CHANNEL g_Gen1PwmChannels[] =
     { NO_X, 0, 0, 0 },        ///< A4
     { NO_X, 0, 0, 0 }         ///< A5
 };
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 /// The global table of pin attributes for the MBM board.
 /**
@@ -480,6 +465,25 @@ const BoardPinsClass::PWM_CHANNEL g_MbmIkaPwmChannels[] =
     { NO_X, 0, 0, 0 }           ///< A5
 };
 
+
+/// The global table of I/O Expander attributes for the boards.
+/**
+This table contains the information needed to communicate with each I/O Expander chip.
+It is indexed by Expander number and contains the type of chip used for that I/O Expander
+and the address on the I2C bus the chip responds to.
+*/
+const BoardPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
+{
+	{ PCAL9535A, 0x25 },                    ///< EXP0 - Galileo Gen2
+	{ PCAL9535A, 0x26 },                    ///< EXP1 - Galileo Gen2
+	{ PCAL9535A, 0x27 },                    ///< EXP2 - Galileo Gen2
+	{ PCA9685,   0x47 },                    ///< PWMG - Galileo Gen2
+	{ CY8C9540A, 0x20 },                    ///< CY8 - Galileo Gen1
+	{ BAYTRAIL,  0x00 },                    ///< SOC - MBM
+	{ PCA9685,   IKA_LURE_PWM_I2C_ADR }     ///< PWMI - MBM with Ika Lure
+};
+
+
 /// The global table of Pin Function tracking structures.
 /**
 This table tracks the currently configured function for each pin of the board.
@@ -514,6 +518,7 @@ BoardPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
     { FUNC_NUL, false },    ///< 25
     { FUNC_NUL, false }     ///< 26
 };
+
 
 /// Constructor.
 /**
@@ -676,13 +681,15 @@ HRESULT BoardPinsClass::_setPinDigitalIo(ULONG pin)
         hr = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].digIoMuxB);
     }
 
-    // If the pin PWM capable and on a CY8C9540A I/O Expander chip, deselect the PWM function.
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+// If the pin PWM capable and on a CY8C9540A I/O Expander chip, deselect the PWM function.
     if (SUCCEEDED(hr) && (m_PwmChannels[pin].expander == CY8))
     {
         ULONG i2cAdr = m_ExpAttributes[m_PwmChannels[pin].expander].I2c_Address;
         ULONG portBit = m_PwmChannels[pin].portBit;
-// TODO:        hr = CY8C9540ADevice::SetPortbitDio(i2cAdr, portBit);
+        hr = CY8C9540ADevice::SetPortbitDio(i2cAdr, portBit);
     }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
     return hr;
 }
@@ -715,20 +722,24 @@ HRESULT BoardPinsClass::_setPinPwm(ULONG pin)
     // Configure the pin for driving a PWM signal.
     if (SUCCEEDED(hr))
     {
-        if (m_PwmChannels[pin].expander == CY8)
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		if (m_PwmChannels[pin].expander == CY8)
         {
             // If PWM on this pin is from a CY8 I/O expander, configure the pin for PWM.
             ULONG i2cAdr = m_ExpAttributes[m_PwmChannels[pin].expander].I2c_Address;
             ULONG portBit = m_PwmChannels[pin].portBit;
             ULONG pwmChan = m_PwmChannels[pin].channel;
-// TODO:            hr = CY8C9540ADevice::SetPortbitPwm(i2cAdr, portBit, pwmChan);
+            hr = CY8C9540ADevice::SetPortbitPwm(i2cAdr, portBit, pwmChan);
         }
         else
         {
-            // If from a non-CY8 PWM chip, just set the pin to be an output.
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+			// If from a non-CY8 PWM chip, just set the pin to be an output.
             hr = setPinMode(pin, DIRECTION_OUT, FALSE);
-        }
-    }
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+	}
 
     return hr;
 }
@@ -744,7 +755,7 @@ HRESULT BoardPinsClass::_setPinAnalogInput(ULONG pin)
 {
     HRESULT hr = S_OK;
  
-    // If the pin is tied to at lease one MUX:
+    // If the pin is tied to at least one MUX:
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for Analog Input.
@@ -882,11 +893,6 @@ HRESULT BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
         // Set the pin direction on the device that supports this pin.
         switch (m_PinAttributes[pin].gpioType)
         {
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-        case GPIO_FABRIC:
-            hr = g_quarkFabricGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
-            break;
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 		case GPIO_S0:
             hr = g_btFabricGpio.setS0PinDirection(m_PinAttributes[pin].portBit, mode);
             break;
@@ -894,13 +900,15 @@ HRESULT BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
             hr = g_btFabricGpio.setS5PinDirection(m_PinAttributes[pin].portBit, mode);
             break;
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_FABRIC:
+			hr = g_quarkFabricGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
+			break;
 		case GPIO_LEGRES:
             hr = g_quarkLegacyGpio.setResumePinDirection(m_PinAttributes[pin].portBit, mode);
             break;
 		case GPIO_LEGCOR:
             hr = g_quarkLegacyGpio.setCorePinDirection(m_PinAttributes[pin].portBit, mode);
             break;
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 		case GPIO_EXP1:
             hr = _setExpBitDirection(EXP1, m_PinAttributes[pin].portBit, mode, pullup);
             break;
@@ -910,7 +918,8 @@ HRESULT BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
         case GPIO_CY8:
             hr = _setExpBitDirection(CY8, m_PinAttributes[pin].portBit, mode, pullup);
             break;
-        case GPIO_NONE:
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		case GPIO_NONE:
             break;             // No actual GPIO pin here, nothing to do.
         default:
 			hr = DMAP_E_DMAP_INTERNAL_ERROR;
@@ -943,30 +952,34 @@ This method sets the direction of an I/O Expander port pin.
 HRESULT BoardPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direction, BOOL pullup)
 {
     HRESULT hr = S_OK;
-    UCHAR i2cAdr = 0;               // I2C address of I/O Expander
-
+    
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	UCHAR i2cAdr = 0;               // I2C address of I/O Expander
     // Get the I2C Address of the I/O Expander in question.
     i2cAdr = m_ExpAttributes[expNo].I2c_Address;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
     //
     // Determine what type of I/O Expander we are dealing with.
     //
 
-    if (m_ExpAttributes[expNo].Exp_Type == PCAL9535A)
+	if (m_ExpAttributes[expNo].Exp_Type == PCA9685)
+    {
+		// Nothing to do here, PCA9685 chip ports are always outputs.
+	}
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	else if (m_ExpAttributes[expNo].Exp_Type == PCAL9535A)
     {
         // Set the bit of the I/O Expander chip to the desired direction.
-// TODO:        hr = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, direction);
+        hr = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, direction);
     }
     else if (m_ExpAttributes[expNo].Exp_Type == CY8C9540A)
     {
         // Set the bit of the I/O Expander chip to the desired direction.
-// TODO:        hr = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, direction, pullup);
+        hr = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, direction, pullup);
     }
-    else if (m_ExpAttributes[expNo].Exp_Type == PCA9685)
-    {
-        // Nothing to do here, PCA9685 chip ports are always outputs.
-    }
-    else
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+	else
     {
 		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
@@ -982,7 +995,6 @@ This method sets the state of an I/O Expander port pin.
 \param[in] state The desired state: HIGH or LOW.
 \return HRESULT success or error code.
 */
-// Method to set an I/O Expander bit to the specified state.
 HRESULT BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state)
 {
     HRESULT hr = S_OK;
@@ -997,31 +1009,33 @@ HRESULT BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, U
 
     switch (m_ExpAttributes[expNo].Exp_Type)
     {
-    case PCAL9535A:
-        // Set the bit of the I/O Expander chip to the desired state.
-// TODO:        hr = PCAL9535ADevice::SetBitState(i2cAdr, bitNo, state);
-
-        if (SUCCEEDED(hr))
-        {
-            // Set the bit of the I/O Expander chip to be an output.
-// TODO:            hr = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT);
-        }
-        break;
     case PCA9685:
         // Set the bit of the PWM chip to the desired state.
-// TODO:        hr = PCA9685Device::SetBitState(i2cAdr, bitNo, state);
+        hr = PCA9685Device::SetBitState(i2cAdr, bitNo, state);
         break;
-    case CY8C9540A:
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	case PCAL9535A:
+		// Set the bit of the I/O Expander chip to the desired state.
+		hr = PCAL9535ADevice::SetBitState(i2cAdr, bitNo, state);
+
+		if (SUCCEEDED(hr))
+		{
+			// Set the bit of the I/O Expander chip to be an output.
+			hr = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT);
+		}
+		break;
+	case CY8C9540A:
         // Set the bit of a CY8 I/O Expander chip to the desired state.
-// TODO:        hr = CY8C9540ADevice::SetBitState(i2cAdr, bitNo, state);
+        hr = CY8C9540ADevice::SetBitState(i2cAdr, bitNo, state);
 
         if (SUCCEEDED(hr))
         {
             // Set the bit of the I/O Expander chip to be an output.
-// TODO:            hr = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT, FALSE);
+            hr = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT, FALSE);
         }
         break;
-    case BAYTRAIL:
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+	case BAYTRAIL:
         if (m_PinAttributes[pin].gpioType == GPIO_S0)
         {
             hr = g_btFabricGpio.setS0PinFunction(m_PinAttributes[pin].portBit, state);
@@ -1196,42 +1210,34 @@ HRESULT BoardPinsClass::setPinState(ULONG pin, ULONG state)
         // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
         switch (m_PinAttributes[pin].gpioType)
         {
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-		case GPIO_FABRIC:
-            return g_quarkFabricGpio.setPinState(m_PinAttributes[pin].portBit, state);
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 		case GPIO_S0:
             return g_btFabricGpio.setS0PinState(m_PinAttributes[pin].portBit, state);
         case GPIO_S5:
             return g_btFabricGpio.setS5PinState(m_PinAttributes[pin].portBit, state);
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_FABRIC:
+			return g_quarkFabricGpio.setPinState(m_PinAttributes[pin].portBit, state);
 		case GPIO_LEGRES:
             return g_quarkLegacyGpio.setResumePinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGCOR:
             return g_quarkLegacyGpio.setCorePinState(m_PinAttributes[pin].portBit, state);
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 		case GPIO_EXP1:
-			// TODO:
-			return S_OK;
-			//return PCAL9535ADevice::SetBitState(
-            //    m_ExpAttributes[EXP1].I2c_Address,
-            //    m_PinAttributes[pin].portBit,
-            //    state);
+			return PCAL9535ADevice::SetBitState(
+                m_ExpAttributes[EXP1].I2c_Address,
+                m_PinAttributes[pin].portBit,
+                state);
         case GPIO_EXP2:
-			// TODO:
-			return S_OK;
-			//return PCAL9535ADevice::SetBitState(
-   //             m_ExpAttributes[EXP2].I2c_Address,
-   //             m_PinAttributes[pin].portBit,
-   //             state);
+            return PCAL9535ADevice::SetBitState(
+                m_ExpAttributes[EXP2].I2c_Address,
+                m_PinAttributes[pin].portBit,
+                state);
         case GPIO_CY8:
-			// TODO:
-			return S_OK;
-			//return CY8C9540ADevice::SetBitState(
-   //             m_ExpAttributes[CY8].I2c_Address,
-   //             m_PinAttributes[pin].portBit,
-   //             state);
-        default:
+            return CY8C9540ADevice::SetBitState(
+                m_ExpAttributes[CY8].I2c_Address,
+                m_PinAttributes[pin].portBit,
+                state);
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		default:
 			hr = DMAP_E_DMAP_INTERNAL_ERROR;
         }
     }
@@ -1261,42 +1267,34 @@ HRESULT BoardPinsClass::getPinState(ULONG pin, ULONG & state)
         // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
         switch (m_PinAttributes[pin].gpioType)
         {
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-		case GPIO_FABRIC:
-            return g_quarkFabricGpio.getPinState(m_PinAttributes[pin].portBit, state);
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 		case GPIO_S0:
             return g_btFabricGpio.getS0PinState(m_PinAttributes[pin].portBit, state);
         case GPIO_S5:
             return g_btFabricGpio.getS5PinState(m_PinAttributes[pin].portBit, state);
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_FABRIC:
+			return g_quarkFabricGpio.getPinState(m_PinAttributes[pin].portBit, state);
 		case GPIO_LEGRES:
             return g_quarkLegacyGpio.getResumePinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGCOR:
             return g_quarkLegacyGpio.getCorePinState(m_PinAttributes[pin].portBit, state);
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 		case GPIO_EXP1:
-			// TODO:
-			return S_OK;
-			//return PCAL9535ADevice::GetBitState(
-   //             m_ExpAttributes[EXP1].I2c_Address,
-   //             m_PinAttributes[pin].portBit,
-   //             state);
+			return PCAL9535ADevice::GetBitState(
+                m_ExpAttributes[EXP1].I2c_Address,
+                m_PinAttributes[pin].portBit,
+                state);
         case GPIO_EXP2:
-			// TODO:
-			return S_OK;
-			//return PCAL9535ADevice::GetBitState(
-   //             m_ExpAttributes[EXP2].I2c_Address,
-   //             m_PinAttributes[pin].portBit,
-   //             state);
+			return PCAL9535ADevice::GetBitState(
+                m_ExpAttributes[EXP2].I2c_Address,
+                m_PinAttributes[pin].portBit,
+                state);
         case GPIO_CY8:
-			// TODO:
-			return S_OK;
-			//return CY8C9540ADevice::GetBitState(
-   //             m_ExpAttributes[CY8].I2c_Address,
-   //             m_PinAttributes[pin].portBit,
-   //             state);
-        default:
+			return CY8C9540ADevice::GetBitState(
+                m_ExpAttributes[CY8].I2c_Address,
+                m_PinAttributes[pin].portBit,
+                state);
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		default:
 			hr = DMAP_E_DMAP_INTERNAL_ERROR;
         }
     }
@@ -1335,12 +1333,14 @@ HRESULT BoardPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
     switch (expType)
     {
     case PCA9685:
-// TODO:        hr = PCA9685Device::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
+        hr = PCA9685Device::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
         break;
-    case CY8C9540A:
-// TODO:        hr = CY8C9540ADevice::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	case CY8C9540A:
+        hr = CY8C9540ADevice::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
         break;
-    default:
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+	default:
 		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
@@ -1356,68 +1356,71 @@ HRESULT BoardPinsClass::_determineBoardType()
 {
     HRESULT hr = S_OK;
 
-	// TODO:
-	// For now, we just set the board type to MBM (without Ika Lure).
-	hr = setBoardType(MBM_BARE);
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+	// For now, we just set the board type to MBM.
+    hr = _determineMbmConfig();
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
-	// TODO:
-    //HKEY baseKey = HKEY_LOCAL_MACHINE;
-    //HKEY regKey = nullptr;
-    //WCHAR subKey[] = L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0";
-    //WCHAR valueName[] = L"Identifier";
-    //PWCHAR value = NULL;
-    //ULONG valueBytes = 0;
-    //WCHAR galileoId[] = L"x86 Family 5";
-    //WCHAR mbmId[] = L"Intel64 Family 6";
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	HKEY baseKey = HKEY_LOCAL_MACHINE;
+    HKEY regKey = nullptr;
+    WCHAR subKey[] = L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0";
+    WCHAR valueName[] = L"Identifier";
+    PWCHAR value = NULL;
+    ULONG valueBytes = 0;
+    WCHAR galileoId[] = L"x86 Family 5";
+    WCHAR mbmId[] = L"Intel64 Family 6";
 
-    //error = RegOpenKeyEx(baseKey, subKey, 0, KEY_READ, &regKey);
-    //if (error != ERROR_SUCCESS) { hr = HRESULT_FROM_WIN32(error); }
+    error = RegOpenKeyEx(baseKey, subKey, 0, KEY_READ, &regKey);
+    if (error != ERROR_SUCCESS) { hr = HRESULT_FROM_WIN32(error); }
 
-    //if (SUCCEEDED(hr))
-    //{
-    //    error = RegGetValue(regKey, NULL, valueName, RRF_RT_REG_SZ, NULL, NULL, &valueBytes);
-    //    if (error != ERROR_SUCCESS) { hr = HRESULT_FROM_WIN32(error); }
+    if (SUCCEEDED(hr))
+    {
+        error = RegGetValue(regKey, NULL, valueName, RRF_RT_REG_SZ, NULL, NULL, &valueBytes);
+        if (error != ERROR_SUCCESS) { hr = HRESULT_FROM_WIN32(error); }
 
-    //    if (SUCCEEDED(hr))
-    //    {
-    //        value = (PWCHAR) new UCHAR[valueBytes];
-    //        if (value == NULL)
-    //        {
-    //            hr = E_OUTOFMEMORY;
-    //        }
-    //    }
+        if (SUCCEEDED(hr))
+        {
+            value = (PWCHAR) new UCHAR[valueBytes];
+            if (value == NULL)
+            {
+                hr = E_OUTOFMEMORY;
+            }
+        }
 
-    //    if (SUCCEEDED(hr))
-    //    {
-    //        error = RegGetValue(regKey, NULL, valueName, RRF_RT_REG_SZ, NULL, value, &valueBytes);
-    //        if (error != ERROR_SUCCESS) { hr = HRESULT_FROM_WIN32(error); }
+        if (SUCCEEDED(hr))
+        {
+            error = RegGetValue(regKey, NULL, valueName, RRF_RT_REG_SZ, NULL, value, &valueBytes);
+            if (error != ERROR_SUCCESS) { hr = HRESULT_FROM_WIN32(error); }
 
-    //        if (SUCCEEDED(hr))
-    //        {
-    //            if ((wcslen(mbmId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, mbmId, wcslen(mbmId)) == 0))
-    //            {
-    //                hr = _determineMbmConfig();
-    //            }
-    //            else if ((wcslen(galileoId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, galileoId, wcslen(galileoId)) == 0))
-    //            {
-    //                hr = _determineGalileoGen();
-    //            }
-    //            else
-    //            {
-    //                m_boardType = NOT_SET;
-    //                hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
-    //            }
-    //        }
+            if (SUCCEEDED(hr))
+            {
+                if ((wcslen(mbmId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, mbmId, wcslen(mbmId)) == 0))
+                {
+                    hr = _determineMbmConfig();
+                }
+                else if ((wcslen(galileoId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, galileoId, wcslen(galileoId)) == 0))
+                {
+                    hr = _determineGalileoGen();
+                }
+                else
+                {
+                    m_boardType = NOT_SET;
+                    hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
+                }
+            }
 
-    //        delete[] value;
-    //    }
+            delete[] value;
+        }
 
-    //    RegCloseKey(regKey);
-    //    regKey = nullptr;
-    //}
+        RegCloseKey(regKey);
+        regKey = nullptr;
+    }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
     return hr;
 }
+
 
 /**
 The Ika Lure has a ADC chip at address 0x48.  If this I2C address responds, 
@@ -1428,23 +1431,23 @@ HRESULT BoardPinsClass::_determineMbmConfig()
 {
     HRESULT hr = S_OK;
 
-	// TODO:
-    //// Start with the assumption this is a bare MBM board.  This is done so the
-    //// I2C code will know how to configure the Bay Trail I2C controller so it can be used 
-    //// to determine if the Ika Lure is attached.
-    //hr = setBoardType(MBM_BARE);
+    // Start with the assumption this is a bare MBM board.  This is done so the
+    // I2C code will know how to configure the Bay Trail I2C controller so it can be used 
+    // to determine if the Ika Lure is attached.
+    hr = setBoardType(MBM_BARE);
 
-    //if (SUCCEEDED(hr))
-    //{
-    //    if (_testI2cAddress(MBM_IKA_LURE_ADC_ADR))
-    //    {
-    //        hr = setBoardType(MBM_IKA_LURE);
-    //    }
-    //}
+    if (SUCCEEDED(hr))
+    {
+        if (_testI2cAddress(MBM_IKA_LURE_ADC_ADR))
+        {
+            hr = setBoardType(MBM_IKA_LURE);
+        }
+    }
 
     return hr;
 }
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 The I/O Expanders on the Gen1 and Gen2 boards are at different I2C addresses.
 The generation of a Galileo Board is decided by determining which I/O Expander
@@ -1454,44 +1457,43 @@ I2C addresses are acknowledged and which are not.
 HRESULT BoardPinsClass::_determineGalileoGen()
 {
     HRESULT hr = S_OK;
-    
-	// TODO:
-	//ULONG expSig = 0;
-    //int i;
+	ULONG expSig = 0;
+    int i;
 
-    //// Start with the assumption this is a Galileo Gen2.  This is done so the 
-    //// I2C code will know to configure the Quark I2C controller so it can be use to
-    //// determine which generation of Galileo this really is.
-    //hr = setBoardType(GALILEO_GEN2);
+    // Start with the assumption this is a Galileo Gen2.  This is done so the 
+    // I2C code will know to configure the Quark I2C controller so it can be use to
+    // determine which generation of Galileo this really is.
+    hr = setBoardType(GALILEO_GEN2);
 
-    //if (SUCCEEDED(hr))
-    //{
-    //    for (i = 0; i < NUM_IO_EXP; i++)
-    //    {
-    //        if (_testI2cAddress(g_GenxExpAttributes[i].I2c_Address))
-    //        {
-    //            expSig = expSig | (1 << i);
-    //        }
-    //    }
+    if (SUCCEEDED(hr))
+    {
+        for (i = 0; i < NUM_IO_EXP; i++)
+        {
+            if (_testI2cAddress(g_GenxExpAttributes[i].I2c_Address))
+            {
+                expSig = expSig | (1 << i);
+            }
+        }
 
-    //    // Compare the signature of expanders found to the Gen1 and Gen2 signatures.
-    //    if ((expSig & (g_gen2ExpSig)) == g_gen2ExpSig)
-    //    {
-    //        hr = setBoardType(GALILEO_GEN2);
-    //    }
-    //    else if ((expSig & (g_gen1ExpSig)) == g_gen1ExpSig)
-    //    {
-    //        hr = setBoardType(GALILEO_GEN1);
-    //    }
-    //    else
-    //    {
-    //        m_boardType = NOT_SET;
-    //        hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
-    //    }
-    //}
+        // Compare the signature of expanders found to the Gen1 and Gen2 signatures.
+        if ((expSig & (g_gen2ExpSig)) == g_gen2ExpSig)
+        {
+            hr = setBoardType(GALILEO_GEN2);
+        }
+        else if ((expSig & (g_gen1ExpSig)) == g_gen1ExpSig)
+        {
+            hr = setBoardType(GALILEO_GEN1);
+        }
+        else
+        {
+            m_boardType = NOT_SET;
+            hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
+        }
+    }
 
     return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 /**
 Method to manually specify the board type.  This can be used to avoid
@@ -1505,21 +1507,7 @@ HRESULT BoardPinsClass::setBoardType(BOARD_TYPE board)
     HRESULT hr = S_OK;
 
     m_boardType = board;
-    if (board == GALILEO_GEN2)
-    {
-        m_PinAttributes = g_Gen2PinAttributes;
-        m_MuxAttributes = g_Gen2MuxAttributes;
-        m_PwmChannels = g_Gen2PwmChannels;
-        m_GpioPinCount = NUM_ARDUINO_PINS;
-    }
-    else if (board == GALILEO_GEN1)
-    {
-        m_PinAttributes = g_Gen1PinAttributes;
-        m_MuxAttributes = g_Gen1MuxAttributes;
-        m_PwmChannels = g_Gen1PwmChannels;
-        m_GpioPinCount = NUM_ARDUINO_PINS;
-    }
-    else if (board == MBM_BARE)
+    if (board == MBM_BARE)
     {
         m_PinAttributes = g_MbmPinAttributes;
         m_MuxAttributes = g_MbmMuxAttributes;
@@ -1533,6 +1521,22 @@ HRESULT BoardPinsClass::setBoardType(BOARD_TYPE board)
         m_PwmChannels = g_MbmIkaPwmChannels;
         m_GpioPinCount = NUM_ARDUINO_PINS;
     }
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	else if (board == GALILEO_GEN2)
+	{
+		m_PinAttributes = g_Gen2PinAttributes;
+		m_MuxAttributes = g_Gen2MuxAttributes;
+		m_PwmChannels = g_Gen2PwmChannels;
+		m_GpioPinCount = NUM_ARDUINO_PINS;
+	}
+	else if (board == GALILEO_GEN1)
+	{
+		m_PinAttributes = g_Gen1PinAttributes;
+		m_MuxAttributes = g_Gen1MuxAttributes;
+		m_PwmChannels = g_Gen1PwmChannels;
+		m_GpioPinCount = NUM_ARDUINO_PINS;
+	}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
     else
     {
         m_boardType = NOT_SET;
@@ -1550,21 +1554,20 @@ is present or not.
 HRESULT BoardPinsClass::_testI2cAddress(ULONG i2cAdr)
 {
     HRESULT hr = S_OK;
-	// TODO:
-    //I2cTransactionClass trans;
-    //UCHAR buffer[1] = { 0 };
+    I2cTransactionClass trans;
+    UCHAR buffer[1] = { 0 };
 
-    //hr = trans.setAddress(i2cAdr);
+    hr = trans.setAddress(i2cAdr);
 
-    //if (SUCCEEDED(hr))
-    //{
-    //    hr = trans.queueWrite(buffer, sizeof(buffer));
-    //}
+    if (SUCCEEDED(hr))
+    {
+        hr = trans.queueWrite(buffer, sizeof(buffer));
+    }
 
-    //if (SUCCEEDED(hr))
-    //{
-    //    hr = trans.execute();
-    //}
+    if (SUCCEEDED(hr))
+    {
+        hr = trans.execute();
+    }
 
     return hr;
 }

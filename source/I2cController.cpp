@@ -163,13 +163,7 @@ HRESULT I2cTransactionClass::setAddress(ULONG slaveAdr)
 {
     HRESULT hr = S_OK;
 
-    // Verify we successfully create the I2C Controller Lock.
-    if (m_hI2cLock == INVALID_HANDLE_VALUE)
-    {
-		hr = DMAP_E_I2C_LOCK_CREATION_FAILED;
-    }
-
-    if (SUCCEEDED(hr) && ((slaveAdr < 0x08) || (slaveAdr >= 0x77)))
+    if ((slaveAdr < 0x08) || (slaveAdr >= 0x77))
     {
         hr = DMAP_E_I2C_ADDRESS_OUT_OF_RANGE;
     }
@@ -319,56 +313,39 @@ HRESULT I2cTransactionClass::execute()
     I2cTransferClass* pReadXfr = nullptr;
     DWORD lockResult = 0;
     BOOL haveLock = FALSE;
-
-    // Verify we successfully created the I2C Controller Lock.
-    if (m_hI2cLock == INVALID_HANDLE_VALUE)
-    {
-        hr = DMAP_E_I2C_LOCK_CREATION_FAILED;
-    }
+	
+	// Get the I2C Controller mapped if it is not mapped yet.
+	hr = g_i2c.mapIfNeeded();
 
     if (SUCCEEDED(hr))
     {
-        // Claim the I2C controller.
-        lockResult = WaitForSingleObject(m_hI2cLock, 5000);
-        if ((lockResult == WAIT_OBJECT_0) || (lockResult == WAIT_ABANDONED))
-        {
-            haveLock = TRUE;
-        }
-        else if (lockResult == WAIT_TIMEOUT)
-        {
-            hr = DMAP_E_I2C_BUS_LOCK_TIMEOUT;
-        }
-        else
-        {
-			hr = HRESULT_FROM_WIN32(GetLastError());
-        }
+		// Lock the I2C bus for access exclusively by this transaction.
+		hr = _acquireI2cLock();
     }
 
+	// If we have the I2C bus locked:
     if (SUCCEEDED(hr))
     {
-        // Initialize the controller.
-        hr = _initializeI2cForTransaction();
-    }
+		// Initialize the controller.
+		hr = _initializeI2cForTransaction();
 
-    // Process each transfer on the queue.
-    if (SUCCEEDED(hr))
-    {
-        hr = _processTransfers();
-    }
+		if (SUCCEEDED(hr))
+		{
+			// Process each transfer on the queue.
+			hr = _processTransfers();
+		}
 
-    if (SUCCEEDED(hr))
-    {
-        // Shut down the controller.
-        hr = _shutDownI2cAfterTransaction();
-    }
+		if (SUCCEEDED(hr))
+		{
+			// Shut down the controller.
+			hr = _shutDownI2cAfterTransaction();
+		}
 
-    // Release this transaction's claim on the controller.
-    if (haveLock)
-    {
-        ReleaseMutex(m_hI2cLock);
-        haveLock = FALSE;
-    }
-    
+		// Release the I2C lock, ignoring any error returned because it is likely
+		// we already have an error that we don't want to cover up.
+		_releaseI2cLock();
+	}
+
     return hr;
 }
 
@@ -395,13 +372,10 @@ void I2cTransactionClass::_queueTransfer(I2cTransferClass* pXfr)
 // Method to initialize the I2C Controller at the start of a transaction.
 HRESULT I2cTransactionClass::_initializeI2cForTransaction()
 {
-    HRESULT hr = S_OK;
     ULONGLONG waitStartTicks = 0;
 
-    // Get the I2C Controller mapped if it is not mapped yet.
-    hr = g_i2c.mapIfNeeded();
-
-    if (SUCCEEDED(hr) && (!g_i2c.isInitialized() || (g_i2c.getAddress() != m_slaveAddress)))
+	// If we need to initialize, or re-initialize, the I2C Controller:
+	if (!g_i2c.isInitialized() || (g_i2c.getAddress() != m_slaveAddress))
     {
         // Make sure the I2C controller is disabled.
         g_i2c.disableController();
@@ -446,9 +420,10 @@ HRESULT I2cTransactionClass::_initializeI2cForTransaction()
 
         // Indicate the I2C Controller is now initialized.
         g_i2c.setInitialized();
-    }
+
+    } // End - if (!g_i2c.isInitialized() || (g_i2c.getAddress() != m_slaveAddress))
     
-    return hr;
+    return S_OK;
 }
 
 // Method to process the transfers in this transaction.
@@ -773,4 +748,90 @@ HRESULT I2cTransactionClass::_handleErrors()
         SetLastError(ERROR_BUS_RESET);
     }
     return hr;
+}
+
+/**
+This lock is a global mutex when running under Win32, and a kernel mode fastmutex
+(implemented in DMap.sys) when running under UWP.  This lock is used both for
+cross-process and cross-thread locking.  It is only held for the duration of a
+transaction.  Because of this lock (as well as the limitations of the I2C Controller)
+nested I2C transactions are not allowed (for example: all needed pin MUXing must be
+done before the lock is acquired to execute the I2C transaction.
+\return HRESULT success or error code.
+*/
+HRESULT I2cTransactionClass::_acquireI2cLock()
+{
+	HRESULT hr = S_OK;
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+	if (m_hI2cLock == INVALID_HANDLE_VALUE)
+	{
+		hr = DMAP_E_I2C_INVALID_LOCK_HANDLE_SPECIFIED;
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = GetControllerLock(m_hI2cLock);
+	}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	if (m_hI2cLock == INVALID_HANDLE_VALUE)
+	{
+		m_hI2cLock = CreateMutex(NULL, FALSE, L"Global\\I2c_Controller_Mutex");
+		if (m_hI2cLock == NULL)
+		{
+			m_hI2cLock = INVALID_HANDLE_VALUE;
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		// Claim the I2C controller.
+		lockResult = WaitForSingleObject(m_hI2cLock, 5000);
+		if ((lockResult == WAIT_OBJECT_0) || (lockResult == WAIT_ABANDONED))
+		{
+			haveLock = TRUE;
+		}
+		else if (lockResult == WAIT_TIMEOUT)
+		{
+			hr = DMAP_E_I2C_BUS_LOCK_TIMEOUT;
+		}
+		else
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
+	}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+	return hr;
+}
+
+/**
+This routine should only be called when it is known that an I2C lock is being held
+on the m_hI2cLock handle for this transaction.
+\return HRESULT success or error code.
+*/
+HRESULT I2cTransactionClass::_releaseI2cLock()
+{
+	HRESULT hr = S_OK;
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+	if (m_hI2cLock == INVALID_HANDLE_VALUE)
+	{
+		hr = DMAP_E_I2C_INVALID_LOCK_HANDLE_SPECIFIED;
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = ReleaseControllerLock(m_hI2cLock);
+	}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	ReleaseMutex(m_hI2cLock);
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+	return hr;
 }

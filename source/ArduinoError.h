@@ -48,6 +48,7 @@ inline void _exit_arduino_loop()
 /// and inserted in the resulting string replacing their respective specifiers.
 inline void ThrowError(_In_ _Printf_format_string_ STRSAFE_LPCSTR pszFormat, ...)
 {
+
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 	HRESULT hr;
 	char buf[BUFSIZ];
@@ -69,11 +70,31 @@ inline void ThrowError(_In_ _Printf_format_string_ STRSAFE_LPCSTR pszFormat, ...
 	}
 	else
 	{
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 		throw _arduino_fatal_error("StringCbVPrintfA() failed while attempting to print exception message");
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 	}
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+	int result;
+	char buf[BUFSIZ];
+	va_list argList;
+
+	va_start(argList, pszFormat);
+
+	result = vsprintf_s(buf, BUFSIZ, pszFormat, argList);
+
+	va_end(argList);
+
+	if (result > 0)
+	{
+		throw _arduino_fatal_error(buf);
+	}
+	else
+	{
+		throw _arduino_fatal_error("vsprintf_s() failed while attempting to print exception message");
+	}
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 }
 
 #endif

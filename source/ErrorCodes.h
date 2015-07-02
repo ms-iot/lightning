@@ -35,8 +35,8 @@
 /// An invalid board type was specified.
 #define DMAP_E_INVALID_BOARD_TYPE_SPECIFIED 0x80040208
 
-/// Lock creation failed for the lock used to synchronize access to the I2C bus.
-#define DMAP_E_I2C_LOCK_CREATION_FAILED 0x80040209
+/// An invalid handle was specified attempting to get a controller lock.
+#define DMAP_E_I2C_INVALID_LOCK_HANDLE_SPECIFIED 0x80040209
 
 /// The specified I2C address is outside the legal range for 7-bit I2C addresses.
 #define DMAP_E_I2C_ADDRESS_OUT_OF_RANGE 0x8004020A
@@ -98,33 +98,10 @@ set the desired width, then call SPI.begin() to start the contrller again.
 /// The specified number of bits per transfer is not supported by the SPI controller.
 #define DMAP_E_SPI_DATA_WIDTH_SPECIFIED_IS_INVALID 0x8004021A
 
+/// An attempt was made to map more than the maximum number of devices.
+#define DMAP_E_TOO_MANY_DEVICES_MAPPED 0x8004021B
 
-
-// TODO: Tests for build types.  Here for convenience, no other reason.
-#include <winapifamily.h>
-
-// For UWP app: (This form is used because WINAPI_PARTITION_APP is always true in 8.1 SDK.)
-#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)       // If building a UWP app:
-#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-
-// For Win32 app:
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-
-// For x86
-#if defined(_M_IX86)                                    // If bulding for x86:
-#endif // defined(_M_IX86)
-
-// For x64
-#if defined(_M_X64)                                     // If building for x64:
-#endif // defined(_M_X64)
-
-// For Intel Architecture
-#if defined(_M_IX86) || defined(_M_X64)                 // If building for x86 or x64:
-#endif // defined(_M_IX86) || defined(_M_X64)
-
-// For Arm
-#if defined(_M_ARM)                                     // If building for Arm
-#endif // defined(_M_ARM)
+/// The specified device was not found on the systems.
+#define DMAP_E_DEVICE_NOT_FOUND_ON_SYSTEM 0x8004021C
 
 #endif  // _ERROR_CODES_H_

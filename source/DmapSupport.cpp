@@ -17,13 +17,6 @@ using namespace Windows::Foundation::Collections;
 using namespace Concurrency;
 #endif	// !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
-//void GetControllersAsyncCompletedHandler(
-//	Windows::Foundation::IAsyncOperation<CustomDevice^> ^operation,
-//	Windows::Foundation::AsyncStatus status);
-//
-//void GetControllerAddressCompletedHandler(
-//	Windows::Foundation::IAsyncOperation<ULONG32> ^operation,
-//	Windows::Foundation::AsyncStatus status);
 
 /**
 Get the base address of a memory mapped controller in the SOC.  Exclusive, non-shared 
@@ -38,20 +31,28 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 	return GetControllerBaseAddress(deviceName, handle, baseAddress, 0);
 }
 
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a UWP app
+/// Array of CustomDevice references.
+/**
+This array is used to store persistent references to the CustomDevice references
+created for open devices that are exposed by DMap.  This array is only used for 
+UWP builds.  Holding a reference on the CustomDevices keep them open.  The maximum
+number of devices in the array is best kept in agreement with the similar limit 
+in the DMap driver (16, as of the first release of this software.)
+*/
+#define MAX_OPEN_DEVICES 16
+CustomDevice^ g_devices[MAX_OPEN_DEVICES];
+UINT32 g_deviceCount = 0;
+#endif	// !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_TOP)
+
 /**
 Get the base address of a memory mapped controller in the SOC.
 \param[in] deviceName The name of the PCI device used to map the controller in question.
-\param[out] handle Handle opened to the device specified by deviceName.
+\param[out] handle Handle opened to the device specified by deviceName (zero for UWP build).
 \param[out] baseAddress Base address of the controller in question.
 \param[in] shareMode Sharing specifier as specified to CreateFile().
 \return HRESULT success or error code.
 */
-
-#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a UWP app
-CustomDevice^ g_device;
-#endif	// !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_TOP)
-
-// Test routine to open the DMap driver.
 HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode)
 {
 	UINT32 controllerAddress = 0;
@@ -59,99 +60,144 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a UWP app
 
-	Platform::Guid myGuid = Platform::Guid({ 0x109b86ad, 0xf53d, 0x4b76, 0xaa, 0x5f, 0x82, 0x1e, 0x2d, 0xdf, 0x21, 0x41 });
-	Platform::String^ myAqs = CustomDevice::GetDeviceSelector(myGuid);
-
-	create_task(DeviceInformation::FindAllAsync(myAqs)).then([&controllerAddress](DeviceInformationCollection^ Devices)
+	// If we don't already have the device controller mapped:
+	if (baseAddress == nullptr)
 	{
-		UINT32 mySize = Devices->Size;
-		IIterator<DeviceInformation^>^ devIter = Devices->First();
-		DeviceInformation^ devInfo;
-		bool foundDevice = false;
-		Platform::String^ deviceId;
-		while (devIter->HasCurrent && !foundDevice)
+		Platform::Guid myGuid = Platform::Guid(DMAP_INTERFACE);
+		Platform::String^ myAqs = CustomDevice::GetDeviceSelector(myGuid);
+
+		std::wstring inputDeviceString(deviceName);
+		size_t subStrLen = inputDeviceString.find(L"{") - 5;
+		if (subStrLen < 1)
 		{
-			UINT32 i;
-			devInfo = devIter->Current;
-			Platform::String^ devName = devInfo->Name;
-			//			std::wstring devNameStr(devName->Data());
-			//			Platform::String^ devId = devInfo->Id;
-			//			std::wstring devIdStr(devId->Data());
-			if (devInfo->IsEnabled)
+			hr = DMAP_E_DMAP_INTERNAL_ERROR;
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			// Get substring from after the leading "\\.\" up to the "#{" at start of GUID.
+			std::wstring inputDeviceSubstr = inputDeviceString.substr(4, subStrLen);
+
+			// Replace each "#" in the substring with a "\".
+			size_t poundPosition;
+			while ((poundPosition = inputDeviceSubstr.find(L"#")) != std::wstring::npos)
 			{
-				IMapView<Platform::String^, Platform::Object^>^ properties = devInfo->Properties;
-				IIterator<IKeyValuePair<Platform::String^, Platform::Object^>^>^ propIter = properties->First();
-				for (i = 0; (i < properties->Size) && !foundDevice; i++)
+				inputDeviceSubstr.replace(poundPosition, 1, L"\\");
+			}
+			// At this point an input device instance name string of:
+			//  "\\.\ACPI#INT33FC#1#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\0"
+			// Would be converted to this device instance name string:
+			//  "ACPI\INT33FC\1"
+
+			create_task(DeviceInformation::FindAllAsync(myAqs))
+				.then([&controllerAddress, &inputDeviceSubstr, &handle, &hr]
+					(DeviceInformationCollection^ Devices)
+			{
+				UINT32 mySize = Devices->Size;
+				IIterator<DeviceInformation^>^ devIter = Devices->First();
+				DeviceInformation^ devInfo;
+				bool foundDevice = false;
+				Platform::String^ deviceId;
+				while (devIter->HasCurrent && !foundDevice)
 				{
-					IKeyValuePair<Platform::String^, Platform::Object^>^ valuePair = propIter->Current;
-
-					Platform::String^ propKey = valuePair->Key;
-					std::wstring keyStr = propKey->Data();
-					if (_wcsicmp(keyStr.c_str(), L"System.Devices.DeviceInstanceId") == 0)
+					UINT32 i;
+					devInfo = devIter->Current;
+					Platform::String^ devName = devInfo->Name;
+					if (devInfo->IsEnabled)
 					{
-						Platform::Object^ propObj = valuePair->Value;
-						Platform::String^ propStr = propObj->ToString();
-						std::wstring propertiesStr = propStr->Data();
-
-						if (_wcsicmp(propertiesStr.c_str(), L"ACPI\\INT33FC\\1") == 0)
+						IMapView<Platform::String^, Platform::Object^>^ properties = devInfo->Properties;
+						IIterator<IKeyValuePair<Platform::String^, Platform::Object^>^>^ propIter = properties->First();
+						for (i = 0; (i < properties->Size) && !foundDevice; i++)
 						{
-							//							deviceId = devInfo->Id;
-							foundDevice = true;
+							IKeyValuePair<Platform::String^, Platform::Object^>^ valuePair = propIter->Current;
+
+							Platform::String^ propKey = valuePair->Key;
+							std::wstring keyStr = propKey->Data();
+							if (_wcsicmp(keyStr.c_str(), L"System.Devices.DeviceInstanceId") == 0)
+							{
+								Platform::Object^ propObj = valuePair->Value;
+								Platform::String^ propStr = propObj->ToString();
+								std::wstring propertiesStr = propStr->Data();
+
+								if (propertiesStr.compare(inputDeviceSubstr) == 0)
+								{
+									foundDevice = true;
+								}
+							}
+
+							propIter->MoveNext();
 						}
 					}
 
-					propIter->MoveNext();
-				}
-			}
+					devIter->MoveNext();
+				} // end - while (devIter->HaveCurrent && !foundDevice)
 
-			devIter->MoveNext();
-		} // end - while
-
-		if (foundDevice)
-		{
-			std::wstring devIdStr(devInfo->Id->Data());
-			devIdStr.append(L"\\0");
-			Platform::String^ devId = ref new Platform::String(devIdStr.c_str());
-
-			create_task(CustomDevice::FromIdAsync(devId, DeviceAccessMode::ReadWrite, DeviceSharingMode::Exclusive))
-				.then([&controllerAddress](CustomDevice^ device)
-			{
-				g_device = device;
-				IOControlCode^ IOCTL = ref new IOControlCode(0x423, 0x100, IOControlAccessMode::Any, IOControlBufferingMethod::Buffered);
-
-				IAsyncOperation<ULONG32>^ getAddressOp;
-				Buffer^ addressBuffer = ref new Buffer(8);
-
-				create_task(device->SendIOControlAsync(IOCTL, nullptr, addressBuffer))
-					.then([&addressBuffer, &controllerAddress](UINT32 result)
+				if (!foundDevice)
 				{
-					auto reader = DataReader::FromBuffer(addressBuffer);
-					UINT32 address = { 0 };
-					int i;
-					for (i = 0; i < 4; i++)
+					hr = DMAP_E_DEVICE_NOT_FOUND_ON_SYSTEM;
+				}
+
+				if (SUCCEEDED(hr))
+				{
+					std::wstring devIdStr(devInfo->Id->Data());
+					devIdStr.append(L"\\0");
+					Platform::String^ devId = ref new Platform::String(devIdStr.c_str());
+
+					return create_task(CustomDevice::FromIdAsync(devId, DeviceAccessMode::ReadWrite, DeviceSharingMode::Exclusive))
+						.then([&controllerAddress, &handle, &hr]
+							(CustomDevice^ device)
 					{
-						address = address | (((UINT32)reader->ReadByte()) << (8 * i));
-					}
-					controllerAddress = address;
-					//UINT32 length = { 0 };
-					//for (i = 0; i < 4; i++)
-					//{
-					//	length = length | (((UINT32)reader->ReadByte()) << (8 * i));
-					//}
-					//UINT32 mappingLength = length;
+						if (g_deviceCount >= MAX_OPEN_DEVICES)
+						{
+							hr = DMAP_E_TOO_MANY_DEVICES_MAPPED;
+						}
 
-					return;
-				}).wait();
+						if (SUCCEEDED(hr))
+						{
+							g_devices[g_deviceCount] = device;
+							handle = &g_devices[g_deviceCount];
+							g_deviceCount++;
 
-				return;
-			}).wait();
+							IOControlCode^ IOCTL = ref new IOControlCode(0x423, 0x100, IOControlAccessMode::Any, IOControlBufferingMethod::Buffered);
+							Buffer^ addressBuffer = ref new Buffer(8);
 
-		}
-		return;
-	}).wait();
+							return create_task(device->SendIOControlAsync(IOCTL, nullptr, addressBuffer))
+								.then([&addressBuffer, &controllerAddress, &hr](UINT32 result)
+							{
+								hr = result;
+								if (SUCCEEDED(hr))
+								{
+									auto reader = DataReader::FromBuffer(addressBuffer);
+									UINT32 address = { 0 };
+									int i;
+									for (i = 0; i < 4; i++)
+									{
+										address = address | (((UINT32)reader->ReadByte()) << (8 * i));
+									}
+									controllerAddress = address;
+								}
 
-	baseAddress = (PVOID)controllerAddress;
-	handle = 0;			// Indicate we have the device open.
+							});	// device->SendIOControlAsync()
+
+					
+						} // End - if (SUCCEEDED(hr))
+
+						return task_from_result();
+
+					});	// CustomDevice::FromIdAsync()
+
+				} // End - if (SUCCEEDED(hr))
+
+				return task_from_result();
+
+            }).wait();	// DeviceInformation::FindAllAsync()
+
+	        baseAddress = (PVOID)controllerAddress;
+
+        } // End - if (SUCCEEDED(hr))
+
+	} // End - if (baseAddress == nullptr)
+
 #endif	// !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a Win32 app
@@ -227,3 +273,62 @@ HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode
     return hr;
 }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a UWP app
+/**
+Acquire an exclusive access lock on a controller.
+\param[in] handle Handle opened to the device to be locked.
+\return HRESULT success or error code.
+*/
+HRESULT GetControllerLock(HANDLE & handle)
+{
+	HRESULT hr = S_OK;
+	CustomDevice^ device;
+
+	if ((handle < &g_devices[0]) || (handle >= &g_devices[MAX_OPEN_DEVICES]))
+	{
+		hr = DMAP_E_I2C_INVALID_LOCK_HANDLE_SPECIFIED;
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		device = *(CustomDevice^*)handle;
+		IOControlCode^ IOCTL = ref new IOControlCode(0x423, 0x103, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
+        // TODO: Add the lock code to DMap.sys.
+		hr = create_task(device->SendIOControlAsync(IOCTL, nullptr, nullptr)).get();
+
+	} // End - if (SUCCEEDED(hr))
+
+	return hr;
+}
+#endif	// !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a UWP app
+/**
+Release an exclusive access lock on a controller.
+\param[in] handle Handle opened to the locked device.
+\return HRESULT success or error code.
+*/
+HRESULT ReleaseControllerLock(HANDLE & handle)
+{
+	HRESULT hr = S_OK;
+	CustomDevice^ device;
+
+	if ((handle < &g_devices[0]) || (handle >= &g_devices[MAX_OPEN_DEVICES]))
+	{
+		hr = DMAP_E_I2C_INVALID_LOCK_HANDLE_SPECIFIED;
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		device = *(CustomDevice^*)handle;
+		IOControlCode^ IOCTL = ref new IOControlCode(0x423, 0x104, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
+
+		hr = create_task(device->SendIOControlAsync(IOCTL, nullptr, nullptr)).get();
+
+	} // End - if (SUCCEEDED(hr))
+
+	return hr;
+}
+#endif	// !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+

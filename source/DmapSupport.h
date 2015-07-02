@@ -37,4 +37,9 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode);
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a UWP app.
+HRESULT GetControllerLock(HANDLE & handle);
+HRESULT ReleaseControllerLock(HANDLE & handle);
+#endif
+
 #endif // _DMAP_SUPPORT_H_
