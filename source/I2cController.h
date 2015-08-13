@@ -816,8 +816,8 @@ public:
         m_pXfrQueueTail = nullptr;
         m_cmdsOutstanding = 0;
         m_readsOutstanding = 0;
-		m_hI2cLock = INVALID_HANDLE_VALUE;
-		m_abort = FALSE;
+        m_hI2cLock = INVALID_HANDLE_VALUE;
+        m_abort = FALSE;
         m_error = SUCCESS;
         m_isIncomplete = FALSE;
         m_useHighSpeed = FALSE;

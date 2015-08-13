@@ -89,19 +89,22 @@ set the desired width, then call SPI.begin() to start the contrller again.
 /// The SPI speed specified is not in the supported range.
 #define DMAP_E_SPI_SPEED_SPECIFIED_IS_INVALID 0x80040217
 
+/// This SPI implementation does not support buffer transfers.
+#define DMAP_E_SPI_BUFFER_TRANSFER_NOT_IMPLEMENTED 0x80040218
+
 /// The port/bit specified does not exist on the device.
-#define DMAP_E_INVALID_PORT_BIT_FOR_DEVICE 0x80040218
+#define DMAP_E_INVALID_PORT_BIT_FOR_DEVICE 0x80040219
 
 /// A GPIO operation was performed on a pin configured as a PWM output.
-#define DMAP_E_GPIO_PIN_IS_SET_TO_PWM 0x80040219
+#define DMAP_E_GPIO_PIN_IS_SET_TO_PWM 0x8004021A
 
 /// The specified number of bits per transfer is not supported by the SPI controller.
-#define DMAP_E_SPI_DATA_WIDTH_SPECIFIED_IS_INVALID 0x8004021A
+#define DMAP_E_SPI_DATA_WIDTH_SPECIFIED_IS_INVALID 0x8004021B
 
 /// An attempt was made to map more than the maximum number of devices.
-#define DMAP_E_TOO_MANY_DEVICES_MAPPED 0x8004021B
+#define DMAP_E_TOO_MANY_DEVICES_MAPPED 0x8004021C
 
 /// The specified device was not found on the systems.
-#define DMAP_E_DEVICE_NOT_FOUND_ON_SYSTEM 0x8004021C
+#define DMAP_E_DEVICE_NOT_FOUND_ON_SYSTEM 0x8004021D
 
 #endif  // _ERROR_CODES_H_

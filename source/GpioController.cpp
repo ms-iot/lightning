@@ -30,6 +30,7 @@ HRESULT QuarkFabricGpioControllerClass::_mapController()
 }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 \return HRESULT success or error code.
 */
@@ -51,7 +52,9 @@ HRESULT BtFabricGpioControllerClass::_mapS0Controller()
 
     return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 \return HRESULT success or error code.
 */
@@ -74,6 +77,7 @@ HRESULT BtFabricGpioControllerClass::_mapS5Controller()
 
     return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
@@ -91,3 +95,28 @@ HRESULT QuarkLegacyGpioControllerClass::_openController()
     return hr;
 }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if defined(_M_ARM)
+/**
+\return HRESULT success or error code.
+*/
+HRESULT BcmGpioControllerClass::_mapController()
+{
+    HRESULT hr = S_OK;
+    PVOID baseAddress = nullptr;
+
+    hr = GetControllerBaseAddress(
+        pi2GpioDeviceName,
+        m_hController,
+        baseAddress,
+        FILE_SHARE_READ | FILE_SHARE_WRITE);
+
+    if (SUCCEEDED(hr))
+    {
+        m_controller = (PBCM_GPIO)baseAddress;
+    }
+
+    return hr;
+}
+#endif // defined(_M_ARM)
+

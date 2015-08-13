@@ -26,11 +26,22 @@
 #define mbmSpiDeviceName      L"\\\\.\\ACPI#80860F0E#0#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
 #define mbmI2cDeviceName      L"\\\\.\\ACPI#80860F41#6#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
 
+// Define the device name strings used to access the controllers on the PI2.
+#define pi2Spi0DeviceName     L"\\\\.\\ACPI#BCM2838#0#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
+#define pi2Spi1DeviceName     L"\\\\.\\ACPI#BCM2839#1#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
+#define pi2I2c0DeviceName     L"\\\\.\\ACPI#BCM2841#0#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
+#define pi2I2c1DeviceName     L"\\\\.\\ACPI#BCM2841#1#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
+#define pi2PwmDeviceName      L"\\\\.\\ACPI#BCM2844#0#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
+#define pi2GpioDeviceName     L"\\\\.\\ACPI#BCM2845#0#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
+
 /// Routine to get the base address of a memory mapped controller with no sharing allowed.
 HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress);
 
 /// Routine to get the base address of a memory mapped controller with a sharing specification.
 HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode);
+
+/// Routine to close a controller that has previously been opened.
+void DmapCloseController(HANDLE & handle);
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	//	If building a Win32 app:
 /// Routine to open a controller device in the SOC.

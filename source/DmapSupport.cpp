@@ -42,7 +42,7 @@ in the DMap driver (16, as of the first release of this software.)
 */
 #define MAX_OPEN_DEVICES 16
 CustomDevice^ g_devices[MAX_OPEN_DEVICES];
-UINT32 g_deviceCount = 0;
+UINT32 g_openDeviceMask = 0;
 #endif	// !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_TOP)
 
 /**
@@ -147,24 +147,36 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 						.then([&controllerAddress, &handle, &hr]
 							(CustomDevice^ device)
 					{
-						if (g_deviceCount >= MAX_OPEN_DEVICES)
+                        // Find the first available open device slot.
+                        int i = 0;
+                        while ((i < MAX_OPEN_DEVICES) && ((g_openDeviceMask & (1 << i)) != 0))
+                        {
+                            i++;
+                        }
+						if (i == MAX_OPEN_DEVICES)
 						{
 							hr = DMAP_E_TOO_MANY_DEVICES_MAPPED;
 						}
 
 						if (SUCCEEDED(hr))
 						{
-							g_devices[g_deviceCount] = device;
-							handle = &g_devices[g_deviceCount];
-							g_deviceCount++;
+							g_devices[i] = device;
+							handle = &g_devices[i];
+                            g_openDeviceMask |= 1 << i;
 
 							IOControlCode^ IOCTL = ref new IOControlCode(0x423, 0x100, IOControlAccessMode::Any, IOControlBufferingMethod::Buffered);
 							Buffer^ addressBuffer = ref new Buffer(8);
 
 							return create_task(device->SendIOControlAsync(IOCTL, nullptr, addressBuffer))
-								.then([&addressBuffer, &controllerAddress, &hr](UINT32 result)
+								.then([addressBuffer, &controllerAddress, &hr](UINT32 result)
 							{
-								hr = result;
+                                // We expect a 4-byte address and a 4-byte length to have been transferred 
+                                // into the address buffer by the I/O operation.
+                                if (result == 8)
+                                {
+                                    hr = S_OK;
+                                }
+
 								if (SUCCEEDED(hr))
 								{
 									auto reader = DataReader::FromBuffer(addressBuffer);
@@ -236,6 +248,32 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 }
 
 /**
+Close an open controller device using a method appropriate to how it was opened.
+\param[inout] handle Handle to the open controller device.
+*/
+void DmapCloseController(HANDLE & handle)
+{
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+        CloseHandle(handle);
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+        if ((handle >= &g_devices[0]) && (handle < &g_devices[MAX_OPEN_DEVICES]))
+        {
+            *(CustomDevice^*)handle = nullptr;                  // Close device handle
+            UINT32 i = ((CustomDevice^*)handle - g_devices);    // Get index of device in array
+            g_openDeviceMask &= ~(1 << i);                      // Indicate device slot is free
+        }
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+        handle = INVALID_HANDLE_VALUE;
+    }
+}
+
+/**
 Open a controller device in the SOC.  This is used for both memory mapped and
 IO mapped controllers.
 \param[in] deviceName The name of the PCI device used to map the controller in question.
@@ -294,8 +332,8 @@ HRESULT GetControllerLock(HANDLE & handle)
 	{
 		device = *(CustomDevice^*)handle;
 		IOControlCode^ IOCTL = ref new IOControlCode(0x423, 0x103, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
-        // TODO: Add the lock code to DMap.sys.
-		hr = create_task(device->SendIOControlAsync(IOCTL, nullptr, nullptr)).get();
+
+        hr = create_task(device->SendIOControlAsync(IOCTL, nullptr, nullptr)).get();
 
 	} // End - if (SUCCEEDED(hr))
 

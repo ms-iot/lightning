@@ -22,6 +22,7 @@ const UCHAR GPIO_EXP2 = 5;      ///< GPIO is from a port bit on  I/O Expander 2
 const UCHAR GPIO_CY8 = 6;       ///< GPIO is from a port on the CY8 I/O Expander (on Gen1)
 const UCHAR GPIO_S0 = 7;        ///< GPIO is from the MBM SOC S0 sub-system
 const UCHAR GPIO_S5 = 8;        ///< GPIO is from the MBM SOC S5 sub-system
+const UCHAR GPIO_BCM = 9;       ///< GPIO is from the BCM2836 SOC GPIO sub-system
 const UCHAR GPIO_NONE = 255;    ///< Specifies there is no GPIO pin with this number
 
 // GPIO pin driver selection values.
@@ -34,8 +35,9 @@ const UCHAR EXP1       =  1;    ///< Value specifies I/O Expander 1
 const UCHAR EXP2       =  2;    ///< Value specifies I/O Expander 2
 const UCHAR PWMG       =  3;    ///< Value specifies Galileo PWM used as I/O Expander
 const UCHAR CY8        =  4;    ///< Value specifies CY8 I/O Expander (on Gen1)
-const UCHAR SOC        =  5;    ///< Value specifies SOC is the "I/O Expander"
+const UCHAR SOCBAYT    =  5;    ///< Value specifies BayTrail SOC is the "I/O Expander"
 const UCHAR PWMI       =  6;    ///< Value specifies Ika Lure PWM used as I/O Expander
+const UCHAR SOCBCM     =  7;    ///< Value specifies BCM2836 SOC is the "I/O Expander"
 const UCHAR NUM_IO_EXP =  7;    ///< The number of I/O Expander types
 const UCHAR NO_X       = 15;    ///< Value specifies that no I/O Expander is used
 
@@ -43,8 +45,9 @@ const UCHAR NO_X       = 15;    ///< Value specifies that no I/O Expander is use
 const UCHAR PCAL9535A = 0;      ///< I/O Expander chip used on Gen2
 const UCHAR PCA9685 = 1;        ///< PWM chip used on Gen2 and Ika Lure
 const UCHAR CY8C9540A = 2;      ///< I/O Expander/PWM chip used on Gen1
-const UCHAR BAYTRAIL = 3;       ///< Muxing is done within the SOC
-const UCHAR NUM_EXP_TYPSES = 3; ///< The number of I/O Expanders types present
+const UCHAR BAYTRAIL = 3;       ///< Muxing is done within the MBM SOC
+const UCHAR BCM2836 = 4;        ///< Muxing is done within the PI2 SOC
+const UCHAR NUM_EXP_TYPSES = 4; ///< The number of I/O Expanders types present
 
 // PWM chip bit values.
 const UCHAR LED0  =  0;         ///< PWM chip LED0 output
@@ -106,6 +109,10 @@ const ULONG NUM_MBM_PINS = 27;  ///< Number of entries in a zero based array ind
 
 // The I2C Address of the MBM Ika Lure ADC.
 const ULONG MBM_IKA_LURE_ADC_ADR = 0x48;    ///< I2C address of ADC on MBM Ika Lure
+                                            
+// The number of connector pins on an PI2 plus one (to allow for 0 not being used).
+const ULONG NUM_PI2_PINS = 41;  ///< Number of entries in a zero based array indexed by PI2 pin number.
+
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// The global table of pin attributes for the Galileo Gen2 board.
@@ -283,6 +290,7 @@ const BoardPinsClass::PWM_CHANNEL g_Gen1PwmChannels[] =
 };
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /// The global table of pin attributes for the MBM board.
 /**
 This table contains all the pin-specific attributes needed to configure and use an I/O pin.
@@ -328,21 +336,21 @@ mux number and specifies which port bit of which I/O Expander drives the mux sel
 */
 const BoardPinsClass::MUX_ATTRIBUTES g_MbmMuxAttributes[MAX_MUXES] =
 {
-    { SOC,  0 },    ///< MUX0
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 }     // Not used on bare MBM
+    { SOCBAYT,  0 },    ///< MUX0
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 }     // Not used on bare MBM
 };
 
 /// The global table of PWM information for the MBM board.
@@ -352,33 +360,33 @@ Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM
 */
 const BoardPinsClass::PWM_CHANNEL g_MbmPwmChannels[] =
 {
-    { NO_X, 0, 0, 0 },          ///<  0
-    { NO_X, 0, 0, 0 },          ///<  1
-    { NO_X, 0, 0, 0 },          ///<  2
-    { NO_X, 0, 0, 0 },          ///<  3
-    { NO_X, 0, 0, 0 },          ///<  4
-    { NO_X, 0, 0, 0 },          ///<  5
-    { NO_X, 0, 0, 0 },          ///<  6
-    { NO_X, 0, 0, 0 },          ///<  7
-    { NO_X, 0, 0, 0 },          ///<  8
-    { NO_X, 0, 0, 0 },          ///<  9
-    { NO_X, 0, 0, 0 },          ///< 10
-    { NO_X, 0, 0, 0 },          ///< 11
-    { NO_X, 0, 0, 0 },          ///< 12
-    { NO_X, 0, 0, 0 },          ///< 13
-    { NO_X, 0, 0, 0 },          ///< 14
-    { NO_X, 0, 0, 0 },          ///< 15
-    { NO_X, 0, 0, 0 },          ///< 16
-    { NO_X, 0, 0, 0 },          ///< 17
-    { NO_X, 0, 0, 0 },          ///< 18
-    { NO_X, 0, 0, 0 },          ///< 19
-    { NO_X, 0, 0, 0 },          ///< 20
-    { NO_X, 0, 0, 0 },          ///< 21
-    { SOC,  0, 0, 0 },          ///< 22
-    { NO_X, 0, 0, 0 },          ///< 23
-    { SOC,  1, 0, 0 },          ///< 24
-    { NO_X, 0, 0, 0 },          ///< 25
-    { NO_X, 0, 0, 0 }           ///< 26
+    { NO_X,     0, 0, 0 },          ///<  0
+    { NO_X,     0, 0, 0 },          ///<  1
+    { NO_X,     0, 0, 0 },          ///<  2
+    { NO_X,     0, 0, 0 },          ///<  3
+    { NO_X,     0, 0, 0 },          ///<  4
+    { NO_X,     0, 0, 0 },          ///<  5
+    { NO_X,     0, 0, 0 },          ///<  6
+    { NO_X,     0, 0, 0 },          ///<  7
+    { NO_X,     0, 0, 0 },          ///<  8
+    { NO_X,     0, 0, 0 },          ///<  9
+    { NO_X,     0, 0, 0 },          ///< 10
+    { NO_X,     0, 0, 0 },          ///< 11
+    { NO_X,     0, 0, 0 },          ///< 12
+    { NO_X,     0, 0, 0 },          ///< 13
+    { NO_X,     0, 0, 0 },          ///< 14
+    { NO_X,     0, 0, 0 },          ///< 15
+    { NO_X,     0, 0, 0 },          ///< 16
+    { NO_X,     0, 0, 0 },          ///< 17
+    { NO_X,     0, 0, 0 },          ///< 18
+    { NO_X,     0, 0, 0 },          ///< 19
+    { NO_X,     0, 0, 0 },          ///< 20
+    { NO_X,     0, 0, 0 },          ///< 21
+    { SOCBAYT,  0, 0, 0 },          ///< 22
+    { NO_X,     0, 0, 0 },          ///< 23
+    { SOCBAYT,  1, 0, 0 },          ///< 24
+    { NO_X,     0, 0, 0 },          ///< 25
+    { NO_X,     0, 0, 0 }           ///< 26
 };
 
 /// The global table of pin attributes for the MBM board with an Ika Lure attached.
@@ -419,21 +427,21 @@ mux number and specifies which port bit of which I/O Expander drives the mux sel
 */
 const BoardPinsClass::MUX_ATTRIBUTES g_MbmIkaMuxAttributes[MAX_MUXES] =
 {
-    { PWMI, LED6 },     ///< MUX0
-    { PWMI, LED7 },     ///< MUX1
-    { PWMI, LED8 },     ///< MUX2
-    { PWMI, LED9 },     ///< MUX3
-    { PWMI, LED10 },    ///< MUX4
-    { PWMI, LED11 },    ///< MUX5
-    { SOC,  0 },        ///< MUX6
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 }         // Not used on Ika Lure
+    { PWMI,     LED6 },     ///< MUX0
+    { PWMI,     LED7 },     ///< MUX1
+    { PWMI,     LED8 },     ///< MUX2
+    { PWMI,     LED9 },     ///< MUX3
+    { PWMI,     LED10 },    ///< MUX4
+    { PWMI,     LED11 },    ///< MUX5
+    { SOCBAYT,  0 },        ///< MUX6
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 }         // Not used on Ika Lure
 };
 
 /// The global table of PWM information for the MBM board with an Ika Lure attached.
@@ -464,7 +472,135 @@ const BoardPinsClass::PWM_CHANNEL g_MbmIkaPwmChannels[] =
     { NO_X, 0, 0, 0 },          ///< A4
     { NO_X, 0, 0, 0 }           ///< A5
 };
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_ARM)
+/// The global table of pin attributes for the PI2 board.
+/**
+This table contains all the pin-specific attributes needed to configure and use an I/O pin.
+It is indexed by pin number (0 to NUM_PI2_PINS-1).
+*/
+const BoardPinsClass::PORT_ATTRIBUTES g_Pi2PinAttributes[] =
+{
+    //gpioType           pullupExp   triStExp    muxA               Muxes (A,B) by function:    I2S  triStIn   Function_mask
+    //             portBit     pullupBit   triStBit      muxB     Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  0
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  1
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  2
+    { GPIO_BCM,    2,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_I2C },  //  3
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  4
+    { GPIO_BCM,    3,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_I2C },  //  5
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  6
+    { GPIO_BCM,    4,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             //  7
+    { GPIO_BCM,   14,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  //  8
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  9
+    { GPIO_BCM,   15,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  // 10
+    { GPIO_BCM,   17,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 11
+    { GPIO_BCM,   18,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 12
+    { GPIO_BCM,   27,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 13
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 14
+    { GPIO_BCM,   22,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 15
+    { GPIO_BCM,   23,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 16
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 17
+    { GPIO_BCM,   24,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 18
+    { GPIO_BCM,   10,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 19
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 20
+    { GPIO_BCM,    9,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 21
+    { GPIO_BCM,   25,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 22
+    { GPIO_BCM,   11,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 23
+    { GPIO_BCM,    8,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 24
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 25
+    { GPIO_BCM,    7,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 26
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 27
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 28
+    { GPIO_BCM,    5,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 29
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 30
+    { GPIO_BCM,    6,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 31
+    { GPIO_BCM,   12,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 32
+    { GPIO_BCM,   13,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 33
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 34
+    { GPIO_BCM,   19,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 35
+    { GPIO_BCM,   16,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 36
+    { GPIO_BCM,   26,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 37
+    { GPIO_BCM,   20,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 38
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 39
+    { GPIO_BCM,   21,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO }              // 40
+};
+
+/// The global table of mux attributes for the PI2 board.
+/**
+This table contains the information needed to set each mux to a desired state.  It is indexed by
+mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
+*/
+const BoardPinsClass::MUX_ATTRIBUTES g_Pi2MuxAttributes[MAX_MUXES] =
+{
+    { SOCBCM,  0 },    ///< MUX0
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 }     // Not used on bare PI2
+};
+
+/// The global table of PWM information for the PI2 board.
+/**
+This table contains the information needed to drive the PWM channels.  It is indexed by the
+PI2 connector pin number, and specifies the chip and port-bit that implements PWM for that pin.
+*/
+const BoardPinsClass::PWM_CHANNEL g_Pi2PwmChannels[] =
+{
+    { NO_X, 0, 0, 0 },          ///<  0
+    { NO_X, 0, 0, 0 },          ///<  1
+    { NO_X, 0, 0, 0 },          ///<  2
+    { NO_X, 0, 0, 0 },          ///<  3
+    { NO_X, 0, 0, 0 },          ///<  4
+    { NO_X, 0, 0, 0 },          ///<  5
+    { NO_X, 0, 0, 0 },          ///<  6
+    { NO_X, 0, 0, 0 },          ///<  7
+    { NO_X, 0, 0, 0 },          ///<  8
+    { NO_X, 0, 0, 0 },          ///<  9
+    { NO_X, 0, 0, 0 },          ///< 10
+    { NO_X, 0, 0, 0 },          ///< 11
+    { NO_X, 0, 0, 0 },          ///< 12
+    { NO_X, 0, 0, 0 },          ///< 13
+    { NO_X, 0, 0, 0 },          ///< 14
+    { NO_X, 0, 0, 0 },          ///< 15
+    { NO_X, 0, 0, 0 },          ///< 16
+    { NO_X, 0, 0, 0 },          ///< 17
+    { NO_X, 0, 0, 0 },          ///< 18
+    { NO_X, 0, 0, 0 },          ///< 19
+    { NO_X, 0, 0, 0 },          ///< 20
+    { NO_X, 0, 0, 0 },          ///< 21
+    { NO_X, 0, 0, 0 },          ///< 22
+    { NO_X, 0, 0, 0 },          ///< 23
+    { NO_X, 0, 0, 0 },          ///< 24
+    { NO_X, 0, 0, 0 },          ///< 25
+    { NO_X, 0, 0, 0 },          ///< 26
+    { NO_X, 0, 0, 0 },          ///< 27
+    { NO_X, 0, 0, 0 },          ///< 28
+    { NO_X, 0, 0, 0 },          ///< 29
+    { NO_X, 0, 0, 0 },          ///< 30
+    { NO_X, 0, 0, 0 },          ///< 31
+    { NO_X, 0, 0, 0 },          ///< 32
+    { NO_X, 0, 0, 0 },          ///< 33
+    { NO_X, 0, 0, 0 },          ///< 34
+    { NO_X, 0, 0, 0 },          ///< 35
+    { NO_X, 0, 0, 0 },          ///< 36
+    { NO_X, 0, 0, 0 },          ///< 37
+    { NO_X, 0, 0, 0 },          ///< 38
+    { NO_X, 0, 0, 0 },          ///< 39
+    { NO_X, 0, 0, 0 }           ///< 40
+};
+#endif // defined(_M_ARM)
 
 /// The global table of I/O Expander attributes for the boards.
 /**
@@ -480,7 +616,8 @@ const BoardPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
 	{ PCA9685,   0x47 },                    ///< PWMG - Galileo Gen2
 	{ CY8C9540A, 0x20 },                    ///< CY8 - Galileo Gen1
 	{ BAYTRAIL,  0x00 },                    ///< SOC - MBM
-	{ PCA9685,   IKA_LURE_PWM_I2C_ADR }     ///< PWMI - MBM with Ika Lure
+	{ PCA9685,   IKA_LURE_PWM_I2C_ADR },    ///< PWMI - MBM with Ika Lure
+    { BCM2836,   0x00 }                     ///< SOC - PI2
 };
 
 
@@ -516,7 +653,21 @@ BoardPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
     { FUNC_NUL, false },    ///< 23
     { FUNC_NUL, false },    ///< 24
     { FUNC_NUL, false },    ///< 25
-    { FUNC_NUL, false }     ///< 26
+    { FUNC_NUL, false },    ///< 26
+    { FUNC_NUL, false },    ///< 27
+    { FUNC_NUL, false },    ///< 28
+    { FUNC_NUL, false },    ///< 29
+    { FUNC_NUL, false },    ///< 30
+    { FUNC_NUL, false },    ///< 31
+    { FUNC_NUL, false },    ///< 32
+    { FUNC_NUL, false },    ///< 33
+    { FUNC_NUL, false },    ///< 34
+    { FUNC_NUL, false },    ///< 35
+    { FUNC_NUL, false },    ///< 36
+    { FUNC_NUL, false },    ///< 37
+    { FUNC_NUL, false },    ///< 38
+    { FUNC_NUL, false },    ///< 39
+    { FUNC_NUL, false }     ///< 40
 };
 
 
@@ -893,12 +1044,19 @@ HRESULT BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
         // Set the pin direction on the device that supports this pin.
         switch (m_PinAttributes[pin].gpioType)
         {
-		case GPIO_S0:
+#if defined(_M_ARM)
+        case GPIO_BCM:
+            hr = g_bcmGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
+            break;
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
+        case GPIO_S0:
             hr = g_btFabricGpio.setS0PinDirection(m_PinAttributes[pin].portBit, mode);
             break;
         case GPIO_S5:
             hr = g_btFabricGpio.setS5PinDirection(m_PinAttributes[pin].portBit, mode);
             break;
+#endif // defined(_M_IX86) || defined(_M_X64)
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 		case GPIO_FABRIC:
 			hr = g_quarkFabricGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
@@ -1013,6 +1171,11 @@ HRESULT BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, U
         // Set the bit of the PWM chip to the desired state.
         hr = PCA9685Device::SetBitState(i2cAdr, bitNo, state);
         break;
+#if defined(_M_ARM)
+    case BCM2836:
+        hr = g_bcmGpio.setPinFunction(m_PinAttributes[pin].portBit, state);
+        break;
+#endif // defined(_M_ARM)
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 	case PCAL9535A:
 		// Set the bit of the I/O Expander chip to the desired state.
@@ -1035,7 +1198,8 @@ HRESULT BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, U
         }
         break;
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-	case BAYTRAIL:
+#if defined(_M_IX86) || defined(_M_X64)
+    case BAYTRAIL:
         if (m_PinAttributes[pin].gpioType == GPIO_S0)
         {
             hr = g_btFabricGpio.setS0PinFunction(m_PinAttributes[pin].portBit, state);
@@ -1045,6 +1209,7 @@ HRESULT BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, U
             hr = g_btFabricGpio.setS5PinFunction(m_PinAttributes[pin].portBit, state);
         }
         break;
+#endif // defined(_M_IX86) || defined(_M_X64)
     default:
 		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
@@ -1111,20 +1276,15 @@ verified the pin number to be in the valid range.
 HRESULT BoardPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
 {
     HRESULT hr = S_OK;
-    ULONG expNo = 0;                // I/O Expander number
-    ULONG bitNo = 0;                // Bit number on I/O Expander
-    ULONG state = 0;                // Desired pin state
+
+    hr = _verifyBoardType();
 
     if (SUCCEEDED(hr))
     {
-        hr = _verifyBoardType();
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        // Determine which I/O Expander pin controls the GPIO-pin drivers.
-        expNo = m_PinAttributes[pin].pullupExp;
-        bitNo = m_PinAttributes[pin].pullupBit;
+#if defined(_M_IX86) || defined(_M_X64)
+        // Determine which I/O Expander pin controls the GPIO-pin pullup.
+        ULONG expNo = m_PinAttributes[pin].pullupExp;
+        ULONG bitNo = m_PinAttributes[pin].pullupBit;
 
         // If this pin has a pullup controlled by an I/O Expander port output pin:
         if (expNo != NO_X)
@@ -1143,6 +1303,10 @@ HRESULT BoardPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
                 hr = _setExpBitDirection(expNo, bitNo, DIRECTION_IN, FALSE);
             }
         }
+#endif // defined(_M_IX86) || defined(_M_X64)
+#if defined (_M_ARM)
+        hr = g_bcmGpio.setPinPullup(m_PinAttributes[pin].portBit, pullup);
+#endif // defined (_M_ARM)
     }
 
     return hr;
@@ -1210,10 +1374,16 @@ HRESULT BoardPinsClass::setPinState(ULONG pin, ULONG state)
         // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
         switch (m_PinAttributes[pin].gpioType)
         {
-		case GPIO_S0:
+#if defined(_M_ARM)
+        case GPIO_BCM:
+            return g_bcmGpio.setPinState(m_PinAttributes[pin].portBit, state);
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
+        case GPIO_S0:
             return g_btFabricGpio.setS0PinState(m_PinAttributes[pin].portBit, state);
         case GPIO_S5:
             return g_btFabricGpio.setS5PinState(m_PinAttributes[pin].portBit, state);
+#endif // defined(_M_IX86) || defined(_M_X64)
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 		case GPIO_FABRIC:
 			return g_quarkFabricGpio.setPinState(m_PinAttributes[pin].portBit, state);
@@ -1267,10 +1437,16 @@ HRESULT BoardPinsClass::getPinState(ULONG pin, ULONG & state)
         // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
         switch (m_PinAttributes[pin].gpioType)
         {
-		case GPIO_S0:
+#if defined(_M_ARM)
+        case GPIO_BCM:
+            return g_bcmGpio.getPinState(m_PinAttributes[pin].portBit, state);
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
+        case GPIO_S0:
             return g_btFabricGpio.getS0PinState(m_PinAttributes[pin].portBit, state);
         case GPIO_S5:
             return g_btFabricGpio.getS5PinState(m_PinAttributes[pin].portBit, state);
+#endif // defined(_M_IX86) || defined(_M_X64)
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 		case GPIO_FABRIC:
 			return g_quarkFabricGpio.getPinState(m_PinAttributes[pin].portBit, state);
@@ -1357,8 +1533,17 @@ HRESULT BoardPinsClass::_determineBoardType()
     HRESULT hr = S_OK;
 
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
-	// For now, we just set the board type to MBM.
+
+    // For now, assume MBM for UWP x86 builds.
+#if defined(_M_IX86) || defined(_M_X64)
     hr = _determineMbmConfig();
+#endif // defined(_M_IX86) || defined(_M_X64)
+
+    // For now, assume PI2 for UWP ARM builds.
+#if defined(_M_ARM)
+    hr = _determinePi2Config();
+#endif // defined(_M_IX86) || defined(_M_X64)
+
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
@@ -1423,7 +1608,7 @@ HRESULT BoardPinsClass::_determineBoardType()
 
 
 /**
-The Ika Lure has a ADC chip at address 0x48.  If this I2C address responds, 
+The Ika Lure has a ADC chip at address 0x48.  If this I2C address responds,
 this code assumes an Ika Lure is attached to this MBM.
 \return HRESULT success or error code.
 */
@@ -1438,11 +1623,27 @@ HRESULT BoardPinsClass::_determineMbmConfig()
 
     if (SUCCEEDED(hr))
     {
-        if (_testI2cAddress(MBM_IKA_LURE_ADC_ADR))
+        hr = _testI2cAddress(MBM_IKA_LURE_ADC_ADR);
+
+        if (SUCCEEDED(hr))
         {
             hr = setBoardType(MBM_IKA_LURE);
         }
     }
+
+    return hr;
+}
+
+/**
+As of the first writing of this code, we only support the bare PI2 board.
+This code needs to be expanded as hats are supported.
+\return HRESULT success or error code.
+*/
+HRESULT BoardPinsClass::_determinePi2Config()
+{
+    HRESULT hr = S_OK;
+
+    hr = setBoardType(PI2_BARE);
 
     return hr;
 }
@@ -1469,7 +1670,7 @@ HRESULT BoardPinsClass::_determineGalileoGen()
     {
         for (i = 0; i < NUM_IO_EXP; i++)
         {
-            if (_testI2cAddress(g_GenxExpAttributes[i].I2c_Address))
+            if (SUCCEEDED(_testI2cAddress(g_GenxExpAttributes[i].I2c_Address)))
             {
                 expSig = expSig | (1 << i);
             }
@@ -1507,6 +1708,7 @@ HRESULT BoardPinsClass::setBoardType(BOARD_TYPE board)
     HRESULT hr = S_OK;
 
     m_boardType = board;
+#if defined(_M_IX86) || defined(_M_X64)
     if (board == MBM_BARE)
     {
         m_PinAttributes = g_MbmPinAttributes;
@@ -1521,6 +1723,18 @@ HRESULT BoardPinsClass::setBoardType(BOARD_TYPE board)
         m_PwmChannels = g_MbmIkaPwmChannels;
         m_GpioPinCount = NUM_ARDUINO_PINS;
     }
+#endif // defined(_M_IX86) || defined(_M_X64)
+
+#if defined(_M_ARM)
+    if (board == PI2_BARE)
+    {
+        m_PinAttributes = g_Pi2PinAttributes;
+        m_MuxAttributes = g_Pi2MuxAttributes;
+        m_PwmChannels = g_Pi2PwmChannels;
+        m_GpioPinCount = NUM_PI2_PINS;
+    }
+#endif // defined(_M_ARM)
+
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 	else if (board == GALILEO_GEN2)
 	{

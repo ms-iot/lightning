@@ -116,7 +116,8 @@ public:
         GALILEO_GEN1,          ///< Original Galileo board
         GALILEO_GEN2,          ///< Galileo Gen2 board
         MBM_BARE,              ///< MBM without Lure attached
-        MBM_IKA_LURE           ///< MBM with Ika Lure attached
+        MBM_IKA_LURE,          ///< MBM with Ika Lure attached
+        PI2_BARE               ///< PI2 without expansion attached
     };
 
     /// Method to set an I/O pin to a state (HIGH or LOW).
@@ -216,6 +217,9 @@ private:
 
     /// Method to determine the configuration of an MBM board.
     HRESULT _determineMbmConfig();
+
+    /// Method to determine the configuration of a PI2 board.
+    HRESULT _determinePi2Config();
 
     /// Test an I2C address to see if a slave is present on it.
     HRESULT _testI2cAddress(ULONG i2cAdr);

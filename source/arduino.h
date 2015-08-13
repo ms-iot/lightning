@@ -229,12 +229,6 @@ inline int digitalRead(int pin)
     ULONG readData = 0;
 
 	hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
-	if (FAILED(hr))
-    {
-        return LOW;
-    }
-
-	hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
 	if (SUCCEEDED(hr))
 	{
 		hr = g_pins.getPinState(pin, readData);

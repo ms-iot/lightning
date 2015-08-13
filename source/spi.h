@@ -10,6 +10,9 @@
 #include "ArduinoCommon.h"
 #include "ArduinoError.h"
 #include "SpiController.h"
+#include "QuarkSpiController.h"
+#include "BtSpiController.h"
+#include "BcmSpiController.h"
 #include "BoardPins.h"
 
 // SPI clock values in KHz.
@@ -42,10 +45,6 @@ public:
         m_clockKHz = 4000;                 // Default clock rate is 4 MHz
         m_mode = SPI_MODE0;                // Default to Mode 0
         m_dataWidth = DEFAULT_SPI_BITS;    // Default to one byte per SPI transfer
-        m_csPin = 0xFFFFFFFF;              // Start with invalid pin values
-        m_sckPin = 0xFFFFFFFF;             //   "
-        m_mosiPin = 0xFFFFFFFF;            //   "
-        m_misoPin = 0xFFFFFFFF;            //   "
     }
 
     /// Destructor.
@@ -70,104 +69,28 @@ public:
             ThrowError("An error occurred determining board type: %08x", hr);
         }
 
-        if (board == BoardPinsClass::BOARD_TYPE::MBM_BARE)
-        {
-            m_csPin = BARE_MBM_PIN_CS;
-            m_misoPin = BARE_MBM_PIN_MISO;
-            m_mosiPin = BARE_MBM_PIN_MOSI;
-            m_sckPin = BARE_MBM_PIN_SCK;
-        }
-        else
-        {
-            m_mosiPin = ARDUINO_PIN_MOSI;
-            m_misoPin = ARDUINO_PIN_MISO;
-            m_sckPin = ARDUINO_PIN_SCK;
-        }
-
+        // Create and initialize the SPI Controller object if we don't already have one.
         if (m_controller == nullptr)
         {
-            m_controller = new SpiControllerClass;
-        }
-
-        // Set SCK and MOSI as outputs dedicated to SPI, and pulled LOW.
-		hr = g_pins.verifyPinFunction(m_sckPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION);
-
-		if (FAILED(hr))
-        {
-            ThrowError("An error occurred configuring SCK pin for SPI use: %08x", hr);
-        }
-
-		hr = g_pins.setPinState(m_sckPin, LOW);
-
-		if (FAILED(hr))
-        {
-            ThrowError("An error occurred setting SCK pin LOW: %08x", hr);
-        }
-
-		hr = g_pins.setPinMode(m_sckPin, DIRECTION_OUT, FALSE);
-
-		if (FAILED(hr))
-        {
-            ThrowError("An error occurred setting SCK pin as output: %08x", hr);
-        }
-
-		hr = g_pins.verifyPinFunction(m_mosiPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION);
-
-		if (FAILED(hr))
-        {
-            ThrowError("An error occurred configuring MOSI pin for SPI use: %08x", hr);
-        }
-
-		hr = g_pins.setPinState(m_mosiPin, LOW);
-
-		if (FAILED(hr))
-        {
-            ThrowError("An error occurred setting MOSI pin LOW: %08x", hr);
-        }
-
-		hr = g_pins.setPinMode(m_mosiPin, DIRECTION_OUT, FALSE);
-
-		if (FAILED(hr))
-        {
-            ThrowError("An error occurred setting MOSI pin as output: %08x", hr);
-        }
-
-        // Set MISO as an input dedicated to SPI.
-		hr = g_pins.verifyPinFunction(m_misoPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION);
-
-		if (FAILED(hr))
-        {
-            ThrowError("An error occurred configuring MISO pin for SPI use: %08x", hr);
-        }
-
-		hr = g_pins.setPinMode(m_misoPin, DIRECTION_IN, FALSE);
-
-		if (FAILED(hr))
-        {
-            ThrowError("An error occurred setting MISO pin as output: %08x", hr);
-        }
-
-        if (board == BoardPinsClass::BOARD_TYPE::MBM_BARE)
-        {
-			hr = g_pins.verifyPinFunction(m_csPin, FUNC_SPI, BoardPinsClass::LOCK_FUNCTION);
-
-			if (FAILED(hr))
+            if (board == BoardPinsClass::BOARD_TYPE::MBM_BARE)
             {
-                ThrowError("An error occurred configuring CS pin for SPI use: %08x", hr);
+                m_controller = new BtSpiControllerClass;
+                hr = m_controller->configurePins(MBM_PIN_MISO, MBM_PIN_MOSI, MBM_PIN_SCK);
+            }
+            else if (board == BoardPinsClass::BOARD_TYPE::PI2_BARE)
+            {
+                m_controller = new BcmSpiControllerClass;
+                hr = m_controller->configurePins(PI2_PIN_SPI0_MISO, PI2_PIN_SPI0_MOSI, PI2_PIN_SPI0_SCK);
+            }
+            else
+            {
+                m_controller = new QuarkSpiControllerClass;
+                hr = m_controller->configurePins(ARDUINO_PIN_MISO, ARDUINO_PIN_MOSI, ARDUINO_PIN_SCK);
             }
 
-			hr = g_pins.setPinState(m_csPin, HIGH);
-
-			if (FAILED(hr))
+            if (FAILED(hr))
             {
-                ThrowError("An error occurred setting CS pin HIGH: %08x", hr);
-            }
-
-			hr = g_pins.setPinMode(m_csPin, DIRECTION_OUT, FALSE);
-
-			if (FAILED(hr))
-            {
-                ThrowError("An error occurred setting CS pin as output: %08x", hr);
+                ThrowError("An error occurred configuring pins for SPI use: %08x", hr);
             }
         }
 
@@ -200,30 +123,19 @@ public:
 
         if (m_controller != nullptr)
         {
+            // Set all SPI pins as digitial I/O.
+            hr = m_controller->revertPinsToGpio();
+
+            if (FAILED(hr))
+            {
+                ThrowError("An error occurred reverting SPI pins to GPIO: %08x", hr);
+            }
+
+            // Get rid of the underlying SPI Controller object.  This closes the handle
+            // we have open to the SPI controller.
             delete m_controller;
             m_controller = nullptr;
 
-            // Set all SPI pins as digitial I/O.
-			hr = g_pins.verifyPinFunction(m_sckPin, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
-
-			if (FAILED(hr))
-            {
-                ThrowError("An error occurred reverting SCK pin from SPI use: %08x", hr);
-            }
-
-			hr = g_pins.verifyPinFunction(m_mosiPin, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
-
-			if (FAILED(hr))
-            {
-                ThrowError("An error occurred reverting MOSI pin from SPI use: %08x", hr);
-            }
-
-			hr = g_pins.verifyPinFunction(m_misoPin, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
-
-			if (FAILED(hr))
-            {
-                ThrowError("An error occurred reverting MISO pin from SPI use: %08x", hr);
-            }
         }
     }
 
@@ -340,7 +252,7 @@ public:
     */
     inline ULONG transfer(ULONG val)
     {
-		HRESULT hr;
+        HRESULT hr;
         ULONG dataReturn = 0;
 
         if (m_controller == nullptr)
@@ -349,9 +261,35 @@ public:
         }
 
         // Transfer the data.
-		hr = m_controller->transfer8(val, dataReturn);
+        hr = m_controller->transfer8(val, dataReturn);
 
-		if (FAILED(hr))
+        if (FAILED(hr))
+        {
+            ThrowError("An error occurred atempting to transfer SPI data: %d", hr);
+        }
+
+        return dataReturn;
+    }
+
+    /// Transfer two bytes in each direction on the SPI bus.
+    /**
+    \param[in] val The least significant 16 bits are the two data bytes to be sent.
+    \return The two data bytes read from the SPI bus.
+    */
+    inline ULONG transfer16(ULONG val)
+    {
+        HRESULT hr;
+        ULONG dataReturn = 0;
+
+        if (m_controller == nullptr)
+        {
+            ThrowError("Can't transfer on SPI bus until an SPI.begin() has been done.");
+        }
+
+        // Transfer the data.
+        hr = m_controller->transfer16(val, dataReturn);
+
+        if (FAILED(hr))
         {
             ThrowError("An error occurred atempting to transfer SPI data: %d", hr);
         }
@@ -363,11 +301,10 @@ public:
     /**
     \param[in] val The least significant 24 bits are the three data bytes to be sent.
     \return The three data bytes read from the SPI bus.
-    \note To use this call, the data width must be set to 24 using setDataWidth() before begin() is called.
     */
     inline ULONG transfer24(ULONG val)
     {
-		HRESULT hr;
+        HRESULT hr;
         ULONG dataReturn = 0;
 
         if (m_controller == nullptr)
@@ -376,9 +313,35 @@ public:
         }
 
         // Transfer the data.
-		hr = m_controller->transfer24(val, dataReturn);
+        hr = m_controller->transfer24(val, dataReturn);
 
-		if (FAILED(hr))
+        if (FAILED(hr))
+        {
+            ThrowError("An error occurred atempting to transfer SPI data: %d", hr);
+        }
+
+        return dataReturn;
+    }
+
+    /// Transfer four bytes in each direction on the SPI bus.
+    /**
+    \param[in] val The least significant 24 bits are the three data bytes to be sent.
+    \return The three data bytes read from the SPI bus.
+    */
+    inline ULONG transfer32(ULONG val)
+    {
+        HRESULT hr;
+        ULONG dataReturn = 0;
+
+        if (m_controller == nullptr)
+        {
+            ThrowError("Can't transfer on SPI bus until an SPI.begin() has been done.");
+        }
+
+        // Transfer the data.
+        hr = m_controller->transfer32(val, dataReturn);
+
+        if (FAILED(hr))
         {
             ThrowError("An error occurred atempting to transfer SPI data: %d", hr);
         }
@@ -402,18 +365,6 @@ private:
 
     /// SPI mode to use.
     ULONG m_mode;
-
-    /// SPI CS pin number.
-    ULONG m_csPin;
-
-    /// SPI Clock pin number.
-    ULONG m_sckPin;
-
-    /// SPI Master Out Slave In pin number.
-    ULONG m_mosiPin;
-
-    /// SPI Master In Slave Out pin number.
-    ULONG  m_misoPin;
 };
 
 /// The global SPI bus object.
