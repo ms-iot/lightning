@@ -11,27 +11,19 @@
 
 // This method is used to prepare to use the I2C bus to communicate with devices
 // that are external to the board.
-BOOL I2cControllerClass::beginExternal()
+HRESULT I2cControllerClass::beginExternal()
 {
-    BOOL status = TRUE;
-    ULONG error = ERROR_SUCCESS;
-
-
+    HRESULT hr = S_OK;
+ 
     // Set the MUXes for external I2C use.
-    status = g_pins.verifyPinFunction(ARDUINO_PIN_I2C_CLK, FUNC_I2C, BoardPinsClass::LOCK_FUNCTION);
-    if (!status) { error = GetLastError(); }
+    hr = g_pins.verifyPinFunction(ARDUINO_PIN_I2C_CLK, FUNC_I2C, BoardPinsClass::LOCK_FUNCTION);
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        status = g_pins.verifyPinFunction(ARDUINO_PIN_I2C_DAT, FUNC_I2C, BoardPinsClass::LOCK_FUNCTION);
-        if (!status) { error = GetLastError(); }
+        hr = g_pins.verifyPinFunction(ARDUINO_PIN_I2C_DAT, FUNC_I2C, BoardPinsClass::LOCK_FUNCTION);
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 // This method returns the esternal I2C bus pins to their default configurations.
@@ -45,7 +37,7 @@ void I2cControllerClass::endExternal()
 }
 
 // This method maps the I2C controller if needed.
-inline BOOL I2cControllerClass::mapIfNeeded()
+inline HRESULT I2cControllerClass::mapIfNeeded()
 {
     if (m_hController == INVALID_HANDLE_VALUE)
     {
@@ -53,24 +45,21 @@ inline BOOL I2cControllerClass::mapIfNeeded()
     }
     else
     {
-        return TRUE;
+        return S_OK;
     }
 }
 
 // Method to map the I2C controller into this process' virtual address space.
-BOOL I2cControllerClass::_mapController()
+HRESULT I2cControllerClass::_mapController()
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     PVOID baseAddress = nullptr;
     BoardPinsClass::BOARD_TYPE board;
     PWCHAR deviceName = nullptr;
 
-
-    status = g_pins.getBoardType(board);
-    if (!status) { error = GetLastError(); }
-
-    if (status)
+    hr = g_pins.getBoardType(board);
+ 
+    if (SUCCEEDED(hr))
     {
         switch (board)
         {
@@ -83,29 +72,23 @@ BOOL I2cControllerClass::_mapController()
             deviceName = mbmI2cDeviceName;
             break;
         default:
-            status = FALSE;
-            error = ERROR_DEVICE_NOT_AVAILABLE;
+			hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
         }
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        status = GetControllerBaseAddress(deviceName,
+        hr = GetControllerBaseAddress(deviceName,
                                           m_hController,
                                           baseAddress,
                                           FILE_SHARE_READ | FILE_SHARE_WRITE);
-        if (!status)
-        {
-            error = GetLastError();
-        }
-        else
-        {
+		if (SUCCEEDED(hr))
+		{
             m_controller = (PI2C_CONTROLLER)baseAddress;
         }
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 //
@@ -176,62 +159,47 @@ void I2cTransactionClass::reset()
 }
 
 // Sets the 7-bit address of the slave for this tranaction.
-BOOL I2cTransactionClass::setAddress(ULONG slaveAdr)
+HRESULT I2cTransactionClass::setAddress(ULONG slaveAdr)
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
 
-
-    // Verify we successfully create the I2C Controller Lock.
-    if (m_hI2cLock == INVALID_HANDLE_VALUE)
+    if ((slaveAdr < 0x08) || (slaveAdr >= 0x77))
     {
-        status = FALSE;
-        error = ERROR_CREATE_FAILED;
+        hr = DMAP_E_I2C_ADDRESS_OUT_OF_RANGE;
     }
 
-    if (status && ((slaveAdr < 0x08) || (slaveAdr >= 0x77)))
-    {
-        status = FALSE;
-        error = ERROR_INVALID_ADDRESS;
-    }
-
-    if (status)
+    if (SUCCEEDED(hr))
     {
         m_slaveAddress = slaveAdr;
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 // Add a write transfer to the transaction.
-BOOL I2cTransactionClass::queueWrite(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart)
+HRESULT I2cTransactionClass::queueWrite(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart)
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     I2cTransferClass* pXfr = nullptr;
-
 
     // Sanity check the buffer and size parameters.
     if ((buffer == nullptr) || (bufferBytes == 0))
     {
-        status = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+        hr = DMAP_E_NO_OR_EMPTY_WRITE_BUFFER;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Allocate a transfer object.
         pXfr = new I2cTransferClass;
 
         if (pXfr == 0)
         {
-            status = FALSE;
-            error = ERROR_OUTOFMEMORY;
+            hr = E_OUTOFMEMORY;
         }
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Mark transfer to start with a restart if that was requested.
         if (preRestart)
@@ -248,39 +216,34 @@ BOOL I2cTransactionClass::queueWrite(PUCHAR buffer, ULONG bufferBytes, BOOL preR
         // Indicate this transaction has at least one incomplete transfer.
         m_isIncomplete = TRUE;
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 // Add a read transfer to the transaction.
-BOOL I2cTransactionClass::queueRead(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart)
+HRESULT I2cTransactionClass::queueRead(PUCHAR buffer, ULONG bufferBytes, BOOL preRestart)
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     I2cTransferClass* pXfr = nullptr;
-
 
     // Sanity check the buffer and size parameters.
     if ((buffer == nullptr) || (bufferBytes == 0))
     {
-        status = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+        hr = DMAP_E_NO_OR_ZERO_LENGTH_READ_BUFFER;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Allocate a transfer object.
         pXfr = new I2cTransferClass;
 
         if (pXfr == 0)
         {
-            status = FALSE;
-            error = ERROR_OUTOFMEMORY;
+            hr = E_OUTOFMEMORY;
         }
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Mark transfer to start with a restart if that was requested.
         if (preRestart)
@@ -298,44 +261,39 @@ BOOL I2cTransactionClass::queueRead(PUCHAR buffer, ULONG bufferBytes, BOOL preRe
         // Indicate this transaction has at least one incomplete transfer.
         m_isIncomplete = TRUE;
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 // Method to queue a callback routine at the current point in the transaction.
-BOOL I2cTransactionClass::queueCallback(std::function<BOOL()> callBack)
+HRESULT I2cTransactionClass::queueCallback(std::function<HRESULT()> callBack)
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     I2cTransferClass* pXfr = nullptr;
 
     if (callBack == nullptr)
     {
-        status = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+        hr = DMAP_E_NO_CALLBACK_ROUTINE_SPECIFIED;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Allocate a transfer object.
         pXfr = new I2cTransferClass;
 
         if (pXfr == 0)
         {
-            status = FALSE;
-            error = ERROR_OUTOFMEMORY;
+            hr = E_OUTOFMEMORY;
         }
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Associate the callback with the transfer.
-        status = pXfr->setCallback(callBack);
-        if (!status) { error = GetLastError(); }
+        hr = pXfr->setCallback(callBack);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Queue the transfer as part of this transaction.
         _queueTransfer(pXfr);
@@ -343,79 +301,52 @@ BOOL I2cTransactionClass::queueCallback(std::function<BOOL()> callBack)
         // Indicate this transaction has at least one incomplete "transfer."
         m_isIncomplete = TRUE;
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 // Method to perform the transfers associated with this transaction.
-BOOL I2cTransactionClass::execute()
+HRESULT I2cTransactionClass::execute()
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     I2cTransferClass* pXfr = nullptr;
     I2cTransferClass* pReadXfr = nullptr;
     DWORD lockResult = 0;
     BOOL haveLock = FALSE;
+	
+	// Get the I2C Controller mapped if it is not mapped yet.
+	hr = g_i2c.mapIfNeeded();
 
-
-    // Verify we successfully created the I2C Controller Lock.
-    if (m_hI2cLock == INVALID_HANDLE_VALUE)
+    if (SUCCEEDED(hr))
     {
-        status = FALSE;
-        error = ERROR_CREATE_FAILED;
+		// Lock the I2C bus for access exclusively by this transaction.
+		hr = _acquireI2cLock();
     }
 
-    if (status)
+	// If we have the I2C bus locked:
+    if (SUCCEEDED(hr))
     {
-        // Claim the I2C controller.
-        lockResult = WaitForSingleObject(m_hI2cLock, 5000);
-        if ((lockResult == WAIT_OBJECT_0) || (lockResult == WAIT_ABANDONED))
-        {
-            haveLock = TRUE;
-        }
-        else if (lockResult == WAIT_TIMEOUT)
-        {
-            status = FALSE;
-            error = ERROR_TIMEOUT;
-        }
-        else
-        {
-            status = FALSE;
-            error = GetLastError();
-        }
-    }
+		// Initialize the controller.
+		hr = _initializeI2cForTransaction();
 
-    if (status)
-    {
-        // Initialize the controller.
-        status = _initializeI2cForTransaction();
-        if (!status) { error = GetLastError(); }
-    }
+		if (SUCCEEDED(hr))
+		{
+			// Process each transfer on the queue.
+			hr = _processTransfers();
+		}
 
-    // Process each transfer on the queue.
-    if (status)
-    {
-        status = _processTransfers();
-        if (!status) { error = GetLastError(); }
-    }
+		if (SUCCEEDED(hr))
+		{
+			// Shut down the controller.
+			hr = _shutDownI2cAfterTransaction();
+		}
 
-    if (status)
-    {
-        // Shut down the controller.
-        status = _shutDownI2cAfterTransaction();
-        if (!status) { error = GetLastError(); }
-    }
+		// Release the I2C lock, ignoring any error returned because it is likely
+		// we already have an error that we don't want to cover up.
+		_releaseI2cLock();
+	}
 
-    // Release this transaction's claim on the controller.
-    if (haveLock)
-    {
-        ReleaseMutex(m_hI2cLock);
-        haveLock = FALSE;
-    }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 // Method to queue a transfer as part of this transaction.
@@ -439,18 +370,12 @@ void I2cTransactionClass::_queueTransfer(I2cTransferClass* pXfr)
 }
 
 // Method to initialize the I2C Controller at the start of a transaction.
-BOOL I2cTransactionClass::_initializeI2cForTransaction()
+HRESULT I2cTransactionClass::_initializeI2cForTransaction()
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
     ULONGLONG waitStartTicks = 0;
 
-
-    // Get the I2C Controller mapped if it is not mapped yet.
-    status = g_i2c.mapIfNeeded();
-    if (!status) { error = GetLastError(); }
-
-    if (status && (!g_i2c.isInitialized() || (g_i2c.getAddress() != m_slaveAddress)))
+	// If we need to initialize, or re-initialize, the I2C Controller:
+	if (!g_i2c.isInitialized() || (g_i2c.getAddress() != m_slaveAddress))
     {
         // Make sure the I2C controller is disabled.
         g_i2c.disableController();
@@ -495,17 +420,16 @@ BOOL I2cTransactionClass::_initializeI2cForTransaction()
 
         // Indicate the I2C Controller is now initialized.
         g_i2c.setInitialized();
-    }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    } // End - if (!g_i2c.isInitialized() || (g_i2c.getAddress() != m_slaveAddress))
+    
+    return S_OK;
 }
 
 // Method to process the transfers in this transaction.
-BOOL I2cTransactionClass::_processTransfers()
+HRESULT I2cTransactionClass::_processTransfers()
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     I2cTransferClass* pXfr = nullptr;
 
     // Clear out any data from a previous use of this transaction.
@@ -515,19 +439,17 @@ BOOL I2cTransactionClass::_processTransfers()
 
     // For each sequence of transfers in the queue, or until transaction is aborted:
     pXfr = m_pFirstXfr;
-    while (status && (pXfr != nullptr) && !m_abort)
+    while (SUCCEEDED(hr) && (pXfr != nullptr) && !m_abort)
     {
         // Perform the sequence of transfers.
-        status = _performContiguousTransfers(pXfr);
-        if (!status) { error = GetLastError(); }
+        hr = _performContiguousTransfers(pXfr);
 
         // If the next transfer has a callback routine, invoke it.
-        if (status && (pXfr != nullptr) && pXfr->hasCallback())
+        if (SUCCEEDED(hr) && (pXfr != nullptr) && pXfr->hasCallback())
         {
-            status = pXfr->invokeCallback();
-            if (!status) { error = GetLastError(); }
+            hr = pXfr->invokeCallback();
 
-            if (status)
+            if (SUCCEEDED(hr))
             {
                 // Get the next transfer in the transaction.
                 pXfr = pXfr->getNextTransfer();
@@ -537,9 +459,8 @@ BOOL I2cTransactionClass::_processTransfers()
 
     // Signal that this transaction has been processed.
     m_isIncomplete = FALSE;
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 //
@@ -551,10 +472,9 @@ BOOL I2cTransactionClass::_processTransfers()
 // OUTPUT:
 //      pXfr - Pointer to a callback "transfer" or NULL if at end of transaction.
 //
-BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
+HRESULT I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     I2cTransferClass* cmdXfr = nullptr;
     I2cTransferClass* readXfr = nullptr;
     PUCHAR readPtr = nullptr;
@@ -565,24 +485,21 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
     ULONGLONG startWaitTicks = 0;
     ULONGLONG currentTicks = 0;
 
-
     if (pXfr == nullptr)
     {
-        status = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+        hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Calculate the command and read counts for the current sequence of 
         // contigous transfers in this transaction.
-        status = _calculateCurrentCounts(pXfr);
-        if (!status) { error = GetLastError(); }
+        hr = _calculateCurrentCounts(pXfr);
     }
 
     // For each transfer in this section of the transaction:
     cmdXfr = pXfr;
-    while (status && (m_cmdsOutstanding > 0) && (cmdXfr != nullptr))
+    while (SUCCEEDED(hr) && (m_cmdsOutstanding > 0) && (cmdXfr != nullptr))
     {
         // If this is the first read transfer in this sequence of transfers:
         if ((readXfr == nullptr) && cmdXfr->transferIsRead())
@@ -603,7 +520,7 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
         }
 
         // For each byte in the transfer:
-        while (status && (cmdXfr->getNextCmd(writeByte)))
+		while (SUCCEEDED(hr) && (cmdXfr->getNextCmd(writeByte)))
         {
             // Wait for at least one empty space in the TX FIFO.
             while (g_i2c.txFifoFull());
@@ -631,16 +548,14 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
             {
                 cmdDat = cmdDat | (1 << 9);
             }
-            
 
             g_i2c.issueCmd(cmdDat);
             m_cmdsOutstanding--;
 
-            status = _handleErrors();
-            if (!status) { error = GetLastError(); }
+            hr = _handleErrors();
 
             // Pull any available bytes out of the receive FIFO.
-            while (status && g_i2c.rxFifoNotEmtpy())
+			while (SUCCEEDED(hr) && g_i2c.rxFifoNotEmtpy())
             {
                 // Read a byte from the I2C Controller.
                 readByte = g_i2c.readByte();
@@ -667,7 +582,8 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
                 }
             }
         }
-        if (status)
+
+        if (SUCCEEDED(hr))
         {
             cmdXfr = cmdXfr->getNextTransfer();
         }
@@ -676,7 +592,7 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
     // Complete any outstanding reads and wait for the TX FIFO to empty.
     startWaitTicks = GetTickCount64();
     currentTicks = startWaitTicks;
-    while (status && ((m_readsOutstanding > 0) || !g_i2c.txFifoEmpty()) && !g_i2c.errorOccured())
+	while (SUCCEEDED(hr) && ((m_readsOutstanding > 0) || !g_i2c.txFifoEmpty()) && !g_i2c.errorOccured())
     {
         // Pull any available bytes out of the receive FIFO.
         while (g_i2c.rxFifoNotEmtpy())
@@ -707,17 +623,15 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
             currentTicks = GetTickCount64();
             if (((currentTicks - startWaitTicks) > 100) && g_i2c.rxFifoEmpty())
             {
-                status = FALSE;
-                error = ERROR_RECEIVE_PARTIAL;
+                hr = DMAP_E_I2C_READ_INCOMPLETE;
             }
         }
     }
 
     // Determine if an error occured on this transaction.
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        status = _handleErrors();
-        error = GetLastError();
+        hr = _handleErrors();
     }
 
     // Pass the next transfer pointer back to the caller.
@@ -729,37 +643,31 @@ BOOL I2cTransactionClass::_performContiguousTransfers(I2cTransferClass* & pXfr)
         m_maxWaitTicks = (ULONG) (currentTicks - startWaitTicks);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Check for some catch-all errors.
         if (m_cmdsOutstanding > 0)
         {
-            status = FALSE;
-            error = ERROR_MORE_DATA;
+            hr = DMAP_E_I2C_OPERATION_INCOMPLETE;
         }
         else if (m_readsOutstanding < 0)
         {
-            status = FALSE;
-            error = ERROR_DATA_NOT_ACCEPTED;
+            hr = DMAP_E_I2C_EXTRA_DATA_RECEIVED;
         }
         else if (m_cmdsOutstanding < 0)
         {
-            status = FALSE;
-            error = ERROR_TOO_MANY_CMDS;
+            hr = DMAP_E_DMAP_INTERNAL_ERROR;
         }
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 // Method to shut down the I2C Controller after a transaction is done with it.
-BOOL I2cTransactionClass::_shutDownI2cAfterTransaction()
+HRESULT I2cTransactionClass::_shutDownI2cAfterTransaction()
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     HiResTimerClass timeOut;
-
 
     // Wait up to two milliseconds for the I2C Controller to go.  It takes less than two
     // milliseconds to transfer a full TX FIFO at "Standard" I2C bus speed (100 kbps).
@@ -769,19 +677,16 @@ BOOL I2cTransactionClass::_shutDownI2cAfterTransaction()
     // Handle a bus error if we got one.
     if (m_error == SUCCESS)
     {
-        status = _handleErrors();
-        if (!status) { error = GetLastError(); }
+        hr = _handleErrors();
     }
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 // Method to calculate the command and read counts for the current section
 // of the transaction (up to callback or end, whichever comes first).
-BOOL I2cTransactionClass::_calculateCurrentCounts(I2cTransferClass* nextXfr)
+HRESULT I2cTransactionClass::_calculateCurrentCounts(I2cTransferClass* nextXfr)
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
     I2cTransferClass* pXfr = nextXfr;
 
     // Clear out any counts currently in place.
@@ -803,19 +708,18 @@ BOOL I2cTransactionClass::_calculateCurrentCounts(I2cTransferClass* nextXfr)
         // Get the next transfer.
         pXfr = pXfr->getNextTransfer();
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return S_OK;
 }
 
 /**
 Determine whether an error occured, and if so (and it is the first error on this
 transaction) record the error information.
-\return TRUE no error occured. FALSE error occured, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL I2cTransactionClass::_handleErrors()
+HRESULT I2cTransactionClass::_handleErrors()
 {
-    BOOL status = TRUE;
+    HRESULT hr = S_OK;
 
     // If an error occurred during this transaction:
     if (g_i2c.errorOccured())
@@ -840,8 +744,94 @@ BOOL I2cTransactionClass::_handleErrors()
         // Clear the error.
         g_i2c.clearErrors();
 
-        status = FALSE;
+        hr = E_FAIL;
         SetLastError(ERROR_BUS_RESET);
     }
-    return status;
+    return hr;
+}
+
+/**
+This lock is a global mutex when running under Win32, and a kernel mode fastmutex
+(implemented in DMap.sys) when running under UWP.  This lock is used both for
+cross-process and cross-thread locking.  It is only held for the duration of a
+transaction.  Because of this lock (as well as the limitations of the I2C Controller)
+nested I2C transactions are not allowed (for example: all needed pin MUXing must be
+done before the lock is acquired to execute the I2C transaction.
+\return HRESULT success or error code.
+*/
+HRESULT I2cTransactionClass::_acquireI2cLock()
+{
+	HRESULT hr = S_OK;
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+	if (m_hI2cLock == INVALID_HANDLE_VALUE)
+	{
+		hr = DMAP_E_I2C_INVALID_LOCK_HANDLE_SPECIFIED;
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = GetControllerLock(m_hI2cLock);
+	}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	if (m_hI2cLock == INVALID_HANDLE_VALUE)
+	{
+		m_hI2cLock = CreateMutex(NULL, FALSE, L"Global\\I2c_Controller_Mutex");
+		if (m_hI2cLock == NULL)
+		{
+			m_hI2cLock = INVALID_HANDLE_VALUE;
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		// Claim the I2C controller.
+		lockResult = WaitForSingleObject(m_hI2cLock, 5000);
+		if ((lockResult == WAIT_OBJECT_0) || (lockResult == WAIT_ABANDONED))
+		{
+			haveLock = TRUE;
+		}
+		else if (lockResult == WAIT_TIMEOUT)
+		{
+			hr = DMAP_E_I2C_BUS_LOCK_TIMEOUT;
+		}
+		else
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
+	}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+	return hr;
+}
+
+/**
+This routine should only be called when it is known that an I2C lock is being held
+on the m_hI2cLock handle for this transaction.
+\return HRESULT success or error code.
+*/
+HRESULT I2cTransactionClass::_releaseI2cLock()
+{
+	HRESULT hr = S_OK;
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+	if (m_hI2cLock == INVALID_HANDLE_VALUE)
+	{
+		hr = DMAP_E_I2C_INVALID_LOCK_HANDLE_SPECIFIED;
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = ReleaseControllerLock(m_hI2cLock);
+	}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	ReleaseMutex(m_hI2cLock);
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+	return hr;
 }

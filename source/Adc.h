@@ -22,7 +22,12 @@ public:
     /// Destructor.
     virtual ~AdcClass()
     {
-        if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
+		if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+		{
+			m_ikaLureAdc.end();
+		}
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
         {
             m_gen2Adc.end();
         }
@@ -30,11 +35,8 @@ public:
         {
             m_gen1Adc.end();
         }
-        else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
-        {
-            m_ikaLureAdc.end();
-        }
-    }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+	}
 
     /// Take a reading with the ADC on the board.
     /**
@@ -43,12 +45,12 @@ public:
     \param[in] pin Number of GPIO pin to read with the ADC.
     \param[out] value The value read from the ADC.
     \param[out] bits The size of the reading in "value" in bits.
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
-    inline BOOL readValue(ULONG pin, ULONG & value, ULONG & bits)
+    inline HRESULT readValue(ULONG pin, ULONG & value, ULONG & bits)
     {
-        BOOL status = TRUE;
-        ULONG error = ERROR_SUCCESS;
+        HRESULT hr = S_OK;
+        
         ULONG channel;
 
 
@@ -58,30 +60,32 @@ public:
         channel = pin - A0;
 
         // Verify we have initialized the correct ADC.
-        status = _verifyAdcInitialized();
-        if (!status) { error = GetLastError(); }
+        hr = _verifyAdcInitialized();
+        
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
-            if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
-            {
-                status = m_gen2Adc.readValue(channel, value, bits);
-                if (!status) { error = GetLastError(); }
-            }
-            else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
-            {
-                status = m_gen1Adc.readValue(channel, value, bits);
-                if (!status) { error = GetLastError(); }
-            }
-            else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
-            {
-                status = m_ikaLureAdc.readValue(channel, value, bits);
-                if (!status) { error = GetLastError(); }
-            }
-        }
+			if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+			{
+				hr = m_ikaLureAdc.readValue(channel, value, bits);
 
-        if (!status) { SetLastError(error); }
-        return status;
+			}
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+			else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
+			{
+				hr = m_gen2Adc.readValue(channel, value, bits);
+
+			}
+			else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
+			{
+				hr = m_gen1Adc.readValue(channel, value, bits);
+
+			}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		}
+
+        
+        return hr;
     }
 
 private:
@@ -89,56 +93,60 @@ private:
     /// The board type for which this object has been initialized.
     BoardPinsClass::BOARD_TYPE m_boardType;
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
     /// Gen2 ADC device.
     ADC108S102Device m_gen2Adc;
 
     /// Gen1 ADC device.
     AD7298Device m_gen1Adc;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
     ADS1015Device m_ikaLureAdc;
 
     /// Initialize this object if it has not already been done.
-    inline BOOL _verifyAdcInitialized()
+    inline HRESULT _verifyAdcInitialized()
     {
-        BOOL status = TRUE;
-        ULONG error = ERROR_SUCCESS;
+        HRESULT hr = S_OK;
+        
 
 
         // If the ADC has not yet been initialized:
         if (m_boardType == BoardPinsClass::BOARD_TYPE::NOT_SET)
         {
             // Get the board generation.
-            status = g_pins.getBoardType(m_boardType);
-            if (!status) { error = GetLastError(); }
+            hr = g_pins.getBoardType(m_boardType);
+            
         
-            if (status)
+            if (SUCCEEDED(hr))
             {
-                if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
-                {
-                    status = m_gen2Adc.begin();
-                    if (!status) { error = GetLastError(); }
-                }
-                else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
-                {
-                    status = m_gen1Adc.begin();
-                    if (!status) { error = GetLastError(); }
-                }
-                else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
-                {
-                    status = m_ikaLureAdc.begin();
-                    if (!status) { error = GetLastError(); }
-                }
-                else
-                {
-                    // If we have an unrecognized board or one that does not support ADC,
-                    // indicate ADC is uninitialized.
-                    m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
-                }
-            }
-        }
+				if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+				{
+					hr = m_ikaLureAdc.begin();
 
-        if (!status) { SetLastError(error); }
-        return status;
+				}
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+				else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
+				{
+					hr = m_gen2Adc.begin();
+
+				}
+				else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
+				{
+					hr = m_gen1Adc.begin();
+
+				}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+				else
+				{
+					// If we have an unrecognized board or one that does not support ADC,
+					// indicate ADC is uninitialized.
+					m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
+				}
+			}
+		}
+
+        
+        return hr;
     }
 
 };

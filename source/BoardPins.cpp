@@ -2,7 +2,7 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-#include <Windows.h>
+#include "ErrorCodes.h"
 #include "BoardPins.h"
 #include "I2cController.h"
 
@@ -22,6 +22,7 @@ const UCHAR GPIO_EXP2 = 5;      ///< GPIO is from a port bit on  I/O Expander 2
 const UCHAR GPIO_CY8 = 6;       ///< GPIO is from a port on the CY8 I/O Expander (on Gen1)
 const UCHAR GPIO_S0 = 7;        ///< GPIO is from the MBM SOC S0 sub-system
 const UCHAR GPIO_S5 = 8;        ///< GPIO is from the MBM SOC S5 sub-system
+const UCHAR GPIO_BCM = 9;       ///< GPIO is from the BCM2836 SOC GPIO sub-system
 const UCHAR GPIO_NONE = 255;    ///< Specifies there is no GPIO pin with this number
 
 // GPIO pin driver selection values.
@@ -34,8 +35,9 @@ const UCHAR EXP1       =  1;    ///< Value specifies I/O Expander 1
 const UCHAR EXP2       =  2;    ///< Value specifies I/O Expander 2
 const UCHAR PWMG       =  3;    ///< Value specifies Galileo PWM used as I/O Expander
 const UCHAR CY8        =  4;    ///< Value specifies CY8 I/O Expander (on Gen1)
-const UCHAR SOC        =  5;    ///< Value specifies SOC is the "I/O Expander"
+const UCHAR SOCBAYT    =  5;    ///< Value specifies BayTrail SOC is the "I/O Expander"
 const UCHAR PWMI       =  6;    ///< Value specifies Ika Lure PWM used as I/O Expander
+const UCHAR SOCBCM     =  7;    ///< Value specifies BCM2836 SOC is the "I/O Expander"
 const UCHAR NUM_IO_EXP =  7;    ///< The number of I/O Expander types
 const UCHAR NO_X       = 15;    ///< Value specifies that no I/O Expander is used
 
@@ -43,8 +45,9 @@ const UCHAR NO_X       = 15;    ///< Value specifies that no I/O Expander is use
 const UCHAR PCAL9535A = 0;      ///< I/O Expander chip used on Gen2
 const UCHAR PCA9685 = 1;        ///< PWM chip used on Gen2 and Ika Lure
 const UCHAR CY8C9540A = 2;      ///< I/O Expander/PWM chip used on Gen1
-const UCHAR BAYTRAIL = 3;       ///< Muxing is done within the SOC
-const UCHAR NUM_EXP_TYPSES = 3; ///< The number of I/O Expanders types present
+const UCHAR BAYTRAIL = 3;       ///< Muxing is done within the MBM SOC
+const UCHAR BCM2836 = 4;        ///< Muxing is done within the PI2 SOC
+const UCHAR NUM_EXP_TYPSES = 4; ///< The number of I/O Expanders types present
 
 // PWM chip bit values.
 const UCHAR LED0  =  0;         ///< PWM chip LED0 output
@@ -106,7 +109,12 @@ const ULONG NUM_MBM_PINS = 27;  ///< Number of entries in a zero based array ind
 
 // The I2C Address of the MBM Ika Lure ADC.
 const ULONG MBM_IKA_LURE_ADC_ADR = 0x48;    ///< I2C address of ADC on MBM Ika Lure
+                                            
+// The number of connector pins on an PI2 plus one (to allow for 0 not being used).
+const ULONG NUM_PI2_PINS = 41;  ///< Number of entries in a zero based array indexed by PI2 pin number.
 
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// The global table of pin attributes for the Galileo Gen2 board.
 /**
 This table contains all the pin-specific attributes needed to configure and use an I/O pin.
@@ -189,23 +197,6 @@ const BoardPinsClass::PWM_CHANNEL g_Gen2PwmChannels[] =
     { NO_X, 0, 0, 0 },          ///< A3
     { NO_X, 0, 0, 0 },          ///< A4
     { NO_X, 0, 0, 0 }           ///< A5
-};
-
-/// The global table of I/O Expander attributes for the boards.
-/**
-This table contains the information needed to communicate with each I/O Expander chip.
-It is indexed by Expander number and contains the type of chip used for that I/O Expander
-and the address on the I2C bus the chip responds to.
-*/
-const BoardPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
-{
-    { PCAL9535A, 0x25 },                    ///< EXP0 - Galileo Gen2
-    { PCAL9535A, 0x26 },                    ///< EXP1 - Galileo Gen2
-    { PCAL9535A, 0x27 },                    ///< EXP2 - Galileo Gen2
-    { PCA9685,   0x47 },                    ///< PWMG - Galileo Gen2
-    { CY8C9540A, 0x20 },                    ///< CY8 - Galileo Gen1
-    { BAYTRAIL,  0x00 },                    ///< SOC - MBM
-    { PCA9685,   IKA_LURE_PWM_I2C_ADR }     ///< PWMI - MGM with Ika Lure
 };
 
 /// The Gen2 I/O expander signature.
@@ -297,7 +288,9 @@ const BoardPinsClass::PWM_CHANNEL g_Gen1PwmChannels[] =
     { NO_X, 0, 0, 0 },        ///< A4
     { NO_X, 0, 0, 0 }         ///< A5
 };
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /// The global table of pin attributes for the MBM board.
 /**
 This table contains all the pin-specific attributes needed to configure and use an I/O pin.
@@ -343,21 +336,21 @@ mux number and specifies which port bit of which I/O Expander drives the mux sel
 */
 const BoardPinsClass::MUX_ATTRIBUTES g_MbmMuxAttributes[MAX_MUXES] =
 {
-    { SOC,  0 },    ///< MUX0
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 },    // Not used on bare MBM
-    { NO_X, 0 }     // Not used on bare MBM
+    { SOCBAYT,  0 },    ///< MUX0
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 },    // Not used on bare MBM
+    { NO_X,     0 }     // Not used on bare MBM
 };
 
 /// The global table of PWM information for the MBM board.
@@ -367,33 +360,33 @@ Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM
 */
 const BoardPinsClass::PWM_CHANNEL g_MbmPwmChannels[] =
 {
-    { NO_X, 0, 0, 0 },          ///<  0
-    { NO_X, 0, 0, 0 },          ///<  1
-    { NO_X, 0, 0, 0 },          ///<  2
-    { NO_X, 0, 0, 0 },          ///<  3
-    { NO_X, 0, 0, 0 },          ///<  4
-    { NO_X, 0, 0, 0 },          ///<  5
-    { NO_X, 0, 0, 0 },          ///<  6
-    { NO_X, 0, 0, 0 },          ///<  7
-    { NO_X, 0, 0, 0 },          ///<  8
-    { NO_X, 0, 0, 0 },          ///<  9
-    { NO_X, 0, 0, 0 },          ///< 10
-    { NO_X, 0, 0, 0 },          ///< 11
-    { NO_X, 0, 0, 0 },          ///< 12
-    { NO_X, 0, 0, 0 },          ///< 13
-    { NO_X, 0, 0, 0 },          ///< 14
-    { NO_X, 0, 0, 0 },          ///< 15
-    { NO_X, 0, 0, 0 },          ///< 16
-    { NO_X, 0, 0, 0 },          ///< 17
-    { NO_X, 0, 0, 0 },          ///< 18
-    { NO_X, 0, 0, 0 },          ///< 19
-    { NO_X, 0, 0, 0 },          ///< 20
-    { NO_X, 0, 0, 0 },          ///< 21
-    { SOC,  0, 0, 0 },          ///< 22
-    { NO_X, 0, 0, 0 },          ///< 23
-    { SOC,  1, 0, 0 },          ///< 24
-    { NO_X, 0, 0, 0 },          ///< 25
-    { NO_X, 0, 0, 0 }           ///< 26
+    { NO_X,     0, 0, 0 },          ///<  0
+    { NO_X,     0, 0, 0 },          ///<  1
+    { NO_X,     0, 0, 0 },          ///<  2
+    { NO_X,     0, 0, 0 },          ///<  3
+    { NO_X,     0, 0, 0 },          ///<  4
+    { NO_X,     0, 0, 0 },          ///<  5
+    { NO_X,     0, 0, 0 },          ///<  6
+    { NO_X,     0, 0, 0 },          ///<  7
+    { NO_X,     0, 0, 0 },          ///<  8
+    { NO_X,     0, 0, 0 },          ///<  9
+    { NO_X,     0, 0, 0 },          ///< 10
+    { NO_X,     0, 0, 0 },          ///< 11
+    { NO_X,     0, 0, 0 },          ///< 12
+    { NO_X,     0, 0, 0 },          ///< 13
+    { NO_X,     0, 0, 0 },          ///< 14
+    { NO_X,     0, 0, 0 },          ///< 15
+    { NO_X,     0, 0, 0 },          ///< 16
+    { NO_X,     0, 0, 0 },          ///< 17
+    { NO_X,     0, 0, 0 },          ///< 18
+    { NO_X,     0, 0, 0 },          ///< 19
+    { NO_X,     0, 0, 0 },          ///< 20
+    { NO_X,     0, 0, 0 },          ///< 21
+    { SOCBAYT,  0, 0, 0 },          ///< 22
+    { NO_X,     0, 0, 0 },          ///< 23
+    { SOCBAYT,  1, 0, 0 },          ///< 24
+    { NO_X,     0, 0, 0 },          ///< 25
+    { NO_X,     0, 0, 0 }           ///< 26
 };
 
 /// The global table of pin attributes for the MBM board with an Ika Lure attached.
@@ -434,21 +427,21 @@ mux number and specifies which port bit of which I/O Expander drives the mux sel
 */
 const BoardPinsClass::MUX_ATTRIBUTES g_MbmIkaMuxAttributes[MAX_MUXES] =
 {
-    { PWMI, LED6 },     ///< MUX0
-    { PWMI, LED7 },     ///< MUX1
-    { PWMI, LED8 },     ///< MUX2
-    { PWMI, LED9 },     ///< MUX3
-    { PWMI, LED10 },    ///< MUX4
-    { PWMI, LED11 },    ///< MUX5
-    { SOC,  0 },        ///< MUX6
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 },        // Not used on Ika Lure
-    { NO_X, 0 }         // Not used on Ika Lure
+    { PWMI,     LED6 },     ///< MUX0
+    { PWMI,     LED7 },     ///< MUX1
+    { PWMI,     LED8 },     ///< MUX2
+    { PWMI,     LED9 },     ///< MUX3
+    { PWMI,     LED10 },    ///< MUX4
+    { PWMI,     LED11 },    ///< MUX5
+    { SOCBAYT,  0 },        ///< MUX6
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 },        // Not used on Ika Lure
+    { NO_X,     0 }         // Not used on Ika Lure
 };
 
 /// The global table of PWM information for the MBM board with an Ika Lure attached.
@@ -479,6 +472,154 @@ const BoardPinsClass::PWM_CHANNEL g_MbmIkaPwmChannels[] =
     { NO_X, 0, 0, 0 },          ///< A4
     { NO_X, 0, 0, 0 }           ///< A5
 };
+#endif // defined(_M_IX86) || defined(_M_X64)
+
+#if defined(_M_ARM)
+/// The global table of pin attributes for the PI2 board.
+/**
+This table contains all the pin-specific attributes needed to configure and use an I/O pin.
+It is indexed by pin number (0 to NUM_PI2_PINS-1).
+*/
+const BoardPinsClass::PORT_ATTRIBUTES g_Pi2PinAttributes[] =
+{
+    //gpioType           pullupExp   triStExp    muxA               Muxes (A,B) by function:    I2S  triStIn   Function_mask
+    //             portBit     pullupBit   triStBit      muxB     Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  0
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  1
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  2
+    { GPIO_BCM,    2,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_I2C },  //  3
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  4
+    { GPIO_BCM,    3,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 1,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_I2C },  //  5
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  6
+    { GPIO_BCM,    4,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             //  7
+    { GPIO_BCM,   14,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  //  8
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             //  9
+    { GPIO_BCM,   15,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },  // 10
+    { GPIO_BCM,   17,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 11
+    { GPIO_BCM,   18,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 12
+    { GPIO_BCM,   27,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 13
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 14
+    { GPIO_BCM,   22,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 15
+    { GPIO_BCM,   23,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 16
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 17
+    { GPIO_BCM,   24,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 18
+    { GPIO_BCM,   10,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 19
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 20
+    { GPIO_BCM,    9,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 21
+    { GPIO_BCM,   25,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 22
+    { GPIO_BCM,   11,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 23
+    { GPIO_BCM,    8,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 24
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 25
+    { GPIO_BCM,    7,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },  // 26
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 27
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 28
+    { GPIO_BCM,    5,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 29
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 30
+    { GPIO_BCM,    6,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 31
+    { GPIO_BCM,   12,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 32
+    { GPIO_BCM,   13,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 33
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 34
+    { GPIO_BCM,   19,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 35
+    { GPIO_BCM,   16,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 36
+    { GPIO_BCM,   26,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 37
+    { GPIO_BCM,   20,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 38
+    { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 39
+    { GPIO_BCM,   21,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO }              // 40
+};
+
+/// The global table of mux attributes for the PI2 board.
+/**
+This table contains the information needed to set each mux to a desired state.  It is indexed by
+mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
+*/
+const BoardPinsClass::MUX_ATTRIBUTES g_Pi2MuxAttributes[MAX_MUXES] =
+{
+    { SOCBCM,  0 },    ///< MUX0
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 },    // Not used on bare PI2
+    { NO_X,    0 }     // Not used on bare PI2
+};
+
+/// The global table of PWM information for the PI2 board.
+/**
+This table contains the information needed to drive the PWM channels.  It is indexed by the
+PI2 connector pin number, and specifies the chip and port-bit that implements PWM for that pin.
+*/
+const BoardPinsClass::PWM_CHANNEL g_Pi2PwmChannels[] =
+{
+    { NO_X, 0, 0, 0 },          ///<  0
+    { NO_X, 0, 0, 0 },          ///<  1
+    { NO_X, 0, 0, 0 },          ///<  2
+    { NO_X, 0, 0, 0 },          ///<  3
+    { NO_X, 0, 0, 0 },          ///<  4
+    { NO_X, 0, 0, 0 },          ///<  5
+    { NO_X, 0, 0, 0 },          ///<  6
+    { NO_X, 0, 0, 0 },          ///<  7
+    { NO_X, 0, 0, 0 },          ///<  8
+    { NO_X, 0, 0, 0 },          ///<  9
+    { NO_X, 0, 0, 0 },          ///< 10
+    { NO_X, 0, 0, 0 },          ///< 11
+    { NO_X, 0, 0, 0 },          ///< 12
+    { NO_X, 0, 0, 0 },          ///< 13
+    { NO_X, 0, 0, 0 },          ///< 14
+    { NO_X, 0, 0, 0 },          ///< 15
+    { NO_X, 0, 0, 0 },          ///< 16
+    { NO_X, 0, 0, 0 },          ///< 17
+    { NO_X, 0, 0, 0 },          ///< 18
+    { NO_X, 0, 0, 0 },          ///< 19
+    { NO_X, 0, 0, 0 },          ///< 20
+    { NO_X, 0, 0, 0 },          ///< 21
+    { NO_X, 0, 0, 0 },          ///< 22
+    { NO_X, 0, 0, 0 },          ///< 23
+    { NO_X, 0, 0, 0 },          ///< 24
+    { NO_X, 0, 0, 0 },          ///< 25
+    { NO_X, 0, 0, 0 },          ///< 26
+    { NO_X, 0, 0, 0 },          ///< 27
+    { NO_X, 0, 0, 0 },          ///< 28
+    { NO_X, 0, 0, 0 },          ///< 29
+    { NO_X, 0, 0, 0 },          ///< 30
+    { NO_X, 0, 0, 0 },          ///< 31
+    { NO_X, 0, 0, 0 },          ///< 32
+    { NO_X, 0, 0, 0 },          ///< 33
+    { NO_X, 0, 0, 0 },          ///< 34
+    { NO_X, 0, 0, 0 },          ///< 35
+    { NO_X, 0, 0, 0 },          ///< 36
+    { NO_X, 0, 0, 0 },          ///< 37
+    { NO_X, 0, 0, 0 },          ///< 38
+    { NO_X, 0, 0, 0 },          ///< 39
+    { NO_X, 0, 0, 0 }           ///< 40
+};
+#endif // defined(_M_ARM)
+
+/// The global table of I/O Expander attributes for the boards.
+/**
+This table contains the information needed to communicate with each I/O Expander chip.
+It is indexed by Expander number and contains the type of chip used for that I/O Expander
+and the address on the I2C bus the chip responds to.
+*/
+const BoardPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
+{
+	{ PCAL9535A, 0x25 },                    ///< EXP0 - Galileo Gen2
+	{ PCAL9535A, 0x26 },                    ///< EXP1 - Galileo Gen2
+	{ PCAL9535A, 0x27 },                    ///< EXP2 - Galileo Gen2
+	{ PCA9685,   0x47 },                    ///< PWMG - Galileo Gen2
+	{ CY8C9540A, 0x20 },                    ///< CY8 - Galileo Gen1
+	{ BAYTRAIL,  0x00 },                    ///< SOC - MBM
+	{ PCA9685,   IKA_LURE_PWM_I2C_ADR },    ///< PWMI - MBM with Ika Lure
+    { BCM2836,   0x00 }                     ///< SOC - PI2
+};
+
 
 /// The global table of Pin Function tracking structures.
 /**
@@ -512,8 +653,23 @@ BoardPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
     { FUNC_NUL, false },    ///< 23
     { FUNC_NUL, false },    ///< 24
     { FUNC_NUL, false },    ///< 25
-    { FUNC_NUL, false }     ///< 26
+    { FUNC_NUL, false },    ///< 26
+    { FUNC_NUL, false },    ///< 27
+    { FUNC_NUL, false },    ///< 28
+    { FUNC_NUL, false },    ///< 29
+    { FUNC_NUL, false },    ///< 30
+    { FUNC_NUL, false },    ///< 31
+    { FUNC_NUL, false },    ///< 32
+    { FUNC_NUL, false },    ///< 33
+    { FUNC_NUL, false },    ///< 34
+    { FUNC_NUL, false },    ///< 35
+    { FUNC_NUL, false },    ///< 36
+    { FUNC_NUL, false },    ///< 37
+    { FUNC_NUL, false },    ///< 38
+    { FUNC_NUL, false },    ///< 39
+    { FUNC_NUL, false }     ///< 40
 };
+
 
 /// Constructor.
 /**
@@ -538,39 +694,35 @@ and to set it to that function if possible.
 \param[in] pin The number of the pin in question
 \param[in] function The desired function. See functions below.
 \param[in] lockAction Desired lock action.  See lock actions below.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 \sa FUNC_DIO \sa FUNC_PWM \sa FUNC_AIN \sa FUNC_I2C \sa FUNC_SPI \sa FUNC_SER
 \sa NO_LOCK_CHANGE \sa LOCK_FUNCTION \sa UNLOCK_FUNCTION
 */
-BOOL BoardPinsClass::verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction)
+HRESULT BoardPinsClass::verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+	HRESULT hr = S_OK;
 
     if (pin >= m_PinFunctionEntryCount)
     {
-        status = FALSE;
-        error = ERROR_INVALID_INDEX;
+		hr = E_BOUNDS;
     }
 
-    if (status && (lockAction == UNLOCK_FUNCTION))
+    if (SUCCEEDED(hr) && (lockAction == UNLOCK_FUNCTION))
     {
         m_PinFunctions[pin].locked = false;
     }
 
-    if (status && (m_PinFunctions[pin].currentFunction != function))
+    if (SUCCEEDED(hr) && (m_PinFunctions[pin].currentFunction != function))
     {
         if (m_PinFunctions[pin].locked)
         {
-            status = FALSE;
-            error = ERROR_LOCKED;
+			hr = DMAP_E_PIN_FUNCTION_LOCKED;
         }
         else
         {
-            status = _setPinFunction(pin, function);
-            if (!status) { error = GetLastError(); }
+            hr = _setPinFunction(pin, function);
 
-            if (status)
+            if (SUCCEEDED(hr))
             {
                 m_PinFunctions[pin].currentFunction = (UCHAR) function;
                 if ((function == FUNC_SPI) || (function == FUNC_I2C))
@@ -581,13 +733,12 @@ BOOL BoardPinsClass::verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTI
         }
     }
 
-    if (status && (lockAction == LOCK_FUNCTION))
+    if (SUCCEEDED(hr) && (lockAction == LOCK_FUNCTION))
     {
         m_PinFunctions[pin].locked = true;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+	return hr;
 }
 
 /**
@@ -595,74 +746,65 @@ This method prepares an external pin to be used for a specific function.
 Functions are Digital I/O, Analog In, PWM, etc.
 \param[in] pin the number of the pin in question.
 \param[in] function the function to be used on the pin.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 \sa FUNC_DIO \sa FUNC_PWM \sa FUNC_AIN \sa FUNC_I2C \sa FUNC_SPI \sa FUNC_SER
 */
-BOOL BoardPinsClass::_setPinFunction(ULONG pin, ULONG function)
+HRESULT BoardPinsClass::_setPinFunction(ULONG pin, ULONG function)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+	HRESULT hr = S_OK;
 
 
     // Make sure the pin attributes table is set up for the board generation.
-    status = _verifyBoardType();
-    if (!status) { error = GetLastError(); }
+    hr = _verifyBoardType();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Verify the pin number is in range.
-        status = _pinNumberIsSafe(pin);
-        if (!status) { error = ERROR_INVALID_PARAMETER; }
+		if (!_pinNumberIsSafe(pin))
+		{
+			hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
+		}
     }
     
     // Verify the requsted function is supported on this pin.
-    if (status && ((m_PinAttributes[pin].funcMask & function) == 0))
+    if (SUCCEEDED(hr) && ((m_PinAttributes[pin].funcMask & function) == 0))
     {
-        status = FALSE;
-        error = ERROR_NOT_SUPPORTED;
+		hr = DMAP_E_FUNCTION_NOT_SUPPORTED_ON_PIN;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         if (function == FUNC_DIO)
         {
-            status = _setPinDigitalIo(pin);
-            if (!status) { error = GetLastError(); }
+            hr = _setPinDigitalIo(pin);
         }
         else if (function == FUNC_PWM)
         {
-            status = _setPinPwm(pin);
-            if (!status) { error = GetLastError(); }
+            hr = _setPinPwm(pin);
         }
         else if (function == FUNC_AIN)
         {
-            status = _setPinAnalogInput(pin);
-            if (!status) { error = GetLastError(); }
+            hr = _setPinAnalogInput(pin);
         }
         else if (function == FUNC_I2C)
         {
-            status = _setPinI2c(pin);
-            if (!status) { error = GetLastError(); }
+            hr = _setPinI2c(pin);
         }
         else if (function == FUNC_SPI)
         {
-            status = _setPinSpi(pin);
-            if (!status) { error = GetLastError(); }
+            hr = _setPinSpi(pin);
         }
         else if (function == FUNC_SER)
         {
-            status = _setPinHwSerial(pin);
-            if (!status) { error = GetLastError(); }
+            hr = _setPinHwSerial(pin);
         }
         else
         {
-            status = FALSE;
-            ERROR_INVALID_PARAMETER;
+			hr = HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER);
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
@@ -670,44 +812,37 @@ This method sets the current function of a pin to Digial I/O.  This code
 assumes the caller has verified the pin number is in range and that Digital
 I/O is supported on the specified pin.
 \param[in] pin The number of the pin in question.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_setPinDigitalIo(ULONG pin)
+HRESULT BoardPinsClass::_setPinDigitalIo(ULONG pin)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-
-
+    HRESULT hr = S_OK;
+    
     // If the pin is tied to at least one MUX:
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for Digital I/O.
-        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].digIoMuxA);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].digIoMuxA);
     }
 
     // If the pin is tied to a second MUX:
-    if (status && (m_PinAttributes[pin].muxB != NO_MUX))
+    if (SUCCEEDED(hr) && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for Digital I/O.
-        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].digIoMuxB);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].digIoMuxB);
     }
 
-    // If the pin PWM capable and on a CY8C9540A I/O Expander chip, deselect the PWM function.
-    if (status && (m_PwmChannels[pin].expander == CY8))
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+// If the pin PWM capable and on a CY8C9540A I/O Expander chip, deselect the PWM function.
+    if (SUCCEEDED(hr) && (m_PwmChannels[pin].expander == CY8))
     {
         ULONG i2cAdr = m_ExpAttributes[m_PwmChannels[pin].expander].I2c_Address;
         ULONG portBit = m_PwmChannels[pin].portBit;
-        status = CY8C9540ADevice::SetPortbitDio(i2cAdr, portBit);
-        if (!status) { error = GetLastError(); }
+        hr = CY8C9540ADevice::SetPortbitDio(i2cAdr, portBit);
     }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -715,55 +850,49 @@ This method sets the current function of a pin to PWM.  This code
 assumes the caller has verified the pin number is in range and that PWM
 is supported on the specified pin.
 \param[in] pin The number of the pin in question.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_setPinPwm(ULONG pin)
+HRESULT BoardPinsClass::_setPinPwm(ULONG pin)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-
+    HRESULT hr = S_OK;
 
     // If the pin is tied to at lease one MUX:
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for PWM.
-        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].pwmMuxA);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].pwmMuxA);
     }
 
     // If the pin is tied to a second MUX:
-    if (status && (m_PinAttributes[pin].muxB != NO_MUX))
+    if (SUCCEEDED(hr) && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for PWM.
-        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].pwmMuxB);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].pwmMuxB);
     }
 
     // Configure the pin for driving a PWM signal.
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        if (m_PwmChannels[pin].expander == CY8)
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		if (m_PwmChannels[pin].expander == CY8)
         {
             // If PWM on this pin is from a CY8 I/O expander, configure the pin for PWM.
             ULONG i2cAdr = m_ExpAttributes[m_PwmChannels[pin].expander].I2c_Address;
             ULONG portBit = m_PwmChannels[pin].portBit;
             ULONG pwmChan = m_PwmChannels[pin].channel;
-            status = CY8C9540ADevice::SetPortbitPwm(i2cAdr, portBit, pwmChan);
-            if (!status) { error = GetLastError(); }
+            hr = CY8C9540ADevice::SetPortbitPwm(i2cAdr, portBit, pwmChan);
         }
         else
         {
-            // If from a non-CY8 PWM chip, just set the pin to be an output.
-            status = setPinMode(pin, DIRECTION_OUT, FALSE);
-            if (!status) { error = GetLastError(); }
-        }
-    }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+			// If from a non-CY8 PWM chip, just set the pin to be an output.
+            hr = setPinMode(pin, DIRECTION_OUT, FALSE);
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+	}
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -771,42 +900,33 @@ This method sets the current function of a pin to Analog Input.  This code
 assumes the caller has verified the pin number is in range and that Analog
 Input is supported on the specified pin.
 \param[in] pin The number of the pin in question.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_setPinAnalogInput(ULONG pin)
+HRESULT BoardPinsClass::_setPinAnalogInput(ULONG pin)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-
-
-    // If the pin is tied to at lease one MUX:
+    HRESULT hr = S_OK;
+ 
+    // If the pin is tied to at least one MUX:
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for Analog Input.
-        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].anInMuxA);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].anInMuxA);
     }
 
     // If the pin is tied to a second MUX:
-    if (status && (m_PinAttributes[pin].muxB != NO_MUX))
+    if (SUCCEEDED(hr) && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for Analog Input.
-        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].anInMuxB);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].anInMuxB);
     }
 
     // Make sure the digital I/O functions on this pin are set to INPUT without pull-up.
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        status = setPinMode(pin, DIRECTION_IN, FALSE);
-        if (!status) { error = GetLastError(); }
+        hr = setPinMode(pin, DIRECTION_IN, FALSE);
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -814,35 +934,27 @@ This method sets the current function of a pin to I2C Bus.  This code
 assumes the caller has verified the pin number is in range and that I2C
 bus use is supported on the specified pin.
 \param[in] pin The number of the pin in question.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_setPinI2c(ULONG pin)
+HRESULT BoardPinsClass::_setPinI2c(ULONG pin)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-
+    HRESULT hr = S_OK;
 
     // If the pin is tied to at lease one MUX:
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for I2C bus use.
-        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].i2cMuxA);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].i2cMuxA);
     }
 
     // If the pin is tied to a second MUX:
-    if (status && (m_PinAttributes[pin].muxB != NO_MUX))
+    if (SUCCEEDED(hr) && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for I2C bus use.
-        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].i2cMuxB);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].i2cMuxB);
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -850,35 +962,27 @@ This method sets the current function of a pin to SPI Bus.  This code
 assumes the caller has verified the pin number is in range and that SPI
 bus use is supported on the specified pin.
 \param[in] pin The number of the pin in question.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_setPinSpi(ULONG pin)
+HRESULT BoardPinsClass::_setPinSpi(ULONG pin)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-
+    HRESULT hr = S_OK;
 
     // If the pin is tied to at lease one MUX:
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for SPI bus use.
-        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].spiMuxA);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].spiMuxA);
     }
 
     // If the pin is tied to a second MUX:
-    if (status && (m_PinAttributes[pin].muxB != NO_MUX))
+    if (SUCCEEDED(hr) && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for SPI bus use.
-        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].spiMuxB);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].spiMuxB);
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -886,35 +990,27 @@ This method sets the current function of a pin to Hardware Serial.  This code
 assumes the caller has verified the pin number is in range and that Hardware 
 Serial is supported on the specified pin.
 \param[in] pin The number of the pin in question.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_setPinHwSerial(ULONG pin)
+HRESULT BoardPinsClass::_setPinHwSerial(ULONG pin)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-
-
+    HRESULT hr = S_OK;
+    
     // If the pin is tied to at lease one MUX:
     if (m_PinAttributes[pin].muxA != NO_MUX)
     {
         // Set the MUX to the desired state for Hardware Serial use.
-        status = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].serMuxA);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxA, m_PinAttributes[pin].serMuxA);
     }
 
     // If the pin is tied to a second MUX:
-    if (status && (m_PinAttributes[pin].muxB != NO_MUX))
+    if (SUCCEEDED(hr) && (m_PinAttributes[pin].muxB != NO_MUX))
     {
         // Set the MUX to the desired state for Hardware Serial use.
-        status = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].serMuxB);
-        if (!status) { error = GetLastError(); }
+        hr = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].serMuxB);
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
@@ -922,93 +1018,85 @@ This method sets the mode and drive type of a pin (Input, Output, etc.)
 \param[in] pin The number of the pin in question.
 \param[in] mode The desired mode: DIRECTION_IN or DIRECTION_OUT.
 \param[in] pullup True to enable pin pullup resistor, false to disable pullup
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
+HRESULT BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
 
-
-    if ((mode != DIRECTION_IN) && (mode != DIRECTION_OUT))
+	if ((mode != DIRECTION_IN) && (mode != DIRECTION_OUT))
     {
-        status = FALSE;
-        error = ERROR_NOT_SUPPORTED;
+        hr = DMAP_E_INVALID_PIN_DIRECTION;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        status = _verifyBoardType();
-        if (!status) { error = GetLastError(); }
+        hr = _verifyBoardType();
     }
 
-    if (status && !_pinNumberIsSafe(pin))
+    if (SUCCEEDED(hr) && !_pinNumberIsSafe(pin))
     {
-        status = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+		hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Set the pin direction on the device that supports this pin.
         switch (m_PinAttributes[pin].gpioType)
         {
-        case GPIO_FABRIC:
-            status = g_quarkFabricGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
-            if (!status) { error = GetLastError(); }
+#if defined(_M_ARM)
+        case GPIO_BCM:
+            hr = g_bcmGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
             break;
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
         case GPIO_S0:
-            status = g_btFabricGpio.setS0PinDirection(m_PinAttributes[pin].portBit, mode);
-            if (!status) { error = GetLastError(); }
+            hr = g_btFabricGpio.setS0PinDirection(m_PinAttributes[pin].portBit, mode);
             break;
         case GPIO_S5:
-            status = g_btFabricGpio.setS5PinDirection(m_PinAttributes[pin].portBit, mode);
-            if (!status) { error = GetLastError(); }
+            hr = g_btFabricGpio.setS5PinDirection(m_PinAttributes[pin].portBit, mode);
             break;
-        case GPIO_LEGRES:
-            status = g_quarkLegacyGpio.setResumePinDirection(m_PinAttributes[pin].portBit, mode);
-            if (!status) { error = GetLastError(); }
+#endif // defined(_M_IX86) || defined(_M_X64)
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_FABRIC:
+			hr = g_quarkFabricGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
+			break;
+		case GPIO_LEGRES:
+            hr = g_quarkLegacyGpio.setResumePinDirection(m_PinAttributes[pin].portBit, mode);
             break;
-        case GPIO_LEGCOR:
-            status = g_quarkLegacyGpio.setCorePinDirection(m_PinAttributes[pin].portBit, mode);
-            if (!status) { error = GetLastError(); }
+		case GPIO_LEGCOR:
+            hr = g_quarkLegacyGpio.setCorePinDirection(m_PinAttributes[pin].portBit, mode);
             break;
-        case GPIO_EXP1:
-            status = _setExpBitDirection(EXP1, m_PinAttributes[pin].portBit, mode, pullup);
-            if (!status) { error = GetLastError(); }
+		case GPIO_EXP1:
+            hr = _setExpBitDirection(EXP1, m_PinAttributes[pin].portBit, mode, pullup);
             break;
         case GPIO_EXP2:
-            status = _setExpBitDirection(EXP2, m_PinAttributes[pin].portBit, mode, pullup);
-            if (!status) { error = GetLastError(); }
+            hr = _setExpBitDirection(EXP2, m_PinAttributes[pin].portBit, mode, pullup);
             break;
         case GPIO_CY8:
-            status = _setExpBitDirection(CY8, m_PinAttributes[pin].portBit, mode, pullup);
-            if (!status) { error = GetLastError(); }
+            hr = _setExpBitDirection(CY8, m_PinAttributes[pin].portBit, mode, pullup);
             break;
-        case GPIO_NONE:
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		case GPIO_NONE:
             break;             // No actual GPIO pin here, nothing to do.
         default:
-            status = FALSE;
-            error = DNS_ERROR_INVALID_TYPE;
+			hr = DMAP_E_DMAP_INTERNAL_ERROR;
         }
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Configure the pin drivers as needed.
-        status = _configurePinDrivers(pin, mode);
-        if (!status) { error = GetLastError(); }
+        hr = _configurePinDrivers(pin, mode);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Configure the pin pullup as requested.
-        status = _configurePinPullup(pin, pullup);
-        if (!status) { error = GetLastError(); }
+        hr = _configurePinPullup(pin, pullup);
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
@@ -1017,46 +1105,44 @@ This method sets the direction of an I/O Expander port pin.
 \param[in] bitNo Specifies the port and bit number to set (such as: P1_4 for port 1, bit 4)
 \param[in] direction The desired direction: DIRECTION_IN or DIRECTION_OUT.
 \param[in] pullup TRUE - enable pullup resistor on the pin, FALSE - disable pullup resistor.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direction, BOOL pullup)
+HRESULT BoardPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direction, BOOL pullup)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-    UCHAR i2cAdr = 0;               // I2C address of I/O Expander
-
-
+    HRESULT hr = S_OK;
+    
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	UCHAR i2cAdr = 0;               // I2C address of I/O Expander
     // Get the I2C Address of the I/O Expander in question.
     i2cAdr = m_ExpAttributes[expNo].I2c_Address;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
     //
     // Determine what type of I/O Expander we are dealing with.
     //
 
-    if (m_ExpAttributes[expNo].Exp_Type == PCAL9535A)
+	if (m_ExpAttributes[expNo].Exp_Type == PCA9685)
+    {
+		// Nothing to do here, PCA9685 chip ports are always outputs.
+	}
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	else if (m_ExpAttributes[expNo].Exp_Type == PCAL9535A)
     {
         // Set the bit of the I/O Expander chip to the desired direction.
-        status = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, direction);
-        if (!status) { error = GetLastError(); }
+        hr = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, direction);
     }
     else if (m_ExpAttributes[expNo].Exp_Type == CY8C9540A)
     {
         // Set the bit of the I/O Expander chip to the desired direction.
-        status = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, direction, pullup);
-        if (!status) { error = GetLastError(); }
+        hr = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, direction, pullup);
     }
-    else if (m_ExpAttributes[expNo].Exp_Type == PCA9685)
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+	else
     {
-        // Nothing to do here, PCA9685 chip ports are always outputs.
-    }
-    else
-    {
-        status = FALSE;
-        error = ERROR_INVALID_ENVIRONMENT;
+		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
@@ -1065,15 +1151,12 @@ This method sets the state of an I/O Expander port pin.
 \param[in] expNo The number of the I/O Expander in question.
 \param[in] bitNo Specifies the port and bit number to set (such as: P1_4 for port 1, bit 4)
 \param[in] state The desired state: HIGH or LOW.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-// Method to set an I/O Expander bit to the specified state.
-BOOL BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state)
+HRESULT BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     UCHAR i2cAdr = 0;               // I2C address of I/O Expander
-
 
     // Get the I2C Address of the I/O Expander in question.
     i2cAdr = m_ExpAttributes[expNo].I2c_Address;
@@ -1084,54 +1167,54 @@ BOOL BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULON
 
     switch (m_ExpAttributes[expNo].Exp_Type)
     {
-    case PCAL9535A:
-        // Set the bit of the I/O Expander chip to the desired state.
-        status = PCAL9535ADevice::SetBitState(i2cAdr, bitNo, state);
-        if (!status) { error = GetLastError(); }
-
-        if (status)
-        {
-            // Set the bit of the I/O Expander chip to be an output.
-            status = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT);
-            if (!status) { error = GetLastError(); }
-        }
-        break;
     case PCA9685:
         // Set the bit of the PWM chip to the desired state.
-        status = PCA9685Device::SetBitState(i2cAdr, bitNo, state);
-        if (!status) { error = GetLastError(); }
+        hr = PCA9685Device::SetBitState(i2cAdr, bitNo, state);
         break;
-    case CY8C9540A:
-        // Set the bit of a CY8 I/O Expander chip to the desired state.
-        status = CY8C9540ADevice::SetBitState(i2cAdr, bitNo, state);
-        if (!status) { error = GetLastError(); }
+#if defined(_M_ARM)
+    case BCM2836:
+        hr = g_bcmGpio.setPinFunction(m_PinAttributes[pin].portBit, state);
+        break;
+#endif // defined(_M_ARM)
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	case PCAL9535A:
+		// Set the bit of the I/O Expander chip to the desired state.
+		hr = PCAL9535ADevice::SetBitState(i2cAdr, bitNo, state);
 
-        if (status)
+		if (SUCCEEDED(hr))
+		{
+			// Set the bit of the I/O Expander chip to be an output.
+			hr = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT);
+		}
+		break;
+	case CY8C9540A:
+        // Set the bit of a CY8 I/O Expander chip to the desired state.
+        hr = CY8C9540ADevice::SetBitState(i2cAdr, bitNo, state);
+
+        if (SUCCEEDED(hr))
         {
             // Set the bit of the I/O Expander chip to be an output.
-            status = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT, FALSE);
-            if (!status) { error = GetLastError(); }
+            hr = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT, FALSE);
         }
         break;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#if defined(_M_IX86) || defined(_M_X64)
     case BAYTRAIL:
         if (m_PinAttributes[pin].gpioType == GPIO_S0)
         {
-            status = g_btFabricGpio.setS0PinFunction(m_PinAttributes[pin].portBit, state);
-            if (!status) { error = GetLastError(); }
+            hr = g_btFabricGpio.setS0PinFunction(m_PinAttributes[pin].portBit, state);
         }
         else
         {
-            status = g_btFabricGpio.setS5PinFunction(m_PinAttributes[pin].portBit, state);
-            if (!status) { error = GetLastError(); }
+            hr = g_btFabricGpio.setS5PinFunction(m_PinAttributes[pin].portBit, state);
         }
         break;
+#endif // defined(_M_IX86) || defined(_M_X64)
     default:
-        status = FALSE;
-        error = ERROR_INVALID_ENVIRONMENT;
+		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
@@ -1139,30 +1222,26 @@ Method to configure the pin input and output drivers to reflect the desired dire
 This code assumes the caller has verified the pin number and mode to be in range.
 \param[in] pin The number of the pin in question.
 \param[in] mode The desired direction for the pin.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_configurePinDrivers(ULONG pin, ULONG mode)
+HRESULT BoardPinsClass::_configurePinDrivers(ULONG pin, ULONG mode)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     UCHAR expNo = 0;                // I/O Expander number
     UCHAR bitNo = 0;                // Bit number on I/O Expander
     UCHAR state = 0;                // Desired pin state
 
-
     if ((mode != DIRECTION_IN) && (mode != DIRECTION_OUT))
     {
-        status = FALSE;
-        error = ERROR_NOT_SUPPORTED;
+		hr = DMAP_E_INVALID_PIN_DIRECTION;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        status = _verifyBoardType();
-        if (!status) { error = GetLastError(); }
+        hr = _verifyBoardType();
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Determine which I/O Expander controls the GPIO-pin drivers.
         expNo = m_PinAttributes[pin].triStExp;
@@ -1180,13 +1259,11 @@ BOOL BoardPinsClass::_configurePinDrivers(ULONG pin, ULONG mode)
             }
 
             // Set the I/O Expander bit to the correct state.
-            status = _setExpBitToState(pin, expNo, bitNo, state);
-            if (!status) { error = GetLastError(); }
+            hr = _setExpBitToState(pin, expNo, bitNo, state);
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
@@ -1194,27 +1271,20 @@ Method to configure the pin pullup as specified.  This code assumes the caller h
 verified the pin number to be in the valid range.
 \param[in] pin The number of the pin in question.
 \param[in] pullup True to turn pullup on, false to turn pullup off.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
+HRESULT BoardPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-    ULONG expNo = 0;                // I/O Expander number
-    ULONG bitNo = 0;                // Bit number on I/O Expander
-    ULONG state = 0;                // Desired pin state
+    HRESULT hr = S_OK;
 
-    if (status)
-    {
-        status = _verifyBoardType();
-        if (!status) { error = GetLastError(); }
-    }
+    hr = _verifyBoardType();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        // Determine which I/O Expander pin controls the GPIO-pin drivers.
-        expNo = m_PinAttributes[pin].pullupExp;
-        bitNo = m_PinAttributes[pin].pullupBit;
+#if defined(_M_IX86) || defined(_M_X64)
+        // Determine which I/O Expander pin controls the GPIO-pin pullup.
+        ULONG expNo = m_PinAttributes[pin].pullupExp;
+        ULONG bitNo = m_PinAttributes[pin].pullupBit;
 
         // If this pin has a pullup controlled by an I/O Expander port output pin:
         if (expNo != NO_X)
@@ -1223,22 +1293,23 @@ BOOL BoardPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
             if (pullup)
             {
                 // Set the I/O Expander bit high (also sets it as an output)
-                status = _setExpBitToState(pin, expNo, bitNo, 1);
-                if (!status)  { error = GetLastError(); }
+                hr = _setExpBitToState(pin, expNo, bitNo, 1);
             }
 
             // If no pullup is wanted:
             else
             {
                 // Make the I/O Expander bit an input.
-                status = _setExpBitDirection(expNo, bitNo, DIRECTION_IN, FALSE);
-                if (!status)  { error = GetLastError(); }
+                hr = _setExpBitDirection(expNo, bitNo, DIRECTION_IN, FALSE);
             }
         }
+#endif // defined(_M_IX86) || defined(_M_X64)
+#if defined (_M_ARM)
+        hr = g_bcmGpio.setPinPullup(m_PinAttributes[pin].portBit, pullup);
+#endif // defined (_M_ARM)
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
@@ -1246,88 +1317,82 @@ Method to set a MUX to select the desired signal.
 \parma[in] pin The number of the pin being configured.
 \param[in] mux The number of the MUX in question.
 \param[in] selection The desired state of the MUX "select" input (LOW or HIGH).
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_setMux(ULONG pin, ULONG mux, ULONG selection)
+HRESULT BoardPinsClass::_setMux(ULONG pin, ULONG mux, ULONG selection)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     ULONG expNo = 0;                // I/O Expander number
     ULONG bitNo = 0;                // Bit number on I/O Expander
-
 
     // If the MUX number is outside the valid range for this board, fail.
     if ((mux >= MAX_MUXES) || (m_MuxAttributes[mux].selectExp == NO_X))
     {
-        status = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Determine which I/O Expander and pin drive the MUX select input.
         expNo = m_MuxAttributes[mux].selectExp;
         bitNo = m_MuxAttributes[mux].selectBit;
 
         // Set the I/O Expander bit to the correct state.
-        status = _setExpBitToState(pin, expNo, bitNo, selection);
-        if (!status) { error = GetLastError(); }
+        hr = _setExpBitToState(pin, expNo, bitNo, selection);
     }
 
-    if (!status)
-    {
-        SetLastError(error);
-    }
-    return status;
+    return hr;
 }
 
 /**
 Method to set a GPIO pin to a specified state.
 \param[in] pin The number of the pin in question.
 \param[in] state The desired state (HIGH or LOW).
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::setPinState(ULONG pin, ULONG state)
+HRESULT BoardPinsClass::setPinState(ULONG pin, ULONG state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-
+    HRESULT hr = S_OK;
 
     if (state > 1)
     {
-        status = FALSE;
-        error = ERROR_INVALID_STATE;
+		hr = DMAP_E_INVALID_PIN_STATE_SPECIFIED;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        status = _verifyBoardType();
-        if (!status) { error = GetLastError(); }
+        hr = _verifyBoardType();
     }
 
-    if (status && !_pinNumberIsSafe(pin))
+    if (SUCCEEDED(hr) && !_pinNumberIsSafe(pin))
     {
-        status = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
         switch (m_PinAttributes[pin].gpioType)
         {
-        case GPIO_FABRIC:
-            return g_quarkFabricGpio.setPinState(m_PinAttributes[pin].portBit, state);
+#if defined(_M_ARM)
+        case GPIO_BCM:
+            return g_bcmGpio.setPinState(m_PinAttributes[pin].portBit, state);
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
         case GPIO_S0:
             return g_btFabricGpio.setS0PinState(m_PinAttributes[pin].portBit, state);
         case GPIO_S5:
             return g_btFabricGpio.setS5PinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_LEGRES:
+#endif // defined(_M_IX86) || defined(_M_X64)
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_FABRIC:
+			return g_quarkFabricGpio.setPinState(m_PinAttributes[pin].portBit, state);
+		case GPIO_LEGRES:
             return g_quarkLegacyGpio.setResumePinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGCOR:
             return g_quarkLegacyGpio.setCorePinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_EXP1:
-            return PCAL9535ADevice::SetBitState(
+		case GPIO_EXP1:
+			return PCAL9535ADevice::SetBitState(
                 m_ExpAttributes[EXP1].I2c_Address,
                 m_PinAttributes[pin].portBit,
                 state);
@@ -1341,75 +1406,76 @@ BOOL BoardPinsClass::setPinState(ULONG pin, ULONG state)
                 m_ExpAttributes[CY8].I2c_Address,
                 m_PinAttributes[pin].portBit,
                 state);
-        default:
-            status = FALSE;
-            error = DNS_ERROR_INVALID_TYPE;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		default:
+			hr = DMAP_E_DMAP_INTERNAL_ERROR;
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
 Method to read a GPIO input pin.
 \param[in] pin The number of the pin in question.
 \param[out] state The variable to pass back the pin state (HIGH or LOW).
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::getPinState(ULONG pin, ULONG & state)
+HRESULT BoardPinsClass::getPinState(ULONG pin, ULONG & state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
 
+    hr = _verifyBoardType();
 
-    status = _verifyBoardType();
-    if (!status) { error = GetLastError(); }
-
-    if (status && !_pinNumberIsSafe(pin))
+    if (SUCCEEDED(hr) && !_pinNumberIsSafe(pin))
     {
-        status = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+		hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
     }
     
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
         switch (m_PinAttributes[pin].gpioType)
         {
-        case GPIO_FABRIC:
-            return g_quarkFabricGpio.getPinState(m_PinAttributes[pin].portBit, state);
+#if defined(_M_ARM)
+        case GPIO_BCM:
+            return g_bcmGpio.getPinState(m_PinAttributes[pin].portBit, state);
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
         case GPIO_S0:
             return g_btFabricGpio.getS0PinState(m_PinAttributes[pin].portBit, state);
         case GPIO_S5:
             return g_btFabricGpio.getS5PinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_LEGRES:
+#endif // defined(_M_IX86) || defined(_M_X64)
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+		case GPIO_FABRIC:
+			return g_quarkFabricGpio.getPinState(m_PinAttributes[pin].portBit, state);
+		case GPIO_LEGRES:
             return g_quarkLegacyGpio.getResumePinState(m_PinAttributes[pin].portBit, state);
         case GPIO_LEGCOR:
             return g_quarkLegacyGpio.getCorePinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_EXP1:
-            return PCAL9535ADevice::GetBitState(
+		case GPIO_EXP1:
+			return PCAL9535ADevice::GetBitState(
                 m_ExpAttributes[EXP1].I2c_Address,
                 m_PinAttributes[pin].portBit,
                 state);
         case GPIO_EXP2:
-            return PCAL9535ADevice::GetBitState(
+			return PCAL9535ADevice::GetBitState(
                 m_ExpAttributes[EXP2].I2c_Address,
                 m_PinAttributes[pin].portBit,
                 state);
         case GPIO_CY8:
-            return CY8C9540ADevice::GetBitState(
+			return CY8C9540ADevice::GetBitState(
                 m_ExpAttributes[CY8].I2c_Address,
                 m_PinAttributes[pin].portBit,
                 state);
-        default:
-            status = FALSE;
-            error = DNS_ERROR_INVALID_TYPE;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+		default:
+			hr = DMAP_E_DMAP_INTERNAL_ERROR;
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
@@ -1417,21 +1483,19 @@ This method expects the call to have verified the pin number is in range, suppor
 PWM functions, and is in PWM mode.
 \param[in] pin The number of the GPIO pin in question.
 \param[in] dutyCycle The desired duty-cycle of the positive pulses (0-0xFFFFFFFF for 0-100%).
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
+HRESULT BoardPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     ULONG expNo;
     ULONG channel;
     ULONG expType;
     ULONG i2cAdr;
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        status = _verifyBoardType();
-        if (!status) { error = GetLastError(); }
+        hr = _verifyBoardType();
     }
 
     // These statements depend on the board generation being set, so they must come
@@ -1445,32 +1509,45 @@ BOOL BoardPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
     switch (expType)
     {
     case PCA9685:
-        status = PCA9685Device::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
-        if (!status) { error = GetLastError(); }
+        hr = PCA9685Device::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
         break;
-    case CY8C9540A:
-        status = CY8C9540ADevice::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
-        if (!status) { error = GetLastError(); }
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	case CY8C9540A:
+        hr = CY8C9540ADevice::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
         break;
-    default:
-        status = FALSE;
-        error = ERROR_NOT_SUPPORTED;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+	default:
+		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
 The board type is determined by parsing the processor identifier string 
 in the Registry.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_determineBoardType()
+HRESULT BoardPinsClass::_determineBoardType()
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-    HKEY baseKey = HKEY_LOCAL_MACHINE;
+    HRESULT hr = S_OK;
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+
+    // For now, assume MBM for UWP x86 builds.
+#if defined(_M_IX86) || defined(_M_X64)
+    hr = _determineMbmConfig();
+#endif // defined(_M_IX86) || defined(_M_X64)
+
+    // For now, assume PI2 for UWP ARM builds.
+#if defined(_M_ARM)
+    hr = _determinePi2Config();
+#endif // defined(_M_IX86) || defined(_M_X64)
+
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	HKEY baseKey = HKEY_LOCAL_MACHINE;
     HKEY regKey = nullptr;
     WCHAR subKey[] = L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0";
     WCHAR valueName[] = L"Identifier";
@@ -1480,45 +1557,41 @@ BOOL BoardPinsClass::_determineBoardType()
     WCHAR mbmId[] = L"Intel64 Family 6";
 
     error = RegOpenKeyEx(baseKey, subKey, 0, KEY_READ, &regKey);
-    if (error != ERROR_SUCCESS) { status = FALSE; }
+    if (error != ERROR_SUCCESS) { hr = HRESULT_FROM_WIN32(error); }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         error = RegGetValue(regKey, NULL, valueName, RRF_RT_REG_SZ, NULL, NULL, &valueBytes);
-        if (error != ERROR_SUCCESS) { status = FALSE; }
+        if (error != ERROR_SUCCESS) { hr = HRESULT_FROM_WIN32(error); }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             value = (PWCHAR) new UCHAR[valueBytes];
             if (value == NULL)
             {
-                status = FALSE;
-                error = ERROR_OUTOFMEMORY;
+                hr = E_OUTOFMEMORY;
             }
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             error = RegGetValue(regKey, NULL, valueName, RRF_RT_REG_SZ, NULL, value, &valueBytes);
-            if (error != ERROR_SUCCESS) { status = FALSE; }
+            if (error != ERROR_SUCCESS) { hr = HRESULT_FROM_WIN32(error); }
 
-            if (status)
+            if (SUCCEEDED(hr))
             {
                 if ((wcslen(mbmId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, mbmId, wcslen(mbmId)) == 0))
                 {
-                    status = _determineMbmConfig();
-                    if (!status) { error = GetLastError(); }
+                    hr = _determineMbmConfig();
                 }
                 else if ((wcslen(galileoId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, galileoId, wcslen(galileoId)) == 0))
                 {
-                    status = _determineGalileoGen();
-                    if (!status) { error = GetLastError(); }
+                    hr = _determineGalileoGen();
                 }
                 else
                 {
                     m_boardType = NOT_SET;
-                    status = FALSE;
-                    error = ERROR_INVALID_ENVIRONMENT;
+                    hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
                 }
             }
 
@@ -1528,64 +1601,76 @@ BOOL BoardPinsClass::_determineBoardType()
         RegCloseKey(regKey);
         regKey = nullptr;
     }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
+
 /**
-The Ika Lure has a ADC chip at address 0x48.  If this I2C address responds, 
+The Ika Lure has a ADC chip at address 0x48.  If this I2C address responds,
 this code assumes an Ika Lure is attached to this MBM.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_determineMbmConfig()
+HRESULT BoardPinsClass::_determineMbmConfig()
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
 
     // Start with the assumption this is a bare MBM board.  This is done so the
     // I2C code will know how to configure the Bay Trail I2C controller so it can be used 
     // to determine if the Ika Lure is attached.
-    status = setBoardType(MBM_BARE);
-    if (!status) { error = GetLastError(); }
+    hr = setBoardType(MBM_BARE);
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        if (_testI2cAddress(MBM_IKA_LURE_ADC_ADR))
+        hr = _testI2cAddress(MBM_IKA_LURE_ADC_ADR);
+
+        if (SUCCEEDED(hr))
         {
-            status = setBoardType(MBM_IKA_LURE);
-            if (!status) { error = GetLastError(); }
+            hr = setBoardType(MBM_IKA_LURE);
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
+/**
+As of the first writing of this code, we only support the bare PI2 board.
+This code needs to be expanded as hats are supported.
+\return HRESULT success or error code.
+*/
+HRESULT BoardPinsClass::_determinePi2Config()
+{
+    HRESULT hr = S_OK;
+
+    hr = setBoardType(PI2_BARE);
+
+    return hr;
+}
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 The I/O Expanders on the Gen1 and Gen2 boards are at different I2C addresses.
 The generation of a Galileo Board is decided by determining which I/O Expander
 I2C addresses are acknowledged and which are not.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_determineGalileoGen()
+HRESULT BoardPinsClass::_determineGalileoGen()
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
-    ULONG expSig = 0;
+    HRESULT hr = S_OK;
+	ULONG expSig = 0;
     int i;
 
     // Start with the assumption this is a Galileo Gen2.  This is done so the 
     // I2C code will know to configure the Quark I2C controller so it can be use to
     // determine which generation of Galileo this really is.
-    status = setBoardType(GALILEO_GEN2);
-    if (!status) { error = GetLastError(); }
+    hr = setBoardType(GALILEO_GEN2);
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         for (i = 0; i < NUM_IO_EXP; i++)
         {
-            if (_testI2cAddress(g_GenxExpAttributes[i].I2c_Address))
+            if (SUCCEEDED(_testI2cAddress(g_GenxExpAttributes[i].I2c_Address)))
             {
                 expSig = expSig | (1 << i);
             }
@@ -1594,54 +1679,37 @@ BOOL BoardPinsClass::_determineGalileoGen()
         // Compare the signature of expanders found to the Gen1 and Gen2 signatures.
         if ((expSig & (g_gen2ExpSig)) == g_gen2ExpSig)
         {
-            status = setBoardType(GALILEO_GEN2);
-            if (!status) { error = GetLastError(); }
+            hr = setBoardType(GALILEO_GEN2);
         }
         else if ((expSig & (g_gen1ExpSig)) == g_gen1ExpSig)
         {
-            status = setBoardType(GALILEO_GEN1);
-            if (!status) { error = GetLastError(); }
+            hr = setBoardType(GALILEO_GEN1);
         }
         else
         {
             m_boardType = NOT_SET;
-            status = FALSE;
-            error = ERROR_INVALID_ENVIRONMENT;
+            hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 /**
 Method to manually specify the board type.  This can be used to avoid
 board type auto-detection, which could cause problems if the user has
 connect I2C slaves at the addresses of the I/O expanders.
 \param[in] gen The type of board to set (GALILEO_GEN2, etc).
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::setBoardType(BOARD_TYPE board)
+HRESULT BoardPinsClass::setBoardType(BOARD_TYPE board)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
 
     m_boardType = board;
-    if (board == GALILEO_GEN2)
-    {
-        m_PinAttributes = g_Gen2PinAttributes;
-        m_MuxAttributes = g_Gen2MuxAttributes;
-        m_PwmChannels = g_Gen2PwmChannels;
-        m_GpioPinCount = NUM_ARDUINO_PINS;
-    }
-    else if (board == GALILEO_GEN1)
-    {
-        m_PinAttributes = g_Gen1PinAttributes;
-        m_MuxAttributes = g_Gen1MuxAttributes;
-        m_PwmChannels = g_Gen1PwmChannels;
-        m_GpioPinCount = NUM_ARDUINO_PINS;
-    }
-    else if (board == MBM_BARE)
+#if defined(_M_IX86) || defined(_M_X64)
+    if (board == MBM_BARE)
     {
         m_PinAttributes = g_MbmPinAttributes;
         m_MuxAttributes = g_MbmMuxAttributes;
@@ -1655,41 +1723,67 @@ BOOL BoardPinsClass::setBoardType(BOARD_TYPE board)
         m_PwmChannels = g_MbmIkaPwmChannels;
         m_GpioPinCount = NUM_ARDUINO_PINS;
     }
+#endif // defined(_M_IX86) || defined(_M_X64)
+
+#if defined(_M_ARM)
+    if (board == PI2_BARE)
+    {
+        m_PinAttributes = g_Pi2PinAttributes;
+        m_MuxAttributes = g_Pi2MuxAttributes;
+        m_PwmChannels = g_Pi2PwmChannels;
+        m_GpioPinCount = NUM_PI2_PINS;
+    }
+#endif // defined(_M_ARM)
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+	else if (board == GALILEO_GEN2)
+	{
+		m_PinAttributes = g_Gen2PinAttributes;
+		m_MuxAttributes = g_Gen2MuxAttributes;
+		m_PwmChannels = g_Gen2PwmChannels;
+		m_GpioPinCount = NUM_ARDUINO_PINS;
+	}
+	else if (board == GALILEO_GEN1)
+	{
+		m_PinAttributes = g_Gen1PinAttributes;
+		m_MuxAttributes = g_Gen1MuxAttributes;
+		m_PwmChannels = g_Gen1PwmChannels;
+		m_GpioPinCount = NUM_ARDUINO_PINS;
+	}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
     else
     {
         m_boardType = NOT_SET;
-        status = FALSE;
-        error = ERROR_INVALID_ENVIRONMENT;
+		hr = DMAP_E_INVALID_BOARD_TYPE_SPECIFIED;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
 
 /**
 Attempt to access an I2C slave at a specified address to determine if the slave
 is present or not.
-\param[in] i2cAdr The I2C address to probe.
+\return HRESULT success or error code.
 */
-BOOL BoardPinsClass::_testI2cAddress(ULONG i2cAdr)
+HRESULT BoardPinsClass::_testI2cAddress(ULONG i2cAdr)
 {
-    BOOL status = TRUE;
+    HRESULT hr = S_OK;
     I2cTransactionClass trans;
     UCHAR buffer[1] = { 0 };
 
-    status = trans.setAddress(i2cAdr);
+    hr = trans.setAddress(i2cAdr);
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        status = trans.queueWrite(buffer, sizeof(buffer));
+        hr = trans.queueWrite(buffer, sizeof(buffer));
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
-        status = trans.execute();
+        hr = trans.execute();
     }
 
-    return status;
+    return hr;
 }
 
 

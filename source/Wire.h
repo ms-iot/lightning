@@ -50,9 +50,13 @@ public:
     /// Method to begin use of the I2C bus by the code using this library.
     void begin()
     {
-        if (!g_i2c.beginExternal())
+		HRESULT hr;
+
+		hr = g_i2c.beginExternal();
+
+		if (FAILED(hr))
         {
-            ThrowError("Error beginning I2C use: %08x", GetLastError());
+            ThrowError("Error beginning I2C use: %08x", hr);
         }
 
         m_writeBuffs.clear();
@@ -116,6 +120,8 @@ public:
     */
     ULONG endTransmission(BOOL sendStop)
     {
+		HRESULT hr;
+
         ULONG retVal = SUCCESS;
 
         // Create a buffer on the write buffer queue for the transfer.
@@ -125,16 +131,20 @@ public:
         m_writeBuff.clear();
 
         // Queue a write from the buffer.
-        if (!m_i2cTransaction.queueWrite(m_writeBuffs.back().data(), (ULONG) m_writeBuffs.back().size()))
+		hr = m_i2cTransaction.queueWrite(m_writeBuffs.back().data(), (ULONG)m_writeBuffs.back().size());
+
+		if (FAILED(hr))
         {
             _cleanTransaction();
-            ThrowError("An error occurred queueing an I2C write of %d bytes.  Error: 0x%08X", m_writeBuffs.back().size(), GetLastError());
+            ThrowError("An error occurred queueing an I2C write of %d bytes.  Error: 0x%08X", m_writeBuffs.back().size(), hr);
         }
 
         // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-            if (!m_i2cTransaction.execute())
+			hr = m_i2cTransaction.execute();
+
+			if (FAILED(hr))
             {
                 if (m_i2cTransaction.getError() == I2cTransactionClass::ERROR_CODE::ADR_NACK)
                 {
@@ -195,6 +205,8 @@ public:
     */
     ULONG requestFrom(ULONG address, ULONG quantity, BOOL sendStop)
     {
+		HRESULT hr;
+
         if (quantity == 0)
         {
             _cleanTransaction();
@@ -209,19 +221,23 @@ public:
         m_readBuffs.push_back(newBuf);
 
         // Queue a read into the buffer.
-        if (!m_i2cTransaction.queueRead(m_readBuffs.back().data(), quantity))
+		hr = m_i2cTransaction.queueRead(m_readBuffs.back().data(), quantity);
+
+		if (FAILED(hr))
         {
             _cleanTransaction();
-            ThrowError("An error occurred queueing an I2C read of %d bytes to address: 0x%02X.  Error: 0x%08X", quantity, address, GetLastError());
+            ThrowError("An error occurred queueing an I2C read of %d bytes to address: 0x%02X.  Error: 0x%08X", quantity, address, hr);
         }
 
         // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-            if (!m_i2cTransaction.execute())
+			hr = m_i2cTransaction.execute();
+
+			if (FAILED(hr))
             {
                 _cleanTransaction();
-                ThrowError("Error encountered performing queued I2C transfers to address: 0x%02X, Error: 0x%08X", address, GetLastError());
+                ThrowError("Error encountered performing queued I2C transfers to address: 0x%02X, Error: 0x%08X", address, hr);
             }
 
             // Clear out queued transfers now that we are done with them.
@@ -246,6 +262,8 @@ public:
     */
     void _setSlaveAddress(ULONG address)
     {
+		HRESULT hr;
+
         if (address != m_i2cTransaction.getAddress())
         {
             if ((m_i2cTransaction.getAddress() != 0) && m_i2cTransaction.isIncomplete())
@@ -255,10 +273,12 @@ public:
             }
             m_i2cTransaction.reset();
             m_writeBuffs.clear();
-            if (!m_i2cTransaction.setAddress(address))
+			hr = m_i2cTransaction.setAddress(address);
+
+			if (FAILED(hr))
             {
                 _cleanTransaction();
-                ThrowError("Error encountered setting I2C address: 0x%02X, Error: 0x%08X", address, GetLastError());
+                ThrowError("Error encountered setting I2C address: 0x%02X, Error: 0x%08X", address, hr);
             }
         }
     }
@@ -292,7 +312,7 @@ public:
     */
     size_t write(const uint8_t *data, size_t cbData)
     {
-        uint8_t length = this->m_writeBuff.size();
+        size_t length = this->m_writeBuff.size();
         this->m_writeBuff.resize(this->m_writeBuff.size() + cbData);
         auto it = this->m_writeBuff.begin();
         advance(it, length);
@@ -307,7 +327,7 @@ public:
     */
     size_t write(PCHAR string)
     {
-        uint8_t length = this->m_writeBuff.size();
+        size_t length = this->m_writeBuff.size();
         this->m_writeBuff.resize(this->m_writeBuff.size() + strlen(string));
         auto it = this->m_writeBuff.begin();
         advance(it, length);

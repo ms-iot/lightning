@@ -2,106 +2,121 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+#include "ErrorCodes.h"
+
 #include "GpioController.h"
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-BOOL QuarkFabricGpioControllerClass::_mapController()
+HRESULT QuarkFabricGpioControllerClass::_mapController()
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     PVOID baseAddress = nullptr;
 
-    status = GetControllerBaseAddress(
+    hr = GetControllerBaseAddress(
         galileoGpioDeviceName,
         m_hController,
         baseAddress,
         FILE_SHARE_READ | FILE_SHARE_WRITE);
-    if (!status)
-    {
-        error = GetLastError();
-    }
-    else
+
+    if (SUCCEEDED(hr))
     {
         m_controller = (PFABRIC_GPIO)baseAddress;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT success or error code.
 */
-BOOL BtFabricGpioControllerClass::_mapS0Controller()
+HRESULT BtFabricGpioControllerClass::_mapS0Controller()
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
-    PVOID baseAddress = nullptr;
+    HRESULT hr = S_OK;
+	PVOID baseAddress = nullptr;
 
-    status = GetControllerBaseAddress(
+    hr = GetControllerBaseAddress(
         mbmGpioS0DeviceName,
         m_hS0Controller,
         baseAddress,
         FILE_SHARE_READ | FILE_SHARE_WRITE);
-    if (!status)
-    {
-        error = GetLastError();
-    }
-    else
+
+	if (SUCCEEDED(hr))
     {
         m_s0Controller = (PGPIO_PAD)baseAddress;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT success or error code.
 */
-BOOL BtFabricGpioControllerClass::_mapS5Controller()
+HRESULT BtFabricGpioControllerClass::_mapS5Controller()
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     PVOID baseAddress = nullptr;
 
-    status = GetControllerBaseAddress(
+    hr = GetControllerBaseAddress(
         mbmGpioS5DeviceName,
         m_hS5Controller,
         baseAddress,
         FILE_SHARE_READ | FILE_SHARE_WRITE);
-    if (!status)
-    {
-        error = GetLastError();
-    }
-    else
-    {
+
+	if (SUCCEEDED(hr))
+	{
         m_s5Controller = (PGPIO_PAD)baseAddress;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT success or error code.
 */
-BOOL QuarkLegacyGpioControllerClass::_openController()
+HRESULT QuarkLegacyGpioControllerClass::_openController()
 {
-    BOOL status = TRUE;
-    BOOL error = ERROR_SUCCESS;
-
-    status = OpenControllerDevice(
+    HRESULT hr = S_OK;
+    
+    hr = OpenControllerDevice(
         galileoLegacyGpioDeviceName,
         m_hController,
         FILE_SHARE_READ | FILE_SHARE_WRITE);
-    if (!status)
+
+    return hr;
+}
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if defined(_M_ARM)
+/**
+\return HRESULT success or error code.
+*/
+HRESULT BcmGpioControllerClass::_mapController()
+{
+    HRESULT hr = S_OK;
+    PVOID baseAddress = nullptr;
+
+    hr = GetControllerBaseAddress(
+        pi2GpioDeviceName,
+        m_hController,
+        baseAddress,
+        FILE_SHARE_READ | FILE_SHARE_WRITE);
+
+    if (SUCCEEDED(hr))
     {
-        error = GetLastError();
+        m_controller = (PBCM_GPIO)baseAddress;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // defined(_M_ARM)
+

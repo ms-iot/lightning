@@ -6,6 +6,9 @@
 #define _AD7298_SUPPORT_H_
 
 #include <Windows.h>
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+
 #include "SpiController.h"
 #include "GpioController.h"
 
@@ -24,26 +27,22 @@ public:
 
     /// Prepare to use this ADC.
     /**
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
-    inline BOOL begin()
+    inline HRESULT begin()
     {
-        BOOL status = TRUE;
-        ULONG error = ERROR_SUCCESS;
-
+        HRESULT hr = S_OK;
+        
         // Prepare to use the controller for the ADC's SPI controller.
-        status = m_spi.begin(ADC_SPI_BUS, 2, 20000, 16);
-        if (!status)  { error = GetLastError(); }
+        hr = m_spi.begin(ADC_SPI_BUS, 2, 20000, 16);
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Make the fabric GPIO bit that drives the ADC chip select signal an output.
-            status = g_quarkFabricGpio.setPinDirection(m_csFabricBit, DIRECTION_OUT);
-            if (!status)  { error = GetLastError(); }
+            hr = g_quarkFabricGpio.setPinDirection(m_csFabricBit, DIRECTION_OUT);
         }
 
-        if (!status) { SetLastError(error); }
-        return status;
+        return hr;
     }
 
     /// Release the ADC.
@@ -58,12 +57,12 @@ public:
     \param[in] channel Number of channel on ADC to read.
     \param[out] value The value read from the ADC.
     \param[out] bits The size of the reading in "value" in bits.
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
-    inline BOOL readValue(ULONG channel, ULONG & value, ULONG & bits)
+    inline HRESULT readValue(ULONG channel, ULONG & value, ULONG & bits)
     {
-        BOOL status = TRUE;
-        ULONG error = ERROR_SUCCESS;
+        HRESULT hr = S_OK;
+        
         ULONG dataOut;
         ULONG dataIn;
         ULONG chanIn;
@@ -74,46 +73,45 @@ public:
         // Make sure the channel number is in range.
         if (channel >= ADC_CHANNELS)
         {
-            status = FALSE;
-            error = ERROR_INVALID_PARAMETER;
+			hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
         }
 
         //
         // Jog the ADC twice to bring it out of any unresponsive state (such as Partial
         // Power-Down) that the shutdown of a previous program may have left it in.
         //
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Build ADC command register contents with Partial Power-Down bit clear.
             cmdReg.ALL_BITS = 0;
             cmdReg.WRITE = 1;
             dataOut = (ULONG)cmdReg.ALL_BITS;
 
-            status = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
-            if (!status) { error = GetLastError(); }
-            else
+            hr = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
+            
+			if (SUCCEEDED(hr))
             {
                 // Write the ADC command register.
-                status = m_spi.transfer16(dataOut, dataIn);
-                if (!status) { error = GetLastError(); }
+                hr = m_spi.transfer16(dataOut, dataIn);
+                
                 g_quarkFabricGpio.setPinState(m_csFabricBit, HIGH);      // Make ADC chip select inactive
             }
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Build ADC command register contents with Partial Power-Down bit clear.
             cmdReg.ALL_BITS = 0;
             cmdReg.WRITE = 1;
             dataOut = (ULONG)cmdReg.ALL_BITS;
 
-            status = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
-            if (!status) { error = GetLastError(); }
-            else
+            hr = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
+            
+			if (SUCCEEDED(hr))
             {
                 // Write the ADC command register.
-                status = m_spi.transfer16(dataOut, dataIn);
-                if (!status) { error = GetLastError(); }
+                hr = m_spi.transfer16(dataOut, dataIn);
+                
                 g_quarkFabricGpio.setPinState(m_csFabricBit, HIGH);      // Make ADC chip select inactive
             }
         }
@@ -122,7 +120,7 @@ public:
         // Tell the ADC which channel we want to read.
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Build ADC command register contents with bit set for the channel we want to read.
             chanMask = 0x0080 >> channel;
@@ -131,13 +129,13 @@ public:
             cmdReg.WRITE = 1;
             dataOut = (ULONG)cmdReg.ALL_BITS;
 
-            status = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
-            if (!status) { error = GetLastError(); }
-            else
+            hr = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
+            
+			if (SUCCEEDED(hr))
             {
                 // Send the channel information to the ADC.
-                status = m_spi.transfer16(dataOut, dataIn);
-                if (!status) { error = GetLastError(); }
+                hr = m_spi.transfer16(dataOut, dataIn);
+                
                 g_quarkFabricGpio.setPinState(m_csFabricBit, HIGH);      // Make ADC chip select inactive
             }
         }
@@ -146,16 +144,16 @@ public:
         // Perform the ADC conversion for the specified channel.
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Shift out 16 bits to perform the conversion.
             dataOut = 0;
-            status = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
-            if (!status) { error = GetLastError(); }
-            else
+            hr = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
+            
+			if (SUCCEEDED(hr))
             {
-                status = m_spi.transfer16(dataOut, dataIn);
-                if (!status) { error = GetLastError(); }
+                hr = m_spi.transfer16(dataOut, dataIn);
+                
                 g_quarkFabricGpio.setPinState(m_csFabricBit, HIGH);      // Make ADC chip select inactive
             }
         }
@@ -164,7 +162,7 @@ public:
         // Get the conversion result from the ADC.
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Build ADC command register contents with Partial Power-Down bit set.
             cmdReg.ALL_BITS = 0;
@@ -172,13 +170,13 @@ public:
             cmdReg.PPD = 1;
             dataOut = (ULONG)cmdReg.ALL_BITS;
 
-            status = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
-            if (!status) { error = GetLastError(); }
-            else
+            hr = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
+            
+			if (SUCCEEDED(hr))
             {
                 // Write the ADC command register and shift out the conversion result.
-                status = m_spi.transfer16(dataOut, dataIn);
-                if (!status) { error = GetLastError(); }
+                hr = m_spi.transfer16(dataOut, dataIn);
+                
                 g_quarkFabricGpio.setPinState(m_csFabricBit, HIGH);      // Make ADC chip select inactive
             }
         }
@@ -187,25 +185,23 @@ public:
         // Verify we got data for the right channel and pass it back to the caller.
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             chanIn = (dataIn >> ADC_BITS) & ((1 << ADC_CHAN_BITS) - 1);
 
             if (chanIn != channel)
             {
-                status = FALSE;
-                error = ERROR_NO_DATA_DETECTED;
+                hr = DMAP_E_ADC_DATA_FROM_WRONG_CHANNEL;
             }
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             value = dataIn & ((1 << ADC_BITS) - 1);
             bits = ADC_BITS;
         }
-
-        if (!status) { SetLastError(error); }
-        return status;
+        
+        return hr;
     }
 
 private:
@@ -252,5 +248,6 @@ private:
     /// The Fabric GPIO bit that controls the chip select signal.
     const ULONG m_csFabricBit = 0;
 };
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #endif  // _AD7298_SUPPORT_H_

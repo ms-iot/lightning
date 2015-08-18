@@ -6,10 +6,17 @@
 #define _GPIO_CONTROLLER_H_
 
 #include <Windows.h>
+#include "ErrorCodes.h"
+
 #include "ArduinoCommon.h"
 #include "DmapSupport.h"
-#include "quarklgpio.h"
+#include "HiResTimer.h"
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+#include "quarklgpio.h"
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// Class used to interact with the Quark Fabric GPIO hardware.
 class QuarkFabricGpioControllerClass
 {
@@ -24,19 +31,15 @@ public:
     /// Destructor.
     virtual ~QuarkFabricGpioControllerClass()
     {
-        if (m_hController != INVALID_HANDLE_VALUE)
-        {
-            CloseHandle(m_hController);
-            m_hController = INVALID_HANDLE_VALUE;
-        }
+        DmapCloseController(m_hController);
         m_controller = nullptr;
     }
 
     /// Method to map the Fabric GPIO controller registers if they are not already mapped.
     /**
-    \return TRUE success, FALSE failure, GetLastError() provides the error code.
-    */
-    inline BOOL mapIfNeeded()
+	\return HRESULT error or success code.
+	*/
+    inline HRESULT mapIfNeeded()
     {
         if (m_hController == INVALID_HANDLE_VALUE)
         {
@@ -44,21 +47,21 @@ public:
         }
         else
         {
-            return TRUE;
+			return S_OK;
         }
     }
 
     /// Method to set the state of a Fabric GPIO port bit.
-    inline BOOL setPinState(ULONG portBit, ULONG state);
+    inline HRESULT setPinState(ULONG portBit, ULONG state);
 
     /// Method to read the state of a Fabric GPIO bit.
-    inline BOOL getPinState(ULONG portBit, ULONG & state);
+    inline HRESULT getPinState(ULONG portBit, ULONG & state);
 
     /// Method to set the direction (input or output) of a Fabric GPIO port bit.
-    inline BOOL setPinDirection(ULONG portBit, ULONG mode);
+    inline HRESULT setPinDirection(ULONG portBit, ULONG mode);
 
     /// Method to get the direction (input or output) of a Fabric GPIO port bit.
-    inline BOOL getPinDirection(ULONG portBit, ULONG & mode);
+    inline HRESULT getPinDirection(ULONG portBit, ULONG & mode);
 
 private:
 
@@ -216,7 +219,7 @@ private:
     //
 
     /// Method to map the Fabric GPIO Controller into this process' virtual address space.
-    BOOL _mapController();
+    HRESULT _mapController();
 
     /// Method to set a Fabric GPIO pin as an input.
     inline void _setPinInput(ULONG portBit)
@@ -233,11 +236,15 @@ private:
         _bittestandset((LONG*)&m_controller->GPIO_SWPORTA_DDR.ALL_BITS, portBit);
     }
 };
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// The global object used to interact with the Fabric GPIO hardware.
 __declspec (selectany) QuarkFabricGpioControllerClass g_quarkFabricGpio;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// Class used to interact with the Quark Legacy GPIO hardware.
 class QuarkLegacyGpioControllerClass
 {
@@ -251,18 +258,14 @@ public:
     /// Destructor.
     virtual ~QuarkLegacyGpioControllerClass()
     {
-        if (m_hController != INVALID_HANDLE_VALUE)
-        {
-            CloseHandle(m_hController);
-            m_hController = INVALID_HANDLE_VALUE;
-        }
+        DmapCloseController(m_hController);
     }
 
     /// Method to open the Legacy GPIO controller if it is not already open.
     /**
-    \return TRUE success, FALSE failure, GetLastError() provides the error code.
-    */
-    inline BOOL openIfNeeded()
+	\return HRESULT error or success code.
+	*/
+    inline HRESULT openIfNeeded()
     {
         if (m_hController == INVALID_HANDLE_VALUE)
         {
@@ -270,33 +273,33 @@ public:
         }
         else
         {
-            return TRUE;
+			return S_OK;
         }
-    }
+	}
 
     /// Method to set the state of a Legacy Core Well GPIO port bit.
-    inline BOOL setCorePinState(ULONG portBit, ULONG state);
+    inline HRESULT setCorePinState(ULONG portBit, ULONG state);
 
     /// Method to read the state of a Legacy Core Well GPIO bit.
-    inline BOOL getCorePinState(ULONG portBit, ULONG & state);
+    inline HRESULT getCorePinState(ULONG portBit, ULONG & state);
 
     /// Method to set the direction (input or output) of a Legacy Core Well GPIO port bit.
-    inline BOOL setCorePinDirection(ULONG portBit, ULONG mode);
+    inline HRESULT setCorePinDirection(ULONG portBit, ULONG mode);
 
     /// Method to get the direction (input or output) of a Legacy Core Well GPIO port bit.
-    inline BOOL getCorePinDirection(ULONG portBit, ULONG & mode);
+    inline HRESULT getCorePinDirection(ULONG portBit, ULONG & mode);
 
     /// Method to set the state of a Legacy Resume Well GPIO port bit.
-    inline BOOL setResumePinState(ULONG portBit, ULONG state);
+    inline HRESULT setResumePinState(ULONG portBit, ULONG state);
 
     /// Method to read the state of a Legacy Resume Well GPIO bit.
-    inline BOOL getResumePinState(ULONG portBit, ULONG & state);
+    inline HRESULT getResumePinState(ULONG portBit, ULONG & state);
 
     /// Method to set the direction (input or output) of a Legacy Resume Well GPIO port bit.
-    inline BOOL setResumePinDirection(ULONG portBit, ULONG mode);
+    inline HRESULT setResumePinDirection(ULONG portBit, ULONG mode);
 
     /// Method to get the direction (input or output) of a Legacy Resume Well GPIO port bit.
-    inline BOOL getResumePinDirection(ULONG portBit, ULONG & mode);
+    inline HRESULT getResumePinDirection(ULONG portBit, ULONG & mode);
 
 private:
 
@@ -315,10 +318,10 @@ private:
     //
 
     /// Method to open the Legacy GPIO Controller.
-    BOOL _openController();
+    HRESULT _openController();
 
     /// Method to set a Legacy Core Well GPIO pin as an input.
-    inline BOOL _setCorePinInput(ULONG portBit)
+    inline HRESULT _setCorePinInput(ULONG portBit)
     {
         QUARKLGPIO_INPUT_BUFFER inp;
         DWORD bytesReturned;
@@ -326,19 +329,26 @@ private:
         inp.Bank = QUARKLGPIO_BANK_COREWELL;
         inp.Mask = 0x1 << portBit;
 
-        return DeviceIoControl(
-            m_hController,
-            IOCTL_QUARKLGPIO_SET_DIR_INPUT,
-            &inp,
-            sizeof(inp),
-            nullptr,
-            0,
-            &bytesReturned,
-            nullptr);
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_SET_DIR_INPUT,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		else
+		{
+			return S_OK;
+		}
     }
 
     /// Method to set a Legacy Core Well GPIO pin as an output
-    inline BOOL _setCorePinOutput(ULONG portBit)
+    inline HRESULT _setCorePinOutput(ULONG portBit)
     {
         QUARKLGPIO_INPUT_BUFFER inp;
         DWORD bytesReturned;
@@ -346,19 +356,26 @@ private:
         inp.Bank = QUARKLGPIO_BANK_COREWELL;
         inp.Mask = 0x1 << portBit;
 
-        return DeviceIoControl(
-            m_hController,
-            IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
-            &inp,
-            sizeof(inp),
-            nullptr,
-            0,
-            &bytesReturned,
-            nullptr);
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		else
+		{
+			return S_OK;
+		}
     }
 
     /// Method to set a Legacy Resume Well GPIO pin as an input.
-    inline BOOL _setResumePinInput(ULONG portBit)
+    inline HRESULT _setResumePinInput(ULONG portBit)
     {
         QUARKLGPIO_INPUT_BUFFER inp;
         DWORD bytesReturned;
@@ -366,19 +383,26 @@ private:
         inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
         inp.Mask = 0x1 << portBit;
 
-        return DeviceIoControl(
-            m_hController,
-            IOCTL_QUARKLGPIO_SET_DIR_INPUT,
-            &inp,
-            sizeof(inp),
-            nullptr,
-            0,
-            &bytesReturned,
-            nullptr);
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_SET_DIR_INPUT,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		else
+		{
+			return S_OK;
+		}
     }
 
     /// Method to set a Legacy Resume Well GPIO pin as an output
-    inline BOOL _setResumePinOutput(ULONG portBit)
+    inline HRESULT _setResumePinOutput(ULONG portBit)
     {
         QUARKLGPIO_INPUT_BUFFER inp;
         DWORD bytesReturned;
@@ -386,22 +410,32 @@ private:
         inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
         inp.Mask = 0x1 << portBit;
 
-        return DeviceIoControl(
-            m_hController,
-            IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
-            &inp,
-            sizeof(inp),
-            nullptr,
-            0,
-            &bytesReturned,
-            nullptr);
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		else
+		{
+			return S_OK;
+		}
     }
 };
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// The global object used to interact with the Legacy GPIO hardware.
 __declspec (selectany) QuarkLegacyGpioControllerClass g_quarkLegacyGpio;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
-
+#if defined(_M_IX86) || defined(_M_X64)
 /// Class used to interact with the BayTrail Fabric GPIO hardware.
 class BtFabricGpioControllerClass
 {
@@ -418,26 +452,18 @@ public:
     /// Destructor.
     virtual ~BtFabricGpioControllerClass()
     {
-        if (m_hS0Controller != INVALID_HANDLE_VALUE)
-        {
-            CloseHandle(m_hS0Controller);
-            m_hS0Controller = INVALID_HANDLE_VALUE;
-        }
+        DmapCloseController(m_hS0Controller);
         m_s0Controller = nullptr;
 
-        if (m_hS5Controller != INVALID_HANDLE_VALUE)
-        {
-            CloseHandle(m_hS5Controller);
-            m_hS5Controller = INVALID_HANDLE_VALUE;
-        }
+        DmapCloseController(m_hS5Controller);
         m_s5Controller = nullptr;
     }
 
     /// Method to map the S0 GPIO controller registers if they are not already mapped.
     /**
-    \return TRUE success, FALSE failure, GetLastError() provides the error code.
-    */
-    inline BOOL mapS0IfNeeded()
+	\return HRESULT error or success code.
+	*/
+    inline HRESULT mapS0IfNeeded()
     {
         if (m_hS0Controller == INVALID_HANDLE_VALUE)
         {
@@ -445,15 +471,15 @@ public:
         }
         else
         {
-            return TRUE;
+			return S_OK;
         }
     }
 
     /// Method to map the S5 GPIO controller registers if they are not already mapped.
     /**
-    \return TRUE success, FALSE failure, GetLastError() provides the error code.
-    */
-    inline BOOL mapS5IfNeeded()
+	\return HRESULT error or success code.
+	*/
+    inline HRESULT mapS5IfNeeded()
     {
         if (m_hS5Controller == INVALID_HANDLE_VALUE)
         {
@@ -461,33 +487,33 @@ public:
         }
         else
         {
-            return TRUE;
+            return S_OK;
         }
     }
 
     /// Method to set the state of an S0 GPIO port bit.
-    inline BOOL setS0PinState(ULONG gpioNo, ULONG state);
+    inline HRESULT setS0PinState(ULONG gpioNo, ULONG state);
 
     /// Method to set the state of an S5 GPIO port bit.
-    inline BOOL setS5PinState(ULONG gpioNo, ULONG state);
+    inline HRESULT setS5PinState(ULONG gpioNo, ULONG state);
 
     /// Method to read the state of an S0 GPIO bit.
-    inline BOOL getS0PinState(ULONG gpioNo, ULONG & state);
+    inline HRESULT getS0PinState(ULONG gpioNo, ULONG & state);
 
     /// Method to read the state of an S5 GPIO bit.
-    inline BOOL getS5PinState(ULONG gpioNo, ULONG & state);
+    inline HRESULT getS5PinState(ULONG gpioNo, ULONG & state);
 
     /// Method to set the direction (input or output) of an S0 GPIO port bit.
-    inline BOOL setS0PinDirection(ULONG gpioNo, ULONG mode);
+    inline HRESULT setS0PinDirection(ULONG gpioNo, ULONG mode);
 
     /// Method to set the direction (input or output) of an S5 GPIO port bit.
-    inline BOOL setS5PinDirection(ULONG gpioNo, ULONG mode);
+    inline HRESULT setS5PinDirection(ULONG gpioNo, ULONG mode);
 
     /// Method to set the function (mux state) of an S0 GPIO port bit.
-    inline BOOL setS0PinFunction(ULONG gpioNo, ULONG function);
+    inline HRESULT setS0PinFunction(ULONG gpioNo, ULONG function);
 
     /// Method to set the function (mux state) of an S5 GPIO port bit.
-    inline BOOL setS5PinFunction(ULONG gpioNo, ULONG function);
+    inline HRESULT setS5PinFunction(ULONG gpioNo, ULONG function);
 
 private:
 
@@ -599,10 +625,10 @@ private:
     //
 
     /// Method to map the S0 GPIO Controller into this process' virtual address space.
-    BOOL _mapS0Controller();
+    HRESULT _mapS0Controller();
 
     /// Method to map the S5 GPIO Controller into this process' virtual address space.
-    BOOL _mapS5Controller();
+    HRESULT _mapS5Controller();
 
     /// Method to set an S0 GPIO pin as an input.
     inline void _setS0PinInput(ULONG gpioNo);
@@ -620,21 +646,153 @@ private:
 /// The global object used to interact with the BayTrail Fabric GPIO hardware.
 __declspec (selectany) BtFabricGpioControllerClass g_btFabricGpio;
 
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_ARM)
+/// Class used to interact with the PI2 BCM2836 GPIO hardware.
+class BcmGpioControllerClass
+{
+public:
+    /// Constructor.
+    BcmGpioControllerClass()
+    {
+        m_hController = INVALID_HANDLE_VALUE;
+        m_controller = nullptr;
+    }
+
+    /// Destructor.
+    virtual ~BcmGpioControllerClass()
+    {
+        DmapCloseController(m_hController);
+        m_controller = nullptr;
+    }
+
+    /// Method to map the BCM2836 GPIO controller registers if they are not already mapped.
+    /**
+    \return HRESULT error or success code.
+    */
+    inline HRESULT mapIfNeeded()
+    {
+        if (m_hController == INVALID_HANDLE_VALUE)
+        {
+            return _mapController();
+        }
+        else
+        {
+            return S_OK;
+        }
+    }
+
+    /// Method to set the state of a GPIO port bit.
+    inline HRESULT setPinState(ULONG gpioNo, ULONG state);
+
+    /// Method to read the state of a GPIO bit.
+    inline HRESULT getPinState(ULONG gpioNo, ULONG & state);
+
+    /// Method to set the direction (input or output) of a GPIO port bit.
+    inline HRESULT setPinDirection(ULONG gpioNo, ULONG mode);
+
+    /// Method to set the function (mux state) of a GPIO port bit.
+    inline HRESULT setPinFunction(ULONG gpioNo, ULONG function);
+
+    /// Method to turn pin pullup on or off.
+    inline HRESULT setPinPullup(ULONG gpioNo, BOOL pullup);
+
+private:
+
+    // Value to write to GPPUD to turn pullup/down off for pins.
+    const ULONG pullupOff = 0;
+
+    // Value to write to GPPUD to turn pullup on for a pin.
+    const ULONG pullupOn = 2;
+
+    /// Layout of the BCM2836 GPIO Controller registers in memory.
+    typedef struct _BCM_GPIO {
+        ULONG   GPFSELN[6];         ///< 0x00-0x17 - Function select GPIO 00-53
+        ULONG   _rsv01;             //   0x18
+        ULONG   GPSET0;             ///< 0x1C - Output Set GPIO 00-31
+        ULONG   GPSET1;             ///< 0x20 - Output Set GPIO 32-53
+        ULONG   _rsv02;             //   0x24
+        ULONG   GPCLR0;             ///< 0x28 - Output Clear GPIO 00-31
+        ULONG   GPCLR1;             ///< 0x2C - Output Clear GPIO 32-53
+        ULONG   _rsv03;             //   0x30
+        ULONG   GPLEV0;             ///< 0x34 - Level GPIO 00-31
+        ULONG   GPLEV1;             ///< 0x38 - Level GPIO 32-53
+        ULONG   _rsv04;             //   0x3C
+        ULONG   GPEDS0;             ///< 0x40 - Event Detect Status GPIO 00-31
+        ULONG   GPEDS1;             ///< 0x44 - Event Detect Status GPIO 32-53
+        ULONG   _rsv05;             //   0x48
+        ULONG   GPREN0;             ///< 0x4C - Rising Edge Detect Enable GPIO 00-31
+        ULONG   GPREN1;             ///< 0x50 - Rising Edge Detect Enable GPIO 32-53
+        ULONG   _rsv06;             //   0x54
+        ULONG   GPFEN0;             ///< 0x58 - Falling Edge Detect Enable GPIO 00-31
+        ULONG   GPFEN1;             ///< 0x5C - Falling Edge Detect Enable GPIO 32-53
+        ULONG   _rsv07;             //   0x60
+        ULONG   GPHEN0;             ///< 0x64 - High Detect Enable GPIO 00-31
+        ULONG   GPHEN1;             ///< 0x68 - High Detect Enable GPIO 32-53
+        ULONG   _rsv08;             //   0x6C
+        ULONG   GPLEN0;             ///< 0x70 - Low Detect Enable GPIO 00-31
+        ULONG   GPLEN1;             ///< 0x74 - Low Detect Enable GPIO 32-53
+        ULONG   _rsv09;             //   0x78
+        ULONG   GPAREN0;            ///< 0x7C - Async Rising Edge Detect GPIO 00-31
+        ULONG   GPAREN1;            ///< 0x80 - Async Rising Edge Detect GPIO 32-53
+        ULONG   _rsv10;             //   0x84
+        ULONG   GPAFEN0;            ///< 0x88 - Async Falling Edge Detect GPIO 00-31
+        ULONG   GPAFEN1;            ///< 0x8C - Async Falling Edge Detect GPIO 32-53
+        ULONG   _rsv11;             //   0x90
+        ULONG   GPPUD;              ///< 0x94 - GPIO Pin Pull-up/down Enable
+        ULONG   GPPUDCLK0;          ///< 0x98 - Pull-up/down Enable Clock GPIO 00-31
+        ULONG   GPPUDCLK1;          ///< 0x9C - Pull-up/down Enable Clock GPIO 32-53
+        ULONG   _rsv12[4];          //   0xA0
+        ULONG   _Test;              //   0xB0
+    } volatile BCM_GPIO, *PBCM_GPIO;
+
+	//
+    // BcmGpioControllerClass private data members.
+    //
+
+    /// Handle to the controller device for GPIOs.
+    /**
+    This handle can be used to refer to the opened GPIO Controller to perform such 
+    actions as closing or locking the controller.
+    */
+    HANDLE m_hController;
+
+    /// Pointer to the GPIO controller object in this process' address space.
+    /**
+    This controller object is used to access the GPIO registers after
+    they are mapped into this process' virtual address space.
+    */
+    PBCM_GPIO m_controller;
+
+    //
+    // BcmGpioControllerClass private methods.
+    //
+
+    /// Method to map the Controller into this process' virtual address space.
+    HRESULT _mapController();
+
+};
+
+/// The global object used to interact with the BayTrail Fabric GPIO hardware.
+__declspec (selectany) BcmGpioControllerClass g_bcmGpio;
+
+#endif // defined(_M_ARM)
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has verified the input parameters.
 \param[in] portBit The number of the bit to set. Range: 0-7.
 \param[in] state The state to set on the port bit. 0 - low, 1 - high.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkFabricGpioControllerClass::setPinState(ULONG portBit, ULONG state)
+inline HRESULT QuarkFabricGpioControllerClass::setPinState(ULONG portBit, ULONG state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
+    hr = mapIfNeeded();
 
-    status = mapIfNeeded();
-
-    if (status)
+    if (SUCCEEDED(hr))
     {
         if (state == 0)
         {
@@ -646,9 +804,11 @@ inline BOOL QuarkFabricGpioControllerClass::setPinState(ULONG portBit, ULONG sta
         }
     }
 
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 If the port bit is configured as in input, the state passed back is the state of the external
 signal connnected to the bit.  If the port bit is configured as an output, the state passed
@@ -656,38 +816,37 @@ back is the state that was last written to the port bit.  This method assumes th
 verified the input parameter.
 \param[in] portBit The number of the bit to set. Range: 0-7.
 \param[out] state The state read from the port bit.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkFabricGpioControllerClass::getPinState(ULONG portBit, ULONG & state)
+inline HRESULT QuarkFabricGpioControllerClass::getPinState(ULONG portBit, ULONG & state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
 
-    status = mapIfNeeded();
+    hr = mapIfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         state = (m_controller->GPIO_EXT_PORTA.ALL_BITS >> portBit) & 0x01;
     }
 
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-7.
 \param[in] mode The mode to set for the bit.  Range: DIRECTION_IN or DIRECTION_OUT
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkFabricGpioControllerClass::setPinDirection(ULONG portBit, ULONG mode)
+inline HRESULT QuarkFabricGpioControllerClass::setPinDirection(ULONG portBit, ULONG mode)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
 
-    status = mapIfNeeded();
-    if (!status) { error = GetLastError(); }
+    hr = mapIfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         switch (mode)
         {
@@ -700,25 +859,24 @@ inline BOOL QuarkFabricGpioControllerClass::setPinDirection(ULONG portBit, ULONG
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-7.
 \param[out] mode The mode of the bit, DIRECTION_IN or DIRECTION_OUT
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkFabricGpioControllerClass::getPinDirection(ULONG portBit, ULONG & mode)
+inline HRESULT QuarkFabricGpioControllerClass::getPinDirection(ULONG portBit, ULONG & mode)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+ 
+    hr = mapIfNeeded();
 
-    status = mapIfNeeded();
-    if (!status) { error = GetLastError(); }
-
-    if (status)
+    if (SUCCEEDED(hr))
     {
         if ((m_controller->GPIO_SWPORTA_DDR.ALL_BITS >> portBit) == 0)
         {
@@ -730,28 +888,27 @@ inline BOOL QuarkFabricGpioControllerClass::getPinDirection(ULONG portBit, ULONG
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-7.
 \param[in] state The state to set on the port bit. 0 - low, 1 - high.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkLegacyGpioControllerClass::setCorePinState(ULONG portBit, ULONG state)
+inline HRESULT QuarkLegacyGpioControllerClass::setCorePinState(ULONG portBit, ULONG state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     QUARKLGPIO_INPUT_BUFFER inp;
     DWORD ioCtl;
     DWORD bytesReturned;
 
-    status = openIfNeeded();
-    if (!status) { error = GetLastError(); }
+    hr = openIfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         inp.Bank = QUARKLGPIO_BANK_COREWELL;
         inp.Mask = 0x1 << portBit;
@@ -765,135 +922,137 @@ inline BOOL QuarkLegacyGpioControllerClass::setCorePinState(ULONG portBit, ULONG
             ioCtl = IOCTL_QUARKLGPIO_SET_PINS_HIGH;
         }
 
-        status = DeviceIoControl(
-            m_hController,
-            ioCtl,
-            &inp,
-            sizeof(inp),
-            nullptr,
-            0,
-            &bytesReturned,
-            nullptr);
-        if (!status) { error = GetLastError(); }
+		if (!DeviceIoControl(
+			m_hController,
+			ioCtl,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to read. Range: 0-7.
 \param[out] state Set to the state of the input bit.  0 - LOW, 1 - HIGH.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkLegacyGpioControllerClass::getCorePinState(ULONG portBit, ULONG & state)
+inline HRESULT QuarkLegacyGpioControllerClass::getCorePinState(ULONG portBit, ULONG & state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     QUARKLGPIO_INPUT_BUFFER inp;
     DWORD bytesReturned;
     DWORD portContents;
 
-status = openIfNeeded();
-if (!status) { error = GetLastError(); }
+    hr = openIfNeeded();
 
-if (status)
-{
-    inp.Bank = QUARKLGPIO_BANK_COREWELL;
-    inp.Mask = 0x1 << portBit;
+	if (SUCCEEDED(hr))
+	{
+		inp.Bank = QUARKLGPIO_BANK_COREWELL;
+		inp.Mask = 0x1 << portBit;
 
-    status = DeviceIoControl(
-        m_hController,
-        IOCTL_QUARKLGPIO_READ_PINS,
-        &inp,
-        sizeof(inp),
-        &portContents,
-        sizeof(portContents),
-        &bytesReturned,
-        nullptr);
-    if (!status) { error = GetLastError(); }
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_READ_PINS,
+			&inp,
+			sizeof(inp),
+			&portContents,
+			sizeof(portContents),
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		state = (portContents >> portBit) & 0x01;
+	}
+
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
-if (status)
-{
-    state = (portContents >> portBit) & 0x01;
-}
-
-if (!status) { SetLastError(error); }
-return status;
-}
-
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-1.
 \param[in] mode The mode to set for the bit.  Range: DIRECTION_IN or DIRECTION_OUT
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkLegacyGpioControllerClass::setCorePinDirection(ULONG portBit, ULONG mode)
+inline HRESULT QuarkLegacyGpioControllerClass::setCorePinDirection(ULONG portBit, ULONG mode)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
+    hr = openIfNeeded();
 
-    status = openIfNeeded();
-    if (!status) { error = GetLastError(); }
-
-    if (status)
+    if (SUCCEEDED(hr))
     {
         switch (mode)
         {
         case DIRECTION_IN:
-            status = _setCorePinInput(portBit);
-            if (!status) { error = GetLastError(); }
+            hr = _setCorePinInput(portBit);
             break;
         case DIRECTION_OUT:
-            status = _setCorePinOutput(portBit);
-            if (!status) { error = GetLastError(); }
+            hr = _setCorePinOutput(portBit);
             break;
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.  This method is largely
 intended for testing use--it is more efficient to just set the desired direction rather
 than checking first.
 \param[in] portBit The number of the bit to modify. Range: 0-1.
 \param[out] mode The mode of the bit, DIRECTION_IN or DIRECTION_OUT
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkLegacyGpioControllerClass::getCorePinDirection(ULONG portBit, ULONG & mode)
+inline HRESULT QuarkLegacyGpioControllerClass::getCorePinDirection(ULONG portBit, ULONG & mode)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     QUARKLGPIO_INPUT_BUFFER inp;
     DWORD readValue;
     DWORD bytesReturned;
 
-    status = openIfNeeded();
-    if (!status) { error = GetLastError(); }
+    hr = openIfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
 
         inp.Bank = QUARKLGPIO_BANK_COREWELL;
         inp.Mask = 0xFF;                // Not used, but if it were, we would want all 8 bits
 
-        status = DeviceIoControl(
-            m_hController,
-            IOCTL_QUARKLGPIO_GET_DIR,
-            &inp,
-            sizeof(inp),
-            &readValue,
-            sizeof(readValue),
-            &bytesReturned,
-            nullptr);
-        if (!status) { error = GetLastError(); }
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_GET_DIR,
+			&inp,
+			sizeof(inp),
+			&readValue,
+			sizeof(readValue),
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             if (((readValue >> portBit) & 0x01) == 1)
             {
@@ -906,47 +1065,49 @@ inline BOOL QuarkLegacyGpioControllerClass::getCorePinDirection(ULONG portBit, U
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.  This method is largely
 intended for testing use--it is more efficient to just set the desired direction rather
 than checking first.
 \param[in] portBit The number of the bit to modify. Range: 0-5.
 \param[out] mode The mode of the bit, DIRECTION_IN or DIRECTION_OUT
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkLegacyGpioControllerClass::getResumePinDirection(ULONG portBit, ULONG & mode)
+inline HRESULT QuarkLegacyGpioControllerClass::getResumePinDirection(ULONG portBit, ULONG & mode)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     QUARKLGPIO_INPUT_BUFFER inp;
     DWORD readValue;
     DWORD bytesReturned;
 
-    status = openIfNeeded();
-    if (!status) { error = GetLastError(); }
+    hr = openIfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
 
         inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
         inp.Mask = 0xFF;                // Not used, but if it were, we would want all 8 bits
 
-        status = DeviceIoControl(
-            m_hController,
-            IOCTL_QUARKLGPIO_GET_DIR,
-            &inp,
-            sizeof(inp),
-            &readValue,
-            sizeof(readValue),
-            &bytesReturned,
-            nullptr);
-        if (!status) { error = GetLastError(); }
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_GET_DIR,
+			&inp,
+			sizeof(inp),
+			&readValue,
+			sizeof(readValue),
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             if (((readValue >> portBit) & 0x01) == 1)
             {
@@ -959,61 +1120,58 @@ inline BOOL QuarkLegacyGpioControllerClass::getResumePinDirection(ULONG portBit,
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-5.
 \param[in] mode The mode to set for the bit.  Range: DIRECTION_IN or DIRECTION_OUT
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkLegacyGpioControllerClass::setResumePinDirection(ULONG portBit, ULONG mode)
+inline HRESULT QuarkLegacyGpioControllerClass::setResumePinDirection(ULONG portBit, ULONG mode)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
+    hr = openIfNeeded();
 
-    status = openIfNeeded();
-    if (!status) { error = GetLastError(); }
-
-    if (status)
+    if (SUCCEEDED(hr))
     {
         switch (mode)
         {
         case DIRECTION_IN:
-            status = _setResumePinInput(portBit);
-            if (!status) { error = GetLastError(); }
+            hr = _setResumePinInput(portBit);
             break;
         case DIRECTION_OUT:
-            status = _setResumePinOutput(portBit);
-            if (!status) { error = GetLastError(); }
+            hr = _setResumePinOutput(portBit);
             break;
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to modify. Range: 0-7.
 \param[in] state The state to set on the port bit. 0 - low, 1 - high.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkLegacyGpioControllerClass::setResumePinState(ULONG portBit, ULONG state)
+inline HRESULT QuarkLegacyGpioControllerClass::setResumePinState(ULONG portBit, ULONG state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
     QUARKLGPIO_INPUT_BUFFER inp;
     DWORD ioCtl;
     DWORD bytesReturned;
 
-    status = openIfNeeded();
-    if (!status) { error = GetLastError(); }
+    hr = openIfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
         inp.Mask = 0x1 << portBit;
@@ -1027,76 +1185,80 @@ inline BOOL QuarkLegacyGpioControllerClass::setResumePinState(ULONG portBit, ULO
             ioCtl = IOCTL_QUARKLGPIO_SET_PINS_HIGH;
         }
 
-        status = DeviceIoControl(
-            m_hController,
-            ioCtl,
-            &inp,
-            sizeof(inp),
-            nullptr,
-            0,
-            &bytesReturned,
-            nullptr);
-        if (!status) { error = GetLastError(); }
+		if (!DeviceIoControl(
+			m_hController,
+			ioCtl,
+			&inp,
+			sizeof(inp),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] portBit The number of the bit to read. Range: 0-7.
 \param[out] state Set to the state of the input bit.  0 - LOW, 1 - HIGH.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL QuarkLegacyGpioControllerClass::getResumePinState(ULONG portBit, ULONG & state)
+inline HRESULT QuarkLegacyGpioControllerClass::getResumePinState(ULONG portBit, ULONG & state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;  
     QUARKLGPIO_INPUT_BUFFER inp;
     DWORD bytesReturned;
     DWORD portContents;
 
-    status = openIfNeeded();
-    if (!status) { error = GetLastError(); }
+    hr = openIfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
         inp.Mask = 0x1 << portBit;
 
-        status = DeviceIoControl(
-            m_hController,
-            IOCTL_QUARKLGPIO_READ_PINS,
-            &inp,
-            sizeof(inp),
-            &portContents,
-            sizeof(portContents),
-            &bytesReturned,
-            nullptr);
-        if (!status) { error = GetLastError(); }
+		if (!DeviceIoControl(
+			m_hController,
+			IOCTL_QUARKLGPIO_READ_PINS,
+			&inp,
+			sizeof(inp),
+			&portContents,
+			sizeof(portContents),
+			&bytesReturned,
+			nullptr))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         state = (portContents >> portBit) & 0x01;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] gpioNo The S0 GPIO number of the pad to set. Range: 0-127.
 \param[in] state State to set the pad to. 0 - LOW, 1 - HIGH.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL BtFabricGpioControllerClass::setS0PinState(ULONG gpioNo, ULONG state)
+inline HRESULT BtFabricGpioControllerClass::setS0PinState(ULONG gpioNo, ULONG state)
 {
-    BOOL status = mapS0IfNeeded();
+    HRESULT hr = mapS0IfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         _PAD_VAL padVal;
         padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
@@ -1108,23 +1270,25 @@ inline BOOL BtFabricGpioControllerClass::setS0PinState(ULONG gpioNo, ULONG state
         {
             padVal.PAD_VAL = 1;
         }
-        m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
-    }
+		m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
+	}
 
-    return status;
+    return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] gpioNo The S5 GPIO number of the pad to set. Range: 0-59.
 \param[in] state State to set the pad to. 0 - LOW, 1 - HIGH.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL BtFabricGpioControllerClass::setS5PinState(ULONG gpioNo, ULONG state)
+inline HRESULT BtFabricGpioControllerClass::setS5PinState(ULONG gpioNo, ULONG state)
 {
-    BOOL status = mapS5IfNeeded();
+    HRESULT hr = mapS5IfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         _PAD_VAL padVal;
         padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
@@ -1139,64 +1303,68 @@ inline BOOL BtFabricGpioControllerClass::setS5PinState(ULONG gpioNo, ULONG state
         m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
     }
 
-    return status;
+    return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] gpioNo The S0 GPIO number of the pad to read. Range: 0-127.
 \param[out] state Set to the state of the input bit.  0 - LOW, 1 - HIGH.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL BtFabricGpioControllerClass::getS0PinState(ULONG gpioNo, ULONG & state)
+inline HRESULT BtFabricGpioControllerClass::getS0PinState(ULONG gpioNo, ULONG & state)
 {
-    BOOL status = mapS0IfNeeded();
+    HRESULT hr = mapS0IfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         _PAD_VAL padVal;
         padVal.ALL_BITS = m_s0Controller[gpioNo].PAD_VAL.ALL_BITS;
         state = padVal.PAD_VAL;
     }
 
-    return status;
+    return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] gpioNo The S5 GPIO number of the pad to read. Range: 0-59.
 \param[out] state Set to the state of the input bit.  0 - LOW, 1 - HIGH.
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL BtFabricGpioControllerClass::getS5PinState(ULONG gpioNo, ULONG & state)
+inline HRESULT BtFabricGpioControllerClass::getS5PinState(ULONG gpioNo, ULONG & state)
 {
-    BOOL status = mapS5IfNeeded();
+    HRESULT hr = mapS5IfNeeded();
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         _PAD_VAL padVal;
         padVal.ALL_BITS = m_s5Controller[gpioNo].PAD_VAL.ALL_BITS;
         state = padVal.PAD_VAL;
     }
 
-    return status;
+    return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] gpioNo The S0 GPIO number of the pad to configure. Range: 0-127.
 \param[in] mode The mode to set for the bit.  Range: DIRECTION_IN or DIRECTION_OUT
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL BtFabricGpioControllerClass::setS0PinDirection(ULONG gpioNo, ULONG mode)
+inline HRESULT BtFabricGpioControllerClass::setS0PinDirection(ULONG gpioNo, ULONG mode)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
+    hr = mapS0IfNeeded();
 
-    status = mapS0IfNeeded();
-    if (!status) { error = GetLastError(); }
-
-    if (status)
+    if (SUCCEEDED(hr))
     {
         switch (mode)
         {
@@ -1209,25 +1377,24 @@ inline BOOL BtFabricGpioControllerClass::setS0PinDirection(ULONG gpioNo, ULONG m
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+	return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] gpioNo The S5 GPIO number of the pad to configure. Range: 0-59.
 \param[in] mode The mode to set for the bit.  Range: DIRECTION_IN or DIRECTION_OUT
-\return TRUE success, FALSE failure, GetLastError() provides the error code.
+\return HRESULT error or success code.
 */
-inline BOOL BtFabricGpioControllerClass::setS5PinDirection(ULONG gpioNo, ULONG mode)
+inline HRESULT BtFabricGpioControllerClass::setS5PinDirection(ULONG gpioNo, ULONG mode)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
+    hr = mapS5IfNeeded();
 
-    status = mapS5IfNeeded();
-    if (!status) { error = GetLastError(); }
-
-    if (status)
+    if (SUCCEEDED(hr))
     {
         switch (mode)
         {
@@ -1240,24 +1407,24 @@ inline BOOL BtFabricGpioControllerClass::setS5PinDirection(ULONG gpioNo, ULONG m
         }
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] gpioNo The S0 GPIO number of the pad to configure.  Range: 0-127.
 \param[in] function The function to set for the pin.  Range: 0-7 (only 0-1 used here).
+\return HRESULT error or success code.
 */
-inline BOOL BtFabricGpioControllerClass::setS0PinFunction(ULONG gpioNo, ULONG function)
+inline HRESULT BtFabricGpioControllerClass::setS0PinFunction(ULONG gpioNo, ULONG function)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
+    hr = mapS0IfNeeded();
 
-    status = mapS0IfNeeded();
-    if (!status) { error = GetLastError(); }
-
-    if (status)
+    if (SUCCEEDED(hr))
     {
         _PCONF0 padConfig;
         padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
@@ -1265,24 +1432,24 @@ inline BOOL BtFabricGpioControllerClass::setS0PinFunction(ULONG gpioNo, ULONG fu
         m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+	return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This method assumes the caller has checked the input parameters.
 \param[in] gpioNo The S5 GPIO number of the pad to configure.  Range: 0-59.
 \param[in] function The function to set for the pin.  Range: 0-7 (only 0-1 used here).
+\return HRESULT error or success code.
 */
-inline BOOL BtFabricGpioControllerClass::setS5PinFunction(ULONG gpioNo, ULONG function)
+inline HRESULT BtFabricGpioControllerClass::setS5PinFunction(ULONG gpioNo, ULONG function)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
+    
+    hr = mapS5IfNeeded();
 
-    status = mapS5IfNeeded();
-    if (!status) { error = GetLastError(); }
-
-    if (status)
+    if (SUCCEEDED(hr))
     {
         _PCONF0 padConfig;
         padConfig.ALL_BITS = m_s5Controller[gpioNo].PCONF0.ALL_BITS;
@@ -1290,11 +1457,11 @@ inline BOOL BtFabricGpioControllerClass::setS5PinFunction(ULONG gpioNo, ULONG fu
         m_s5Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
     }
 
-    if (!status) { SetLastError(error); }
-    return status;
+    return hr;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
-
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This routine disables the output latch for the pad, disables pin output and
 enables pin input.
@@ -1314,7 +1481,9 @@ inline void BtFabricGpioControllerClass::_setS0PinInput(ULONG gpioNo)
     padVal.IOUTENB = 1;                // Disable pad for output
     m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This routine disables the output latch for the pad, disables pin output and
 enables pin input.
@@ -1334,7 +1503,9 @@ inline void BtFabricGpioControllerClass::_setS5PinInput(ULONG gpioNo)
     padVal.IOUTENB = 1;                // Disable pad for output
     m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This routine enables the output latch for the pad, disables pull-ups on
 the pad, disables pin input and enables pin output.
@@ -1346,6 +1517,7 @@ inline void BtFabricGpioControllerClass::_setS0PinOutput(ULONG gpioNo)
     padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
     padConfig.BYPASS_FLOP = 0;         // Enable flop
     padConfig.PULL_ASSIGN = 0;         // No pull resistor
+	padConfig.FUNC_PIN_MUX = 0;        // Mux function 0 (GPIO)
     m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
     _PAD_VAL padVal;
@@ -1354,7 +1526,9 @@ inline void BtFabricGpioControllerClass::_setS0PinOutput(ULONG gpioNo)
     padVal.IINENB = 1;                 // Disable pad for input
     m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
 This routine enables the output latch for the pad, disables pull-ups on
 the pad, disables pin input and enables pin output.
@@ -1374,5 +1548,215 @@ inline void BtFabricGpioControllerClass::_setS5PinOutput(ULONG gpioNo)
     padVal.IINENB = 1;                 // Disable pad for input
     m_s5Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
 }
+#endif // defined(_M_IX86) || defined(_M_X64)
+
+
+
+
+#if defined(_M_ARM)
+/**
+This method assumes the caller has checked the input parameters.
+\param[in] gpioNo The GPIO number of the pad to set. Range: 0-31.
+\param[in] state State to set the pad to. 0 - LOW, 1 - HIGH.
+\return HRESULT error or success code.
+*/
+inline HRESULT BcmGpioControllerClass::setPinState(ULONG gpioNo, ULONG state)
+{
+	HRESULT hr = mapIfNeeded();
+
+    ULONG bitMask = 1 << gpioNo;
+    if (SUCCEEDED(hr))
+    {
+		if (state == 0)
+        {
+            m_controller->GPCLR0 = bitMask;
+        }
+        else
+        {
+            m_controller->GPSET0 = bitMask;
+        }
+	}
+
+    return hr;
+}
+#endif // defined(_M_ARM)
+
+#if defined(_M_ARM)
+/**
+This method assumes the caller has checked the input parameters.
+\param[in] gpioNo The GPIO number of the pad to read. Range: 0-31.
+\param[out] state Set to the state of the input bit.  0 - LOW, 1 - HIGH.
+\return HRESULT error or success code.
+*/
+inline HRESULT BcmGpioControllerClass::getPinState(ULONG gpioNo, ULONG & state)
+{
+    HRESULT hr = mapIfNeeded();
+
+    if (SUCCEEDED(hr))
+    {
+        state = ((m_controller->GPLEV0) >> gpioNo) & 1;
+    }
+
+    return hr;
+}
+#endif // defined(_M_ARM)
+
+#if defined(_M_ARM)
+/**
+This method assumes the caller has checked the input parameters.  This method has 
+the side effect of setting the pin to GPIO use (since the BCM GPIO controller uses 
+the same bits to control both function and direction).
+\param[in] gpioNo The GPIO number of the pad to configure. Range: 0-53.
+\param[in] mode The mode to set for the bit.  Range: DIRECTION_IN or DIRECTION_OUT
+\return HRESULT error or success code.
+*/
+inline HRESULT BcmGpioControllerClass::setPinDirection(ULONG gpioNo, ULONG mode)
+{
+    HRESULT hr = S_OK;
+    ULONG funcSelData = 0;
+
+    hr = mapIfNeeded();
+
+    if (SUCCEEDED(hr))
+    {
+        hr = GetControllerLock(m_hController);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        // Each GPIO has a 3-bit function field (000b selects input, 001b output, etc.) 
+        // and there are 10 such fields in each 32-bit function select register.
+
+        funcSelData = m_controller->GPFSELN[gpioNo / 10];   // Read function register data
+
+        funcSelData &= ~(0x07 << ((gpioNo % 10) * 3));      // Clear bits for GPIO (make input)
+
+        if (mode == DIRECTION_OUT)                          // If GPIO should be output:
+        {
+            funcSelData |= (0x01 << ((gpioNo % 10) * 3));   // Set one bit for GPIO (make output)
+        }
+
+        m_controller->GPFSELN[gpioNo / 10] = funcSelData;   // Write function register data back
+
+		ReleaseControllerLock(m_hController);
+    }
+
+    return hr;
+}
+#endif // defined(_M_ARM)
+
+#if defined(_M_ARM)
+/**
+This method assumes the caller has checked the input parameters.
+\param[in] gpioNo The GPIO number of the pad to configure.  Range: 0-53.
+\param[in] function The function to set for the pin.  Range: 0-1.  Function 0 is GPIO, and
+function 1 is the non-GPIO use of the pin (called "alternate function 0" in the datasheet).
+\return HRESULT error or success code.
+*/
+inline HRESULT BcmGpioControllerClass::setPinFunction(ULONG gpioNo, ULONG function)
+{
+    HRESULT hr = S_OK;
+    ULONG funcSelData = 0;
+
+    hr = mapIfNeeded();
+
+    if (SUCCEEDED(hr))
+    {
+        hr = GetControllerLock(m_hController);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        // Each GPIO has a 3-bit function field (000b selects input, 001b output, etc.) 
+        // and there are 10 such fields in each 32-bit function select register.
+
+        funcSelData = m_controller->GPFSELN[gpioNo / 10];   // Read function register data
+
+		// If the function is already set to GPIO, and the new function is GPIO, leave it 
+		// alone (so we don't change the pin direction trying to set the pin function).
+		if (((funcSelData & (0x06 << ((gpioNo % 10) * 3))) != 0) || (function != 0))
+		{
+			funcSelData &= ~(0x07 << ((gpioNo % 10) * 3));      // Clear bits for (make GPIO input)
+
+			if (function == 1)                                  // If alternate function 0 is wanted:
+			{
+				funcSelData |= (0x04 << ((gpioNo % 10) * 3));   // Set function code to 100b
+			}
+
+			m_controller->GPFSELN[gpioNo / 10] = funcSelData;   // Write function register data back
+		}
+
+        ReleaseControllerLock(m_hController);
+    }
+
+    return hr;
+}
+#endif // defined(_M_ARM)
+
+#if defined(_M_ARM)
+/**
+This method assumes the caller has checked the input parameters.
+\param[in] gpioNo The GPIO number of the pad to configure.  Range: 0-53.
+\param[in] pullup TRUE to turn pullup on for this pin, FALSE to turn it off.
+\return HRESULT error or success code.
+*/
+inline HRESULT BcmGpioControllerClass::setPinPullup(ULONG gpioNo, BOOL pullup)
+{
+    HRESULT hr = S_OK;
+    ULONG gpioPull = 0;
+    HiResTimerClass timer;
+
+
+    hr = mapIfNeeded();
+
+    if (SUCCEEDED(hr))
+    {
+        hr = GetControllerLock(m_hController);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        if (pullup)
+        {
+            gpioPull = pullupOn;
+        }
+        else
+        {
+            gpioPull = pullupOff;
+        }
+
+        //
+        // The sequence to set pullup/down for a pin is:
+        // 1) Write desired state to GPPUD
+        // 2) Wait 150 cycles
+        // 3) Write clock mask to GPPUDCLK0/1 with bits set that correspond to pins to be configured
+        // 4) Wait 150 cycles
+        // 5) Write to GPPUD to remove state
+        // 6) Write to GPPUDCLK0/1 to remove clock bits
+        //
+        // 150 cycles is 0.25 microseconds with a cpu clock of 600 Mhz.
+        //
+        m_controller->GPPUD = gpioPull;         // 1)
+
+        timer.StartTimeout(1);
+        while (!timer.TimeIsUp());              // 2)
+        
+        m_controller->GPPUDCLK0 = 1 << gpioNo;
+        m_controller->GPPUDCLK1 = 0;            // 3)
+        
+        timer.StartTimeout(1);
+        while (!timer.TimeIsUp());              // 4)
+        
+        m_controller->GPPUD = 0;                // 5)
+        
+        m_controller->GPPUDCLK0 = 0;
+        m_controller->GPPUDCLK1 = 0;            // 6)
+
+        ReleaseControllerLock(m_hController);
+    }
+
+    return hr;
+}
+#endif // defined(_M_ARM)
 
 #endif  // _GPIO_CONTROLLER_H_

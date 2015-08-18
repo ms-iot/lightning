@@ -187,9 +187,13 @@ inline bool _IsAnalogPin(int num)
 //
 inline void digitalWrite(unsigned int pin, unsigned int state)
 {
-    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE))
+	HRESULT hr;
+
+	hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
+
+	if (FAILED(hr))
     {
-        ThrowError("Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, GetLastError());
+        ThrowError("Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
     }
 
     if (state != LOW)
@@ -199,9 +203,10 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
         state = HIGH;
     }
 
-    if (!g_pins.setPinState(pin, state))
+	hr = g_pins.setPinState(pin, state);
+	if (FAILED(hr))
     {
-        ThrowError("Error occurred setting pin: %d to state: %d, Error: %08x", pin, state, GetLastError());
+        ThrowError("Error occurred setting pin: %d to state: %d, Error: %08x", pin, state, hr);
     }
 }
 
@@ -220,15 +225,15 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
 //
 inline int digitalRead(int pin)
 {
+	HRESULT hr;
     ULONG readData = 0;
 
-    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE))
-    {
-        return LOW;
-    }
-
-    if (!g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE) ||
-        !g_pins.getPinState(pin, readData))
+	hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
+	if (SUCCEEDED(hr))
+	{
+		hr = g_pins.getPinState(pin, readData);
+	}
+	if (FAILED(hr))
     {
         // On error return LOW per docs.
         readData = LOW;
@@ -250,6 +255,7 @@ analogReadResolution() API.  By default ten bits are returned (0-1023 for 0-5v p
 */
 inline int analogRead(int pin)
 {
+	HRESULT hr;
     ULONG value;
     ULONG bits;
     ULONG ioPin;
@@ -268,14 +274,18 @@ inline int analogRead(int pin)
         ThrowError("Pin: %d is not an analog input pin.", pin);
     }
 
-    if (!g_pins.verifyPinFunction(ioPin, FUNC_AIN, BoardPinsClass::NO_LOCK_CHANGE))
+	hr = g_pins.verifyPinFunction(ioPin, FUNC_AIN, BoardPinsClass::NO_LOCK_CHANGE);
+
+	if (FAILED(hr))
     {
-        ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, GetLastError());
+        ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, hr);
     }
 
-    if (!g_adc.readValue(ioPin, value, bits))
+	hr = g_adc.readValue(ioPin, value, bits);
+
+	if (FAILED(hr))
     {
-        ThrowError("Error performing analogRead on pin: %d, Error: 0x%08x", pin, GetLastError());
+        ThrowError("Error performing analogRead on pin: %d, Error: 0x%08x", pin, hr);
     }
 
     // Scale the digitized analog value to the currently set analog read resolution.
@@ -338,12 +348,15 @@ on the board, or if a pin that does not support PWM is specified.
 */
 inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
 {
+	HRESULT hr;
     ULONGLONG scaledDutyCycle;
 
     // Verify the pin is in PWM mode, and configure it for PWM use if not.
-    if (!g_pins.verifyPinFunction(pin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE))
+	hr = g_pins.verifyPinFunction(pin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE);
+
+	if (FAILED(hr))
     {
-        ThrowError("Error occurred verifying pin: %d function: PWM, Error: %08x", pin, GetLastError());
+        ThrowError("Error occurred verifying pin: %d function: PWM, Error: %08x", pin, hr);
     }
 
     // Scale the duty cycle passed in using the current analog write resolution.
@@ -354,9 +367,11 @@ inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
     scaledDutyCycle = (((ULONGLONG)dutyCycle * (1ULL << 32)) + (1ULL << (g_pwmResolutionBits - 1))) / (1ULL << g_pwmResolutionBits);
 
     // Set the PWM duty cycle.
-    if (!g_pins.setPwmDutyCycle(pin, (ULONG) scaledDutyCycle))
+	hr = g_pins.setPwmDutyCycle(pin, (ULONG)scaledDutyCycle);
+
+	if (FAILED(hr))
     {
-        ThrowError("Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", pin, dutyCycle, GetLastError());
+        ThrowError("Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", pin, dutyCycle, hr);
     }
 }
 
@@ -380,24 +395,32 @@ inline void analogWriteResolution(int bits)
 */
 inline void pinMode(unsigned int pin, unsigned int mode)
 {
+	HRESULT hr;
+
     switch (mode)
     {
     case INPUT:
-        if (!g_pins.setPinMode(pin, DIRECTION_IN, false))
+		hr = g_pins.setPinMode(pin, DIRECTION_IN, false);
+
+		if (FAILED(hr))
         {
-            ThrowError("Error setting mode: INPUT for pin: %d, Error: 0x%08x", pin, GetLastError());
+            ThrowError("Error setting mode: INPUT for pin: %d, Error: 0x%08x", pin, hr);
         }
         break;
     case OUTPUT:
-        if (!g_pins.setPinMode(pin, DIRECTION_OUT, false))
+		hr = g_pins.setPinMode(pin, DIRECTION_OUT, false);
+
+		if (FAILED(hr))
         {
-            ThrowError("Error setting mode: OUTPUT for pin: %d, Error: 0x%08x", pin, GetLastError());
+            ThrowError("Error setting mode: OUTPUT for pin: %d, Error: 0x%08x", pin, hr);
         }
         break;
     case INPUT_PULLUP:
-        if (!g_pins.setPinMode(pin, DIRECTION_IN, true))
+		hr = g_pins.setPinMode(pin, DIRECTION_IN, true);
+
+		if (FAILED(hr))
         {
-            ThrowError("Error setting mode: INPUT_PULLUP for pin: %d, Error: 0x%08x", pin, GetLastError());
+            ThrowError("Error setting mode: INPUT_PULLUP for pin: %d, Error: 0x%08x", pin, hr);
         }
         break;
     default:

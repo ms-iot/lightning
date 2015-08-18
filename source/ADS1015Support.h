@@ -23,9 +23,9 @@ public:
 
     /// Prepare to use this ADC.
     /**
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
-    inline BOOL begin()
+    inline HRESULT begin()
     {
         // Prepare to use the I2C bus to talk to the ADC on the Ika Lure.
         return g_i2c.beginExternal();
@@ -43,15 +43,15 @@ public:
     \param[in] channel Number of channel on ADC to read.
     \param[out] value The value read from the ADC.
     \param[out] bits The size of the reading in "value" in bits.
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     \note This routine is not multi-thread safe.  If two or more threads access the 
     ADC at the same time, each thread could be changing the other thread's configuration 
     (such as channel number).  A global mutex could be added to fix this.
     */
-    inline BOOL readValue(ULONG channel, ULONG & value, ULONG & bits)
+    inline HRESULT readValue(ULONG channel, ULONG & value, ULONG & bits)
     {
-        BOOL status = TRUE;
-        ULONG error = ERROR_SUCCESS;
+        HRESULT hr = S_OK;
+        
         BOOL conversionDone = FALSE;
         CONFIG_REG_H configH;
         CONFIG_REG_L configL;
@@ -82,11 +82,10 @@ public:
             configH.MUX = ANI3;
             break;
         default:
-            status = FALSE;
-            error = ERROR_INVALID_PARAMETER;
+			hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             configH.OS = 1;     // Signal to start a conversion
         }
@@ -95,58 +94,58 @@ public:
         // Send the configuration information to the ADC to start the conversion.
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
-            status = transaction.setAddress(ADC_I2C_ADR);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.setAddress(ADC_I2C_ADR);
+            
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Send the address of the register we want to write.
-            status = transaction.queueWrite(configRegAdr, 1);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite(configRegAdr, 1);
+            
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             configData[0] = configH.ALL_BITS;
             configData[1] = configL.ALL_BITS;
 
-            status = transaction.queueWrite(configData, 2);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite(configData, 2);
+            
         }
         
-        if (status)
+        if (SUCCEEDED(hr))
         {
-            status = transaction.execute();
-            if (!status) { error = GetLastError(); }
+            hr = transaction.execute();
+            
         }
 
         //
         // Wait for the conversion to complete.
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             transaction.reset();
             // Send the address of the register we want to read.
-            status = transaction.queueWrite(configRegAdr, 1);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite(configRegAdr, 1);
+            
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
-            status = transaction.queueRead(configData, 2);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueRead(configData, 2);
+            
         }
 
-        while (status && !conversionDone)
+		while (SUCCEEDED(hr) && !conversionDone)
         {
-            status = transaction.execute();
-            if (!status) { error = GetLastError(); }
+            hr = transaction.execute();
+            
 
-            if (status)
+            if (SUCCEEDED(hr))
             {
                 configH.ALL_BITS = configData[0];
                 if (configH.OS == 1)
@@ -160,27 +159,27 @@ public:
         // Read the conversion result.
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             transaction.reset();
             // Send the address of the register we want to read.
-            status = transaction.queueWrite(conversionRegAdr, 1);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite(conversionRegAdr, 1);
+            
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
-            status = transaction.queueRead(conversionData, 2);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueRead(conversionData, 2);
+            
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
-            status = transaction.execute();
-            if (!status) { error = GetLastError(); }
+            hr = transaction.execute();
+            
         }
         
-        if (status)
+        if (SUCCEEDED(hr))
         {
             value = conversionData[0] << 8;
             value = value | conversionData[1];
@@ -197,8 +196,8 @@ public:
             bits = ADC_BITS;
         }
 
-        if (!status) { SetLastError(error); }
-        return status;
+        
+        return hr;
     }
 
 private:

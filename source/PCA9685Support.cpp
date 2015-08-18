@@ -31,45 +31,39 @@ This method takes the actions needed to set a port bit of the PWM chip to the de
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] portBit The number of the port bit to modify.
 \param[in] state The state to set the port bit to: HIGH or LOW.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
+HRESULT PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     I2cTransactionClass transaction;
     UCHAR bitRegsAdr = 0;                       // Address of start of registers for bit in question
     UCHAR lowBitData[REGS_PER_LED] = { 0x00, 0x00, 0x00, 0x10 };    // Registers data to set bit low
     UCHAR highBitData[REGS_PER_LED] = { 0x00, 0x10, 0x00, 0x00 };   // Registers data to set bit high
 
-
     if (portBit >= LED_COUNT)
     {
-        status = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
-    if (status && (state != HIGH) && (state != LOW))
+    if (SUCCEEDED(hr) && (state != HIGH) && (state != LOW))
     {
-        status = FALSE;
-        error = ERROR_INVALID_STATE;
+        hr = DMAP_E_INVALID_PIN_STATE_SPECIFIED;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Make sure the PWM chip is initialized.
-        status = _InitializeChip(i2cAdr);
-        if (!status) { error = GetLastError(); }
-    }
+		hr = _InitializeChip(i2cAdr);
+	}
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Set the I2C address of the PWM chip.
-        status = transaction.setAddress(i2cAdr);
-        if (!status) { error = GetLastError(); }
+        hr = transaction.setAddress(i2cAdr);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Indicate this chip supports high speed I2C transfers.
         transaction.useHighSpeed();
@@ -78,46 +72,42 @@ BOOL PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
         bitRegsAdr = (UCHAR)(LEDS_BASE_ADR + (portBit * REGS_PER_LED));
 
         // Queue sending the base address of the port registers to the chip.
-        status = transaction.queueWrite(&bitRegsAdr, 1);
-        if (!status) { error = GetLastError(); }
+        hr = transaction.queueWrite(&bitRegsAdr, 1);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Queue sending the registers contents to set the specified bit state.
         if (state == LOW)
         {
-            status = transaction.queueWrite(lowBitData, REGS_PER_LED);
+            hr = transaction.queueWrite(lowBitData, REGS_PER_LED);
         }
         else
         {
-            status = transaction.queueWrite(highBitData, REGS_PER_LED);
+            hr = transaction.queueWrite(highBitData, REGS_PER_LED);
         }
-        if (!status) { error = GetLastError(); }
+        
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
-        status = transaction.execute();
-        if (!status) { error = GetLastError(); }
+        hr = transaction.execute();
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 /**
 This expects the port bit to be configured to be constantly on or off.
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] portBit The number of the port bit to read.
-\param[out] state The state of the port bit to: HIGH or LOW.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\param[out] state The state of the port bit: HIGH or LOW.
+\return HRESULT success or error code.
 */
-BOOL PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
+HRESULT PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     I2cTransactionClass transaction;
     UCHAR bitRegsAdr = 0;                       // Address of start of registers for bit in question
     UCHAR bitData[REGS_PER_LED] = { 0 };        // Buffer for bit register contents
@@ -125,34 +115,22 @@ BOOL PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 
     if (portBit >= LED_COUNT)
     {
-        status = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
-    if (status && (state != HIGH) && (state != LOW))
+    if (SUCCEEDED(hr))
     {
-        status = FALSE;
-        error = ERROR_INVALID_PARAMETER;
+		// Make sure the PWM chip is initialized.
+		hr = _InitializeChip(i2cAdr);
     }
 
-    if (status)
-    {
-        // If the chip is not initialized, the ports don't work.
-        if (!m_chipIsInitialized)
-        {
-            status = FALSE;
-            error = ERROR_INVALID_ENVIRONMENT;
-        }
-    }
-
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Set the I2C address of the PWM chip.
-        status = transaction.setAddress(i2cAdr);
-        if (!status) { error = GetLastError(); }
+        hr = transaction.setAddress(i2cAdr);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Indicate this chip supports high speed I2C transfers.
         transaction.useHighSpeed();
@@ -161,25 +139,22 @@ BOOL PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
         bitRegsAdr = (UCHAR)(LEDS_BASE_ADR + (portBit * REGS_PER_LED));
 
         // Queue sending the base address of the port registers to the chip.
-        status = transaction.queueWrite(&bitRegsAdr, 1);
-        if (!status) { error = GetLastError(); }
+        hr = transaction.queueWrite(&bitRegsAdr, 1);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Queue reading the registers for the bit in question.
-        status = transaction.queueRead(bitData, REGS_PER_LED);
-        if (!status) { error = GetLastError(); }
+        hr = transaction.queueRead(bitData, REGS_PER_LED);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
-        status = transaction.execute();
-        if (!status) { error = GetLastError(); }
+        hr = transaction.execute();
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // If constant OFF bit is 1, the port bit is LOW, regardless of constant ON bit.
         if ((bitData[3] & 0x10) != 0)
@@ -193,14 +168,11 @@ BOOL PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
         }
         // If both constant state bits are zero, the port bit is not in a constant state.
         {
-            status = FALSE;
-            error = ERROR_INVALID_STATE;
-
+            hr = DMAP_E_GPIO_PIN_IS_SET_TO_PWM;
         }
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 /**
@@ -208,12 +180,11 @@ Set the width of the positive pulses on one of the PWM channels.
 \param[in] i2cAdr The I2C address of the PWM chip.
 \param[in] channel The channel on the PWM chip for which to set the pulse width.
 \param[in] dutyCycle The desired duty-cycle of the positive pulses (0-0xFFFFFFFF for 0-100%).
-\return TRUE success.FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCycle)
+HRESULT PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCycle)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
     I2cTransactionClass transaction;
     ULONGLONG tmpPulsetime = 0;
     UCHAR bitRegsAdr = 0;                       // Address of start of registers for bit in question
@@ -222,25 +193,22 @@ BOOL PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCycle
 
     if (channel >= LED_COUNT)
     {
-        status = FALSE;
-        error = ERROR_INVALID_ADDRESS;
+		hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Make sure the PWM chip is initialized.
-        status = _InitializeChip(i2cAdr);
-        if (!status) { error = GetLastError(); }
+        hr = _InitializeChip(i2cAdr);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Set the I2C address of the PWM chip.
-        status = transaction.setAddress(i2cAdr);
-        if (!status) { error = GetLastError(); }
+        hr = transaction.setAddress(i2cAdr);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Indicate this chip supports high speed I2C transfers.
         transaction.useHighSpeed();
@@ -249,11 +217,10 @@ BOOL PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCycle
         bitRegsAdr = (UCHAR)(LEDS_BASE_ADR + (channel * REGS_PER_LED));
 
         // Queue sending the base address of the port registers to the chip.
-        status = transaction.queueWrite(&bitRegsAdr, 1);
-        if (!status) { error = GetLastError(); }
+        hr = transaction.queueWrite(&bitRegsAdr, 1);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Get the pulse high time in PWM chip terms.
         tmpPulsetime = ((((ULONGLONG)dutyCycle) * (1LL << PWM_BITS)) + 0x80000000LL) / 0x100000000LL;
@@ -262,19 +229,16 @@ BOOL PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCycle
         pulseData[3] = (UCHAR)((tmpPulsetime >> 8) & 0xFF);
 
         // Queue sending the registers contents for the desired pulse width.
-        status = transaction.queueWrite(pulseData, REGS_PER_LED);
-        if (!status) { error = GetLastError(); }
+        hr = transaction.queueWrite(pulseData, REGS_PER_LED);
     }
 
-    if (status)
+    if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
-        status = transaction.execute();
-        if (!status) { error = GetLastError(); }
+        hr = transaction.execute();
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }
 
 
@@ -284,12 +248,11 @@ If the chip has already been initialized it does nothing, otherwise it sets the 
 prescale value, turns on the chip and sets the mode registers for how other methods access 
 the chip.
 \param[in] i2cAdr The I2C address of the PWM chip.
-\return TRUE success. FALSE failure, GetLastError() provides error code.
+\return HRESULT success or error code.
 */
-BOOL PCA9685Device::_InitializeChip(ULONG i2cAdr)
+HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
 {
-    BOOL status = TRUE;
-    DWORD error = ERROR_SUCCESS;
+    HRESULT hr = S_OK;
 
     // If we don't know that the chip is already initialized:
     if (!m_chipIsInitialized)
@@ -307,41 +270,38 @@ BOOL PCA9685Device::_InitializeChip(ULONG i2cAdr)
         MODE2 mode2Reg = { 0, 1, 1, 0, 0 };         // Drive outputs both high & low, change on ACK, non-inverted
 
         // Set the I2C address of the PWM chip.
-        status = transaction.setAddress(i2cAdr);
-        if (!status) { error = GetLastError(); }
+        hr = transaction.setAddress(i2cAdr);
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Indicate this chip supports high speed I2C transfers.
             transaction.useHighSpeed();
 
             // Queue sending the address of the MODE1 regeister to the PWM chip.
-            status = transaction.queueWrite(mode1RegAdr, sizeof(mode1Reg));
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1Reg));
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Queue reading the contents of the MODE1 register.
-            status = transaction.queueRead(readBuf, sizeof(readBuf));
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueRead(readBuf, sizeof(readBuf));
         }
 
         //
         // If the SLEEP bit is clear, the chip has been initialize: abort the rest of the transaction.
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Register a callback to test if the chip is initialized.
-            status = transaction.queueCallback([&readBuf, &transaction]()
+            hr = transaction.queueCallback([&readBuf, &transaction]()
             {
                 PMODE1 mode1RegPtr = (PMODE1)readBuf;
                 if (mode1RegPtr->SLEEP == 0)   // If chip is not in sleep mode,
                 {
                     transaction.abort();
                 }
-                return TRUE;
+                return S_OK;
             }
             );
         }
@@ -350,35 +310,31 @@ BOOL PCA9685Device::_InitializeChip(ULONG i2cAdr)
         // Queue writes to initialize the PWM chip.
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Queue sending the address of the PRE_SCALE register to the PWM chip.
-            status = transaction.queueWrite(preScaleAdr, sizeof(preScaleAdr), TRUE);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite(preScaleAdr, sizeof(preScaleAdr), TRUE);
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Queue sendng the prescale value.
-            status = transaction.queueWrite(&m_freqPreScale, 1);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite(&m_freqPreScale, 1);
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Queue sending the address of the MODE1 register to the PWM chip.
-            status = transaction.queueWrite(mode1RegAdr, sizeof(mode1RegAdr), TRUE);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1RegAdr), TRUE);
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Queue sending the contents of MODE1 register.
-            status = transaction.queueWrite((PUCHAR)&mode1Reg, 1);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite((PUCHAR)&mode1Reg, 1);
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Delay for 500 microseconds for clock to start.
             for (int i = 0; i < 5; i++)
@@ -388,42 +344,38 @@ BOOL PCA9685Device::_InitializeChip(ULONG i2cAdr)
             }
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Queue RESTART and sending the address of the MODE2 register to the PWM chip.
-            status = transaction.queueWrite(mode2RegAdr, sizeof(mode2RegAdr), TRUE);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite(mode2RegAdr, sizeof(mode2RegAdr), TRUE);
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Queue sending the contents of MODE2 register.
-            status = transaction.queueWrite((PUCHAR)&mode2Reg, 1);
-            if (!status) { error = GetLastError(); }
+            hr = transaction.queueWrite((PUCHAR)&mode2Reg, 1);
         }
 
         //
         // Perform the read, decision, and writes to initialize the chip (if needed).
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Actually perform the I2C transfers specified above.
-            status = transaction.execute();
-            if (!status) { error = GetLastError(); }
+            hr = transaction.execute();
         }
 
         //
         // Whether we initialized the chip or found it initialized, we now know it is initialized.
         //
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Indicate chip is initialized.
             m_chipIsInitialized = TRUE;
         }
     }
-
-    if (!status) { SetLastError(error); }
-    return status;
+    
+    return hr;
 }

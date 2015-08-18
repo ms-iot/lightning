@@ -6,6 +6,9 @@
 #define _ADC108S102_SUPPORT_H_
 
 #include <Windows.h>
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+
 #include "SpiController.h"
 #include "GpioController.h"
 
@@ -25,26 +28,22 @@ public:
 
     /// Prepare to use this ADC.
     /**
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
-    inline BOOL begin()
+    inline HRESULT begin()
     {
-        BOOL status = TRUE;
-        ULONG error = ERROR_SUCCESS;
+        HRESULT hr = S_OK;
 
         // Prepare to use the controller for the ADC's SPI controller.
-        status = m_spi.begin(ADC_SPI_BUS, 3, 12500, 32);
-        if (!status)  { error = GetLastError(); }
+        hr = m_spi.begin(ADC_SPI_BUS, 3, 12500, 32);
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Make the fabric GPIO bit that drives the ADC chip select signal an output.
-            status = g_quarkFabricGpio.setPinDirection(m_csFabricBit, DIRECTION_OUT);
-            if (!status)  { error = GetLastError(); }
+            hr = g_quarkFabricGpio.setPinDirection(m_csFabricBit, DIRECTION_OUT);
         }
-
-        if (!status) { SetLastError(error); }
-        return status;
+        
+        return hr;
     }
 
     /// Release the ADC.
@@ -59,48 +58,46 @@ public:
     \param[in] channel Number of channel on ADC to read.
     \param[out] value The value read from the ADC.
     \param[out] bits The size of the reading in "value" in bits.
-    \return TRUE, success. FALSE, failure, GetLastError() returns the error code.
+    \return HRESULT success or error code.
     */
-    inline BOOL readValue(ULONG channel, ULONG & value, ULONG & bits)
+    inline HRESULT readValue(ULONG channel, ULONG & value, ULONG & bits)
     {
-        BOOL status = TRUE;
-        ULONG error = ERROR_SUCCESS;
+        HRESULT hr = S_OK;
+        
         ULONG dataOut = 0;
         ULONG dataIn = 0;
-
 
         // Make sure the channel number is in range.
         if (channel >= ADC_CHANNELS)
         {
-            status = FALSE;
-            error = ERROR_INVALID_PARAMETER;
+			hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Prepare to send the channel number to the SPI controller.
             dataOut = channel << CHAN_SHIFT;
 
             // Perform a conversion and get the result.
             g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);       // Make ADC chip select active
-            if (!status) { error = GetLastError(); }
-            else
+            
+			if (SUCCEEDED(hr))
             {
-                status = m_spi.transfer32(dataOut, dataIn);
-                if (!status) { error = GetLastError(); }
+                hr = m_spi.transfer32(dataOut, dataIn);
+                
                 g_quarkFabricGpio.setPinState(m_csFabricBit, HIGH);  // Make ADC chip select inactive
             }
         }
 
-        if (status)
+        if (SUCCEEDED(hr))
         {
             // Extract the reading from the data sent back from the ADC.
             value = (dataIn >> DATA_SHIFT) & ((1 << ADC_BITS) - 1);
             bits = ADC_BITS;
         }
 
-        if (!status) { SetLastError(error); }
-        return status;
+        
+        return hr;
     }
 
 private:
@@ -122,5 +119,7 @@ private:
     /// The Fabric GPIO bit that controls the chip select signal.
     ULONG m_csFabricBit;
 };
+
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #endif  // _ADC108S102_SUPPORT_H_
