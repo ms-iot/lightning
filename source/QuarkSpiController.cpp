@@ -81,7 +81,7 @@ Initialize member variables, including the SPI Clock rate variables.
 QuarkSpiControllerClass::QuarkSpiControllerClass()
 {
     m_hController = INVALID_HANDLE_VALUE;
-    m_controller = nullptr;
+    m_registers = nullptr;
 
     // Load values for the SPI clock generators.
     spiSpeed20mhz = { 0x666666, 1 };    // 20 mhz for Gen1 ADC
@@ -139,19 +139,19 @@ HRESULT QuarkSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockK
 
 			if (SUCCEEDED(hr))
 			{
-                m_controller = (PSPI_CONTROLLER)baseAddress;
+                m_registers = (PSPI_CONTROLLER)baseAddress;
             }
         }
 
         if (SUCCEEDED(hr))
         {
             // We now "own" the SPI controller, intialize it.
-            m_controller->SSCR0.ALL_BITS = 0;              // Disable controller (and also clear other bits)
-            m_controller->SSCR0.DSS = dataBits - 1;        // Use the specified data width
+            m_registers->SSCR0.ALL_BITS = 0;              // Disable controller (and also clear other bits)
+            m_registers->SSCR0.DSS = dataBits - 1;        // Use the specified data width
 
-            m_controller->SSCR1.ALL_BITS = 0;              // Clear all register bits
+            m_registers->SSCR1.ALL_BITS = 0;              // Clear all register bits
 
-            m_controller->SSSR.ROR = 1;                    // Clear any RX Overrun Status bit currently set
+            m_registers->SSSR.ROR = 1;                    // Clear any RX Overrun Status bit currently set
 
 			hr = setMode(mode);
         }
@@ -169,11 +169,11 @@ Unmap and close the SPI controller associated with this object.
 */
 void QuarkSpiControllerClass::end()
 {
-    if (m_controller != nullptr)
+    if (m_registers != nullptr)
     {
         // Disable the SPI controller.
-        m_controller->SSCR0.SSE = 0;
-        m_controller = nullptr;
+        m_registers->SSCR0.SSE = 0;
+        m_registers = nullptr;
     }
 
     if (m_hController != INVALID_HANDLE_VALUE)
@@ -198,7 +198,7 @@ HRESULT QuarkSpiControllerClass::setMode(ULONG mode)
 
 
     // If we don't have the controller registers mapped, fail.
-    if (m_controller == nullptr)
+    if (m_registers == nullptr)
     {
         hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
@@ -232,8 +232,8 @@ HRESULT QuarkSpiControllerClass::setMode(ULONG mode)
     // Set the SPI phase and polarity values in the SPI controller registers.
     if (SUCCEEDED(hr))
     {
-        m_controller->SSCR1.SPO = polarity;
-        m_controller->SSCR1.SPH = phase;
+        m_registers->SSCR1.SPO = polarity;
+        m_registers->SSCR1.SPH = phase;
     }
 
     return hr;
@@ -252,7 +252,7 @@ HRESULT QuarkSpiControllerClass::setClock(ULONG clockKhz)
 
 
     // If we don't have the controller registers mapped, fail.
-    if (m_controller == nullptr)
+    if (m_registers == nullptr)
     {
         hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
@@ -329,8 +329,8 @@ HRESULT QuarkSpiControllerClass::setClock(ULONG clockKhz)
     if (SUCCEEDED(hr))
     {
         // Set the clock rate.
-        m_controller->SSCR0.SCR = pSpeed->scr;
-        m_controller->DDS_RATE.DDS_CLK_RATE = pSpeed->dds_clk_rate;
+        m_registers->SSCR0.SCR = pSpeed->scr;
+        m_registers->DDS_RATE.DDS_CLK_RATE = pSpeed->dds_clk_rate;
     }
  
     return hr;

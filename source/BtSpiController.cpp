@@ -81,7 +81,7 @@ Initialize member variables, including the SPI Clock rate variables.
 BtSpiControllerClass::BtSpiControllerClass()
 {
     m_hController = INVALID_HANDLE_VALUE;
-    m_controller = nullptr;
+    m_registers = nullptr;
 
     // Load values for the SPI clock generators.
     spiSpeed15mhz = { 3, 4, 4 };    // Fastest supported SPI clock on BayTrail is 15mhz
@@ -137,8 +137,8 @@ HRESULT BtSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz,
             hr = GetControllerBaseAddress(deviceName, m_hController, baseAddress);
 			if (SUCCEEDED(hr))
             {
-                m_controller = (PSPI_CONTROLLER)baseAddress;
-                m_controllerUpper = (PSPI_CONTROLLER_UPPER)(((PBYTE)baseAddress) + SPI_CONTROLLER_UPPER_OFFSET);
+                m_registers = (PSPI_CONTROLLER)baseAddress;
+                m_registersUpper = (PSPI_CONTROLLER_UPPER)(((PBYTE)baseAddress) + SPI_CONTROLLER_UPPER_OFFSET);
             }
         }
 
@@ -146,15 +146,15 @@ HRESULT BtSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz,
         {
             // We now "own" the SPI controller, intialize it.
             sscr0.ALL_BITS = 0;
-            m_controller->SSCR0.ALL_BITS = sscr0.ALL_BITS;  // Disable controller
+            m_registers->SSCR0.ALL_BITS = sscr0.ALL_BITS;  // Disable controller
 
             sscr0.DSS = (dataBits - 1) & 0x0F;             // Data width ls4bits
             sscr0.EDSS = ((dataBits - 1) >> 4) & 0x01;     // Data width msbit
             sscr0.RIM = 1;                                 // Mask RX FIFO Over Run interrupts
             sscr0.TIM = 1;                                 // Mask TX FIFO Under Run interrupts
-            m_controller->SSCR0.ALL_BITS = sscr0.ALL_BITS;
+            m_registers->SSCR0.ALL_BITS = sscr0.ALL_BITS;
 
-            m_controller->SSCR1.ALL_BITS = 0;              // Master mode, interrupts disabled
+            m_registers->SSCR1.ALL_BITS = 0;              // Master mode, interrupts disabled
 
             sssr.ALL_BITS = 0;
             sssr.ROR = 1;                                  // Clear any Receive Overrun int
@@ -163,7 +163,7 @@ HRESULT BtSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz,
             sssr.EOC = 1;                                  // Clear any End of Chain int
             sssr.TUR = 1;                                  // Clear any Transmit FIFO Under Run int
             sssr.BCE = 1;                                  // Clear any Bit Count Error
-            m_controller->SSSR.ALL_BITS = sssr.ALL_BITS;
+            m_registers->SSSR.ALL_BITS = sssr.ALL_BITS;
 
             hr = setMode(mode);
             
@@ -184,12 +184,12 @@ Unmap and close the SPI controller associated with this object.
 */
 void BtSpiControllerClass::end()
 {
-    if (m_controller != nullptr)
+    if (m_registers != nullptr)
     {
         // Disable the SPI controller.
-        m_controller->SSCR0.SSE = 0;
-        m_controller = nullptr;
-        m_controllerUpper = nullptr;
+        m_registers->SSCR0.SSE = 0;
+        m_registers = nullptr;
+        m_registersUpper = nullptr;
     }
 
     if (m_hController != INVALID_HANDLE_VALUE)
@@ -215,7 +215,7 @@ HRESULT BtSpiControllerClass::setMode(ULONG mode)
 
 
     // If we don't have the controller registers mapped, fail.
-    if (m_controller == nullptr)
+    if (m_registers == nullptr)
     {
 		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
@@ -249,10 +249,10 @@ HRESULT BtSpiControllerClass::setMode(ULONG mode)
     // Set the SPI phase and polarity values in the SPI controller registers.
     if (SUCCEEDED(hr))
     {
-        sscr1.ALL_BITS = m_controller->SSCR1.ALL_BITS;
+        sscr1.ALL_BITS = m_registers->SSCR1.ALL_BITS;
         sscr1.SPO = polarity;
         sscr1.SPH = phase;
-        m_controller->SSCR1.ALL_BITS = sscr1.ALL_BITS;
+        m_registers->SSCR1.ALL_BITS = sscr1.ALL_BITS;
     }
 
     return hr;
@@ -273,7 +273,7 @@ HRESULT BtSpiControllerClass::setClock(ULONG clockKhz)
 
 
     // If we don't have the controller registers mapped, fail.
-    if (m_controller == nullptr)
+    if (m_registers == nullptr)
     {
         hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
@@ -350,16 +350,16 @@ HRESULT BtSpiControllerClass::setClock(ULONG clockKhz)
     if (SUCCEEDED(hr))
     {
         // Set the clock rate.
-        sscr0.ALL_BITS = m_controller->SSCR0.ALL_BITS;
+        sscr0.ALL_BITS = m_registers->SSCR0.ALL_BITS;
         sscr0.SCR = pSpeed->SCR;
-        m_controller->SSCR0.ALL_BITS = sscr0.ALL_BITS;
+        m_registers->SSCR0.ALL_BITS = sscr0.ALL_BITS;
 
-        prvClockParams.ALL_BITS = m_controllerUpper->PRV_CLOCK_PARAMS.ALL_BITS;
+        prvClockParams.ALL_BITS = m_registersUpper->PRV_CLOCK_PARAMS.ALL_BITS;
         prvClockParams.M_VAL = pSpeed->M_VALUE;
         prvClockParams.N_VAL = pSpeed->N_VALUE;
         prvClockParams.CLK_UPDATE = 1;
         prvClockParams.CLK_EN = 1;
-        m_controllerUpper->PRV_CLOCK_PARAMS.ALL_BITS = prvClockParams.ALL_BITS;
+        m_registersUpper->PRV_CLOCK_PARAMS.ALL_BITS = prvClockParams.ALL_BITS;
     }
     
     return hr;

@@ -4,8 +4,9 @@
 
 #include "CY8C9540ASupport.h"
 #include "ExpanderDefs.h"
-#include "I2cController.h"
-
+#include "I2c.h"
+#include "ErrorCodes.h"
+#include "ArduinoCommon.h"
 
 const ULONG CY8C9540ADevice::PWM_BITS          =    8;  // This PWM chip has 8 bits of resolution.
 const ULONG CY8C9540ADevice::PWM_CHAN_COUNT    =    8;  // This chip has 8 PWM channels.
@@ -137,7 +138,7 @@ HRESULT CY8C9540ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
     if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
     
     return hr;
@@ -198,7 +199,7 @@ HRESULT CY8C9540ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
     if (SUCCEEDED(hr))
     {
         // Perform the I2C transfers specified above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
 
     if (SUCCEEDED(hr))
@@ -412,7 +413,7 @@ HRESULT CY8C9540ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
     //
     if (SUCCEEDED(hr))
     {
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
     
     return hr;
@@ -516,7 +517,7 @@ HRESULT CY8C9540ADevice::SetPortbitPwm(ULONG i2cAdr, ULONG portBit, ULONG pwmCha
     if (SUCCEEDED(hr))
     {
         //  Perform the I2C transfers specified above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
 
     if (SUCCEEDED(hr))
@@ -617,7 +618,7 @@ HRESULT CY8C9540ADevice::SetPortbitDio(ULONG i2cAdr, ULONG portBit)
     if (SUCCEEDED(hr))
     {
         //  Perform the I2C transfers specified above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
     
     return hr;
@@ -686,7 +687,7 @@ HRESULT CY8C9540ADevice::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG duty
     if (SUCCEEDED(hr))
     {
         //  Perform the I2C transfers specified above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
     
     return hr;
@@ -730,7 +731,7 @@ HRESULT CY8C9540ADevice::_configurePwmChannelFrequency(ULONG i2cAdr, ULONG chann
     if (SUCCEEDED(hr))
     {
         //  Perform the I2C transfer specified above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
     
     return hr;

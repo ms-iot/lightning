@@ -400,10 +400,10 @@ private:
     HANDLE m_hController;
 
     /// Pointer to SPI controller registers mapped into this process' address space.
-    PSPI_CONTROLLER m_controller;
+    PSPI_CONTROLLER m_registers;
 
     /// Pointer to upper SPI controller registers mapped into this process' address space.
-    PSPI_CONTROLLER_UPPER m_controllerUpper;
+    PSPI_CONTROLLER_UPPER m_registersUpper;
 
     /// The minimum width of a transfer on this controller.
     const UINT m_minTransferBits = 4;
@@ -430,7 +430,7 @@ inline HRESULT BtSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, UL
     _SSCR0 sscr0;
 
 
-    if (m_controller == nullptr)
+    if (m_registers == nullptr)
     {
 		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
@@ -441,21 +441,21 @@ inline HRESULT BtSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, UL
         txData = txData & (0xFFFFFFFF >> (32 - bits));
 
         // Make sure the SPI bus is enabled.
-        sscr0.ALL_BITS = m_controller->SSCR0.ALL_BITS;
+        sscr0.ALL_BITS = m_registers->SSCR0.ALL_BITS;
         sscr0.SSE = 1;
-        m_controller->SSCR0.ALL_BITS = sscr0.ALL_BITS;
+        m_registers->SSCR0.ALL_BITS = sscr0.ALL_BITS;
 
         // Wait for an empty space in the FIFO.
-        while (m_controller->SSSR.TNF == 0);
+        while (m_registers->SSSR.TNF == 0);
 
         // Send the data.
-        m_controller->SSDR.ALL_BITS = txData;
+        m_registers->SSDR.ALL_BITS = txData;
 
         // Wait for data to be received.
-        while (m_controller->SSSR.RNE == 0);
+        while (m_registers->SSSR.RNE == 0);
 
         // Get the received data.
-        rxData = m_controller->SSDR.ALL_BITS;
+        rxData = m_registers->SSDR.ALL_BITS;
 
         dataIn = rxData & (0xFFFFFFFF >> (32 - bits));
     }

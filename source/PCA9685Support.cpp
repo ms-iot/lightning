@@ -4,7 +4,9 @@
 
 #include "PCA9685Support.h"
 #include "ExpanderDefs.h"
-#include "I2cController.h"
+#include "I2c.h"
+#include "ErrorCodes.h"
+#include "ArduinoCommon.h"
 
 // Start with "chip not initialized" status.
 BOOL PCA9685Device::m_chipIsInitialized = FALSE;
@@ -92,7 +94,7 @@ HRESULT PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
     if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
     
     return hr;
@@ -151,7 +153,7 @@ HRESULT PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
     if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
 
     if (SUCCEEDED(hr))
@@ -235,7 +237,7 @@ HRESULT PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCy
     if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
     
     return hr;
@@ -363,7 +365,7 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
         if (SUCCEEDED(hr))
         {
             // Actually perform the I2C transfers specified above.
-            hr = transaction.execute();
+            hr = transaction.execute(g_i2c.getController());
         }
 
         //

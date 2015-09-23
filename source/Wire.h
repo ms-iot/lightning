@@ -11,7 +11,7 @@
 #include <algorithm>
 
 #include "ArduinoError.h"
-#include "I2cController.h"
+#include "I2c.h"
 
 #ifndef TWI_FREQ
 #define TWI_FREQ 100000L
@@ -37,7 +37,8 @@ public:
     };
 
     /// Constructor.
-    TwoWire()
+    TwoWire() :
+        m_controller(nullptr)
     {
         _cleanTransaction();
     }
@@ -52,7 +53,11 @@ public:
     {
 		HRESULT hr;
 
-		hr = g_i2c.beginExternal();
+        hr = g_i2c.begin();
+        if (SUCCEEDED(hr))
+        {
+            m_controller = g_i2c.getController();
+        }
 
 		if (FAILED(hr))
         {
@@ -69,7 +74,7 @@ public:
     {
         _cleanTransaction();
 
-        g_i2c.endExternal();
+        g_i2c.end();
     }
 
     // slave mode not supported
@@ -142,7 +147,7 @@ public:
         // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-			hr = m_i2cTransaction.execute();
+			hr = m_i2cTransaction.execute(m_controller);
 
 			if (FAILED(hr))
             {
@@ -232,7 +237,7 @@ public:
         // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-			hr = m_i2cTransaction.execute();
+			hr = m_i2cTransaction.execute(m_controller);
 
 			if (FAILED(hr))
             {
@@ -397,6 +402,9 @@ private:
 
     /// The I2C transaction object used to drive transfers.
     I2cTransactionClass m_i2cTransaction;
+
+    /// The I2c Controller object.
+    I2cControllerClass* m_controller;
 
     /// Typdef for a transmit or receive buffer.
     typedef std::vector<uint8_t> buff_t;
