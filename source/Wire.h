@@ -37,8 +37,7 @@ public:
     };
 
     /// Constructor.
-    TwoWire() :
-        m_controller(nullptr)
+    TwoWire()
     {
         _cleanTransaction();
     }
@@ -54,10 +53,6 @@ public:
 		HRESULT hr;
 
         hr = g_i2c.begin();
-        if (SUCCEEDED(hr))
-        {
-            m_controller = g_i2c.getController();
-        }
 
 		if (FAILED(hr))
         {
@@ -147,7 +142,7 @@ public:
         // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-			hr = m_i2cTransaction.execute(m_controller);
+			hr = m_i2cTransaction.execute(g_i2c.getController());
 
 			if (FAILED(hr))
             {
@@ -237,7 +232,7 @@ public:
         // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-			hr = m_i2cTransaction.execute(m_controller);
+			hr = m_i2cTransaction.execute(g_i2c.getController());
 
 			if (FAILED(hr))
             {
@@ -402,9 +397,6 @@ private:
 
     /// The I2C transaction object used to drive transfers.
     I2cTransactionClass m_i2cTransaction;
-
-    /// The I2c Controller object.
-    I2cControllerClass* m_controller;
 
     /// Typdef for a transmit or receive buffer.
     typedef std::vector<uint8_t> buff_t;

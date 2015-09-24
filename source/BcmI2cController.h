@@ -31,7 +31,7 @@ public:
     HRESULT begin(ULONG busNumber) override;
 
     // This method returns the external I2C bus pins to their default configurations.
-    void end() override
+    inline void end() override
     {
         revertPinsToGpio();
 

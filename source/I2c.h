@@ -38,7 +38,7 @@ public:
     void end();
 
     /// Method to get the address of the I2C Controller object.
-    I2cControllerClass* getController()
+    inline I2cControllerClass* getController()
     {
         if (m_controller == nullptr)
         {

@@ -140,7 +140,7 @@ public:
     }
 
     // Method to associate a callback routine with this transfer.
-    HRESULT setCallback(std::function<HRESULT()> callBack)
+    inline HRESULT setCallback(std::function<HRESULT()> callBack)
     {
         m_callBack = callBack;
         return S_OK;

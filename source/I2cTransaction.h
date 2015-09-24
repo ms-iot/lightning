@@ -34,7 +34,7 @@ public:
     {
     }
 
-    virtual ~I2cTransactionClass()
+    virtual inline ~I2cTransactionClass()
     {
         reset();
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
@@ -58,13 +58,13 @@ public:
     HRESULT setAddress(ULONG slaveAdr);
 
     // Gets the 7-bit address of the slave for this transaction.
-    ULONG getAddress()
+    inline ULONG getAddress()
     {
         return m_slaveAddress;
     }
 
     // Add a write transfer to the transaction.
-    HRESULT queueWrite(PUCHAR buffer, const ULONG bufferBytes)
+    inline HRESULT queueWrite(PUCHAR buffer, const ULONG bufferBytes)
     {
         return queueWrite(buffer, bufferBytes, FALSE);
     }
@@ -72,7 +72,7 @@ public:
     HRESULT queueWrite(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
 
     // Add a read transfer to the transaction.
-    HRESULT queueRead(PUCHAR buffer, const ULONG bufferBytes)
+    inline HRESULT queueRead(PUCHAR buffer, const ULONG bufferBytes)
     {
         return queueRead(buffer, bufferBytes, FALSE);
     }

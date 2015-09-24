@@ -51,7 +51,7 @@ public:
     virtual HRESULT begin(ULONG busNumber) = 0;
 
     /// Finish using the I2C controller associated with this object.
-    virtual void end() = 0;
+    virtual inline void end() = 0;
 
     // This method maps the I2C controller if needed.
     inline HRESULT mapIfNeeded()

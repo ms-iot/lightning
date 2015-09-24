@@ -15,8 +15,7 @@ class ADS1015Device
 {
 public:
     /// Constructor.
-    ADS1015Device() :
-        m_controller(nullptr)
+    ADS1015Device()
     {
     }
 
@@ -36,10 +35,6 @@ public:
         // Prepare to use the I2C bus to talk to the ADC on the Ika Lure.
         
         hr = g_i2c.begin();
-        if (SUCCEEDED(hr))
-        {
-            m_controller = g_i2c.getController();
-        }
 
         return hr;
     }
@@ -128,7 +123,7 @@ public:
         
         if (SUCCEEDED(hr))
         {
-            hr = transaction.execute(m_controller);
+            hr = transaction.execute(g_i2c.getController());
         }
 
         //
@@ -151,7 +146,7 @@ public:
 
 		while (SUCCEEDED(hr) && !conversionDone)
         {
-            hr = transaction.execute(m_controller);
+            hr = transaction.execute(g_i2c.getController());
             
 
             if (SUCCEEDED(hr))
@@ -184,7 +179,7 @@ public:
 
         if (SUCCEEDED(hr))
         {
-            hr = transaction.execute(m_controller);
+            hr = transaction.execute(g_i2c.getController());
             
         }
         
@@ -266,9 +261,6 @@ private:
 
     /// The mux value for single-ended input on AIN3.
     const BYTE ANI3 = 7;
-
-    /// The I2C Controller object for the bus we are using.
-    I2cControllerClass* m_controller;
 
 };
 
