@@ -56,7 +56,7 @@ Initialize member variables, including the SPI Clock rate variables.
 BcmSpiControllerClass::BcmSpiControllerClass()
 {
     m_hController = INVALID_HANDLE_VALUE;
-    m_controller = nullptr;
+    m_registers = nullptr;
 
     // Load values for the SPI clock generator divisors.
     // SPI clock is 250mhz / Divisor.  Divisors must be even, and < 65536.
@@ -114,7 +114,7 @@ HRESULT BcmSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz
             hr = GetControllerBaseAddress(deviceName, m_hController, baseAddress);
 			if (SUCCEEDED(hr))
             {
-                m_controller = (PSPI_CONTROLLER)baseAddress;
+                m_registers = (PSPI_CONTROLLER)baseAddress;
             }
         }
 
@@ -139,7 +139,7 @@ HRESULT BcmSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz
             cs.CPOL = m_clockPolarity;
             cs.CLEAR = 3;                       // Clear both FIFOs,
             cs.TA = 1;                          //  then start transfers.
-            m_controller->CS.ALL_BITS = cs.ALL_BITS;
+            m_registers->CS.ALL_BITS = cs.ALL_BITS;
         }
     }
 
@@ -153,13 +153,13 @@ void BcmSpiControllerClass::end()
 {
     _CS cs;
 
-    if (m_controller != nullptr)
+    if (m_registers != nullptr)
     {
-        cs.ALL_BITS = m_controller->CS.ALL_BITS;
+        cs.ALL_BITS = m_registers->CS.ALL_BITS;
         cs.TA = 0;                              // No tranfer is active
-        m_controller->CS.ALL_BITS = cs.ALL_BITS;
+        m_registers->CS.ALL_BITS = cs.ALL_BITS;
 
-        m_controller = nullptr;
+        m_registers = nullptr;
     }
 
     if (m_hController != INVALID_HANDLE_VALUE)
@@ -217,7 +217,7 @@ HRESULT BcmSpiControllerClass::setClock(ULONG clockKhz)
     _CLK clk;
 
     // If we don't have the controller registers mapped, fail.
-    if (m_controller == nullptr)
+    if (m_registers == nullptr)
     {
         hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
@@ -292,7 +292,7 @@ HRESULT BcmSpiControllerClass::setClock(ULONG clockKhz)
         // Set the clock rate.
         clk.ALL_BITS = 0;
         clk.CDIV = speed & 0xFFFF;
-        m_controller->CLK.ALL_BITS = clk.ALL_BITS;
+        m_registers->CLK.ALL_BITS = clk.ALL_BITS;
     }
     
     return hr;

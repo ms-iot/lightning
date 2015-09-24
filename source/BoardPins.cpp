@@ -4,7 +4,7 @@
 
 #include "ErrorCodes.h"
 #include "BoardPins.h"
-#include "I2cController.h"
+#include "I2c.h"
 
 // The default PWM chip I2C address on the Ika Lure is 0x40.  To use the Ika Lure with a 
 // Weather Shield which has a humidity sensor at addresss 0x40 the address of the PWM chip
@@ -623,7 +623,8 @@ const BoardPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
 
 /// The global table of Pin Function tracking structures.
 /**
-This table tracks the currently configured function for each pin of the board.
+This table tracks the currently configured function for each pin of the board.  It must
+contain at least the number of entries for the number of pins on the "largest" board.
 */
 BoardPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
 {
@@ -682,7 +683,6 @@ BoardPinsClass::BoardPinsClass()
     m_MuxAttributes(NULL),
     m_ExpAttributes(g_GenxExpAttributes),
     m_PinFunctions(g_GenxPinFunctions),
-    m_PinFunctionEntryCount(27),
     m_PwmChannels(NULL),
     m_GpioPinCount(0)
 {
@@ -702,7 +702,7 @@ HRESULT BoardPinsClass::verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_A
 {
 	HRESULT hr = S_OK;
 
-    if (pin >= m_PinFunctionEntryCount)
+    if (!_pinNumberIsSafe(pin))
     {
 		hr = E_BOUNDS;
     }
@@ -1629,6 +1629,11 @@ HRESULT BoardPinsClass::_determineMbmConfig()
         {
             hr = setBoardType(MBM_IKA_LURE);
         }
+        else
+        {
+            // Error return from _testI2cAddress() is expected if the devices does not exist.
+            hr = S_OK;
+        }
     }
 
     return hr;
@@ -1780,7 +1785,7 @@ HRESULT BoardPinsClass::_testI2cAddress(ULONG i2cAdr)
 
     if (SUCCEEDED(hr))
     {
-        hr = trans.execute();
+        hr = trans.execute(g_i2c.getController());
     }
 
     return hr;

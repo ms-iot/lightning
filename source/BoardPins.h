@@ -155,9 +155,6 @@ private:
     /// Pointer to array of pin function tracking structures.
     const PPIN_FUNCTION m_PinFunctions;
 
-    /// The count of entries in the pin function tracking array.
-    const ULONG m_PinFunctionEntryCount;
-
     /// Pointer to array of PWM channels.
     const PWM_CHANNEL* m_PwmChannels;
 

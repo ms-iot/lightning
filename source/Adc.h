@@ -116,7 +116,6 @@ private:
             // Get the board generation.
             hr = g_pins.getBoardType(m_boardType);
             
-        
             if (SUCCEEDED(hr))
             {
 				if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)

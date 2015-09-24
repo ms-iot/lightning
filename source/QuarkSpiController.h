@@ -183,7 +183,7 @@ private:
     HANDLE m_hController;
 
     /// Pointer SPI controller registers mapped into this process' address space.
-    PSPI_CONTROLLER m_controller;
+    PSPI_CONTROLLER m_registers;
 
     /// The minimum width of a transfer on this controller.
     const UINT m_minTransferBits = 4;
@@ -206,7 +206,7 @@ inline HRESULT QuarkSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn,
     ULONG txData;
     ULONG rxData;
 
-    if (m_controller == nullptr)
+    if (m_registers == nullptr)
     {
 		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
@@ -217,19 +217,19 @@ inline HRESULT QuarkSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn,
         txData = txData & (0xFFFFFFFF >> (32 - bits));
 
         // Make sure the SPI bus is enabled.
-        m_controller->SSCR0.SSE = 1;
+        m_registers->SSCR0.SSE = 1;
 
         // Wait for an empty space in the FIFO.
-        while (m_controller->SSSR.TNF == 0);
+        while (m_registers->SSSR.TNF == 0);
 
         // Send the data.
-        m_controller->SSDR.ALL_BITS = txData;
+        m_registers->SSDR.ALL_BITS = txData;
 
         // Wait for data to be received.
-        while (m_controller->SSSR.RNE == 0);
+        while (m_registers->SSSR.RNE == 0);
 
         // Get the received data.
-        rxData = m_controller->SSDR.ALL_BITS;
+        rxData = m_registers->SSDR.ALL_BITS;
 
         dataIn = rxData & (0xFFFFFFFF >> (32 - bits));
     }

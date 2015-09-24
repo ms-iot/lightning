@@ -23,7 +23,7 @@ HRESULT QuarkFabricGpioControllerClass::_mapController()
 
     if (SUCCEEDED(hr))
     {
-        m_controller = (PFABRIC_GPIO)baseAddress;
+        m_registers = (PFABRIC_GPIO)baseAddress;
     }
 
     return hr;
@@ -113,7 +113,7 @@ HRESULT BcmGpioControllerClass::_mapController()
 
     if (SUCCEEDED(hr))
     {
-        m_controller = (PBCM_GPIO)baseAddress;
+        m_registers = (PBCM_GPIO)baseAddress;
     }
 
     return hr;

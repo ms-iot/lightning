@@ -325,7 +325,7 @@ HRESULT GetControllerLock(HANDLE & handle)
 
 	if ((handle < &g_devices[0]) || (handle >= &g_devices[MAX_OPEN_DEVICES]))
 	{
-		hr = DMAP_E_I2C_INVALID_LOCK_HANDLE_SPECIFIED;
+		hr = DMAP_E_INVALID_LOCK_HANDLE_SPECIFIED;
 	}
 
 	if (SUCCEEDED(hr))
@@ -354,7 +354,7 @@ HRESULT ReleaseControllerLock(HANDLE & handle)
 
 	if ((handle < &g_devices[0]) || (handle >= &g_devices[MAX_OPEN_DEVICES]))
 	{
-		hr = DMAP_E_I2C_INVALID_LOCK_HANDLE_SPECIFIED;
+		hr = DMAP_E_INVALID_LOCK_HANDLE_SPECIFIED;
 	}
 
 	if (SUCCEEDED(hr))

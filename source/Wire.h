@@ -11,7 +11,7 @@
 #include <algorithm>
 
 #include "ArduinoError.h"
-#include "I2cController.h"
+#include "I2c.h"
 
 #ifndef TWI_FREQ
 #define TWI_FREQ 100000L
@@ -52,7 +52,7 @@ public:
     {
 		HRESULT hr;
 
-		hr = g_i2c.beginExternal();
+        hr = g_i2c.begin();
 
 		if (FAILED(hr))
         {
@@ -69,7 +69,7 @@ public:
     {
         _cleanTransaction();
 
-        g_i2c.endExternal();
+        g_i2c.end();
     }
 
     // slave mode not supported
@@ -142,7 +142,7 @@ public:
         // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-			hr = m_i2cTransaction.execute();
+			hr = m_i2cTransaction.execute(g_i2c.getController());
 
 			if (FAILED(hr))
             {
@@ -232,7 +232,7 @@ public:
         // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-			hr = m_i2cTransaction.execute();
+			hr = m_i2cTransaction.execute(g_i2c.getController());
 
 			if (FAILED(hr))
             {

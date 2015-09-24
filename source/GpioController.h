@@ -25,14 +25,14 @@ public:
     QuarkFabricGpioControllerClass()
     {
         m_hController = INVALID_HANDLE_VALUE;
-        m_controller = nullptr;
+        m_registers = nullptr;
     }
 
     /// Destructor.
     virtual ~QuarkFabricGpioControllerClass()
     {
         DmapCloseController(m_hController);
-        m_controller = nullptr;
+        m_registers = nullptr;
     }
 
     /// Method to map the Fabric GPIO controller registers if they are not already mapped.
@@ -212,7 +212,7 @@ private:
     This controller object is used to access the Fabric GPIO regiseters after
     they are mapped into this process' virtual address space.
     */
-    PFABRIC_GPIO m_controller;
+    PFABRIC_GPIO m_registers;
 
     //
     // QuarkFabricGpioControllerClass private methods.
@@ -226,14 +226,14 @@ private:
     {
         // Clear the appropriate Data Direction Register bit.  This operation is atomic, 
         // and therefore thread-safe on a single core processor (such as the Quark X1000).
-        _bittestandreset((LONG*)&m_controller->GPIO_SWPORTA_DDR.ALL_BITS, portBit);
+        _bittestandreset((LONG*)&m_registers->GPIO_SWPORTA_DDR.ALL_BITS, portBit);
     }
 
     /// Method to set a Fabric GPIO pin as an output
     inline void _setPinOutput(ULONG portBit)
     {
         // Set the appropriate Data Direction Register bit.
-        _bittestandset((LONG*)&m_controller->GPIO_SWPORTA_DDR.ALL_BITS, portBit);
+        _bittestandset((LONG*)&m_registers->GPIO_SWPORTA_DDR.ALL_BITS, portBit);
     }
 };
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
@@ -657,14 +657,14 @@ public:
     BcmGpioControllerClass()
     {
         m_hController = INVALID_HANDLE_VALUE;
-        m_controller = nullptr;
+        m_registers = nullptr;
     }
 
     /// Destructor.
     virtual ~BcmGpioControllerClass()
     {
         DmapCloseController(m_hController);
-        m_controller = nullptr;
+        m_registers = nullptr;
     }
 
     /// Method to map the BCM2836 GPIO controller registers if they are not already mapped.
@@ -763,7 +763,7 @@ private:
     This controller object is used to access the GPIO registers after
     they are mapped into this process' virtual address space.
     */
-    PBCM_GPIO m_controller;
+    PBCM_GPIO m_registers;
 
     //
     // BcmGpioControllerClass private methods.
@@ -796,11 +796,11 @@ inline HRESULT QuarkFabricGpioControllerClass::setPinState(ULONG portBit, ULONG 
     {
         if (state == 0)
         {
-            _bittestandreset((LONG*)&m_controller->GPIO_SWPORTA_DR.ALL_BITS, portBit);
+            _bittestandreset((LONG*)&m_registers->GPIO_SWPORTA_DR.ALL_BITS, portBit);
         }
         else
         {
-            _bittestandset((LONG*)&m_controller->GPIO_SWPORTA_DR.ALL_BITS, portBit);
+            _bittestandset((LONG*)&m_registers->GPIO_SWPORTA_DR.ALL_BITS, portBit);
         }
     }
 
@@ -826,7 +826,7 @@ inline HRESULT QuarkFabricGpioControllerClass::getPinState(ULONG portBit, ULONG 
 
     if (SUCCEEDED(hr))
     {
-        state = (m_controller->GPIO_EXT_PORTA.ALL_BITS >> portBit) & 0x01;
+        state = (m_registers->GPIO_EXT_PORTA.ALL_BITS >> portBit) & 0x01;
     }
 
     return hr;
@@ -878,7 +878,7 @@ inline HRESULT QuarkFabricGpioControllerClass::getPinDirection(ULONG portBit, UL
 
     if (SUCCEEDED(hr))
     {
-        if ((m_controller->GPIO_SWPORTA_DDR.ALL_BITS >> portBit) == 0)
+        if ((m_registers->GPIO_SWPORTA_DDR.ALL_BITS >> portBit) == 0)
         {
             mode = DIRECTION_IN;
         }
@@ -1569,11 +1569,11 @@ inline HRESULT BcmGpioControllerClass::setPinState(ULONG gpioNo, ULONG state)
     {
 		if (state == 0)
         {
-            m_controller->GPCLR0 = bitMask;
+            m_registers->GPCLR0 = bitMask;
         }
         else
         {
-            m_controller->GPSET0 = bitMask;
+            m_registers->GPSET0 = bitMask;
         }
 	}
 
@@ -1594,7 +1594,7 @@ inline HRESULT BcmGpioControllerClass::getPinState(ULONG gpioNo, ULONG & state)
 
     if (SUCCEEDED(hr))
     {
-        state = ((m_controller->GPLEV0) >> gpioNo) & 1;
+        state = ((m_registers->GPLEV0) >> gpioNo) & 1;
     }
 
     return hr;
@@ -1627,7 +1627,7 @@ inline HRESULT BcmGpioControllerClass::setPinDirection(ULONG gpioNo, ULONG mode)
         // Each GPIO has a 3-bit function field (000b selects input, 001b output, etc.) 
         // and there are 10 such fields in each 32-bit function select register.
 
-        funcSelData = m_controller->GPFSELN[gpioNo / 10];   // Read function register data
+        funcSelData = m_registers->GPFSELN[gpioNo / 10];   // Read function register data
 
         funcSelData &= ~(0x07 << ((gpioNo % 10) * 3));      // Clear bits for GPIO (make input)
 
@@ -1636,7 +1636,7 @@ inline HRESULT BcmGpioControllerClass::setPinDirection(ULONG gpioNo, ULONG mode)
             funcSelData |= (0x01 << ((gpioNo % 10) * 3));   // Set one bit for GPIO (make output)
         }
 
-        m_controller->GPFSELN[gpioNo / 10] = funcSelData;   // Write function register data back
+        m_registers->GPFSELN[gpioNo / 10] = funcSelData;   // Write function register data back
 
 		ReleaseControllerLock(m_hController);
     }
@@ -1670,7 +1670,7 @@ inline HRESULT BcmGpioControllerClass::setPinFunction(ULONG gpioNo, ULONG functi
         // Each GPIO has a 3-bit function field (000b selects input, 001b output, etc.) 
         // and there are 10 such fields in each 32-bit function select register.
 
-        funcSelData = m_controller->GPFSELN[gpioNo / 10];   // Read function register data
+        funcSelData = m_registers->GPFSELN[gpioNo / 10];   // Read function register data
 
 		// If the function is already set to GPIO, and the new function is GPIO, leave it 
 		// alone (so we don't change the pin direction trying to set the pin function).
@@ -1683,7 +1683,7 @@ inline HRESULT BcmGpioControllerClass::setPinFunction(ULONG gpioNo, ULONG functi
 				funcSelData |= (0x04 << ((gpioNo % 10) * 3));   // Set function code to 100b
 			}
 
-			m_controller->GPFSELN[gpioNo / 10] = funcSelData;   // Write function register data back
+			m_registers->GPFSELN[gpioNo / 10] = funcSelData;   // Write function register data back
 		}
 
         ReleaseControllerLock(m_hController);
@@ -1736,21 +1736,21 @@ inline HRESULT BcmGpioControllerClass::setPinPullup(ULONG gpioNo, BOOL pullup)
         //
         // 150 cycles is 0.25 microseconds with a cpu clock of 600 Mhz.
         //
-        m_controller->GPPUD = gpioPull;         // 1)
+        m_registers->GPPUD = gpioPull;         // 1)
 
         timer.StartTimeout(1);
         while (!timer.TimeIsUp());              // 2)
         
-        m_controller->GPPUDCLK0 = 1 << gpioNo;
-        m_controller->GPPUDCLK1 = 0;            // 3)
+        m_registers->GPPUDCLK0 = 1 << gpioNo;
+        m_registers->GPPUDCLK1 = 0;            // 3)
         
         timer.StartTimeout(1);
         while (!timer.TimeIsUp());              // 4)
         
-        m_controller->GPPUD = 0;                // 5)
+        m_registers->GPPUD = 0;                // 5)
         
-        m_controller->GPPUDCLK0 = 0;
-        m_controller->GPPUDCLK1 = 0;            // 6)
+        m_registers->GPPUDCLK0 = 0;
+        m_registers->GPPUDCLK1 = 0;            // 6)
 
         ReleaseControllerLock(m_hController);
     }

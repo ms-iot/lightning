@@ -123,7 +123,7 @@ public:
 
         if (m_controller != nullptr)
         {
-            // Set all SPI pins as digitial I/O.
+            // Set all SPI pins as digital I/O.
             hr = m_controller->revertPinsToGpio();
 
             if (FAILED(hr))
@@ -135,7 +135,6 @@ public:
             // we have open to the SPI controller.
             delete m_controller;
             m_controller = nullptr;
-
         }
     }
 

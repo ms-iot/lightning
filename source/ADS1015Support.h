@@ -6,6 +6,9 @@
 #define _ADS1015_SUPPORT_H_
 
 #include <Windows.h>
+
+#include "I2c.h"
+#include "I2cTransaction.h"
 #include "I2cController.h"
 
 class ADS1015Device
@@ -27,15 +30,20 @@ public:
     */
     inline HRESULT begin()
     {
+        HRESULT hr;
+
         // Prepare to use the I2C bus to talk to the ADC on the Ika Lure.
-        return g_i2c.beginExternal();
+        
+        hr = g_i2c.begin();
+
+        return hr;
     }
 
     /// Release the ADC.
     inline void end()
     {
         // Release the I2C controller.
-        g_i2c.endExternal();
+        g_i2c.end();
     }
 
     /// Take a reading with the ADC used on the Ika Lure board.
@@ -97,14 +105,12 @@ public:
         if (SUCCEEDED(hr))
         {
             hr = transaction.setAddress(ADC_I2C_ADR);
-            
         }
 
         if (SUCCEEDED(hr))
         {
             // Send the address of the register we want to write.
             hr = transaction.queueWrite(configRegAdr, 1);
-            
         }
 
         if (SUCCEEDED(hr))
@@ -113,13 +119,11 @@ public:
             configData[1] = configL.ALL_BITS;
 
             hr = transaction.queueWrite(configData, 2);
-            
         }
         
         if (SUCCEEDED(hr))
         {
-            hr = transaction.execute();
-            
+            hr = transaction.execute(g_i2c.getController());
         }
 
         //
@@ -142,7 +146,7 @@ public:
 
 		while (SUCCEEDED(hr) && !conversionDone)
         {
-            hr = transaction.execute();
+            hr = transaction.execute(g_i2c.getController());
             
 
             if (SUCCEEDED(hr))
@@ -175,7 +179,7 @@ public:
 
         if (SUCCEEDED(hr))
         {
-            hr = transaction.execute();
+            hr = transaction.execute(g_i2c.getController());
             
         }
         

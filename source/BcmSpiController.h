@@ -196,7 +196,7 @@ private:
     HANDLE m_hController;
 
 	/// Pointer to SPI controller registers mapped into this process' address space.
-	PSPI_CONTROLLER m_controller;
+	PSPI_CONTROLLER m_registers;
 
     /// SPI clock phase.
     ULONG m_clockPhase;
@@ -229,7 +229,7 @@ inline HRESULT BcmSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, U
     int bytesRemaining;
 
 
-    if (m_controller == nullptr)
+    if (m_registers == nullptr)
     {
 		hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
@@ -249,16 +249,16 @@ inline HRESULT BcmSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, U
         while (bytesRemaining > 0)
         {
             // Wait for an available space in the TX FIFO.
-            do { cs.ALL_BITS = m_controller->CS.ALL_BITS; } while (cs.TXD == 0);
+            do { cs.ALL_BITS = m_registers->CS.ALL_BITS; } while (cs.TXD == 0);
 
             // Send a byte of the data.
-            m_controller->FIFO.DATA_BYTE0 = oneByte[bytesRemaining - 1];
+            m_registers->FIFO.DATA_BYTE0 = oneByte[bytesRemaining - 1];
 
             // Wait for the RX FIFO to have data.
-            do { cs.ALL_BITS = m_controller->CS.ALL_BITS; } while (cs.RXD == 0);
+            do { cs.ALL_BITS = m_registers->CS.ALL_BITS; } while (cs.RXD == 0);
 
             // Read the received data.
-            dataIn = dataIn | (m_controller->FIFO.ALL_BITS & 0x000000FF);
+            dataIn = dataIn | (m_registers->FIFO.ALL_BITS & 0x000000FF);
 
             bytesRemaining--;
         }

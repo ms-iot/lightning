@@ -4,7 +4,9 @@
 
 #include "PCAL9535ASupport.h"
 #include "ExpanderDefs.h"
-#include "I2cController.h"
+#include "I2c.h"
+#include "ErrorCodes.h"
+#include "ArduinoCommon.h"
 
 HRESULT PCAL9535ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
 {
@@ -78,7 +80,7 @@ HRESULT PCAL9535ADevice::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
     if (SUCCEEDED(hr))
     {
         // Actually perform the I2C transfers specified above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
     
     return hr;
@@ -129,7 +131,7 @@ HRESULT PCAL9535ADevice::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
     if (SUCCEEDED(hr))
     {
         // Perform the I2C transfers queued above.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
 
     if (SUCCEEDED(hr))
@@ -232,7 +234,7 @@ HRESULT PCAL9535ADevice::SetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG dire
     if (SUCCEEDED(hr))
     {
         // Actually perform the transfers.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
     
     return hr;
@@ -289,7 +291,7 @@ HRESULT PCAL9535ADevice::GetBitDirection(ULONG i2cAdr, ULONG portBit, ULONG & di
     if (SUCCEEDED(hr))
     {
         // Actually perform the transfers.
-        hr = transaction.execute();
+        hr = transaction.execute(g_i2c.getController());
     }
 
     //
