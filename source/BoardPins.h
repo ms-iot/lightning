@@ -141,6 +141,9 @@ public:
     /// Method to get the board type.
     inline HRESULT getBoardType(BOARD_TYPE & board);
 
+    /// Method to test whether a pin number is safe to use as an array index.
+    inline BOOL pinNumberIsSafe(ULONG pin);
+
 private:
 
     /// Pointer to the array of pin attributes.
@@ -200,9 +203,6 @@ private:
     /// Method to set the state of an I/O Expander port pin.
     HRESULT _setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state);
 
-    /// Method to test whether a pin number is safe to use as an array index.
-    inline BOOL _pinNumberIsSafe(ULONG pin);
-
     /// Method to verify the board type has been configured.
     HRESULT _verifyBoardType();
 
@@ -249,7 +249,7 @@ Method to determine if a pin number is in the legal range or not.
 \param[in] pin the pin number to check for range
 \return TRUE if pin number is in range, FALSE otherwise
 */
-inline BOOL BoardPinsClass::_pinNumberIsSafe(ULONG pin)
+inline BOOL BoardPinsClass::pinNumberIsSafe(ULONG pin)
 {
     return (pin < m_GpioPinCount);
 }

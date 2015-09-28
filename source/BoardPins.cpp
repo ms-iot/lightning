@@ -701,8 +701,12 @@ and to set it to that function if possible.
 HRESULT BoardPinsClass::verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction)
 {
 	HRESULT hr = S_OK;
+    BoardPinsClass::BOARD_TYPE board;
 
-    if (!_pinNumberIsSafe(pin))
+    // Make sure we know what type of board we are running on, needed by pinNumberIsSafe().
+    hr = g_pins.getBoardType(board);
+
+    if (SUCCEEDED(hr) && !pinNumberIsSafe(pin))
     {
 		hr = E_BOUNDS;
     }
@@ -760,7 +764,7 @@ HRESULT BoardPinsClass::_setPinFunction(ULONG pin, ULONG function)
     if (SUCCEEDED(hr))
     {
         // Verify the pin number is in range.
-		if (!_pinNumberIsSafe(pin))
+		if (!pinNumberIsSafe(pin))
 		{
 			hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
 		}
@@ -1034,7 +1038,7 @@ HRESULT BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
         hr = _verifyBoardType();
     }
 
-    if (SUCCEEDED(hr) && !_pinNumberIsSafe(pin))
+    if (SUCCEEDED(hr) && !pinNumberIsSafe(pin))
     {
 		hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
     }
@@ -1364,7 +1368,7 @@ HRESULT BoardPinsClass::setPinState(ULONG pin, ULONG state)
         hr = _verifyBoardType();
     }
 
-    if (SUCCEEDED(hr) && !_pinNumberIsSafe(pin))
+    if (SUCCEEDED(hr) && !pinNumberIsSafe(pin))
     {
         hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
     }
@@ -1427,7 +1431,7 @@ HRESULT BoardPinsClass::getPinState(ULONG pin, ULONG & state)
 
     hr = _verifyBoardType();
 
-    if (SUCCEEDED(hr) && !_pinNumberIsSafe(pin))
+    if (SUCCEEDED(hr) && !pinNumberIsSafe(pin))
     {
 		hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
     }

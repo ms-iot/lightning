@@ -259,28 +259,53 @@ inline int analogRead(int pin)
     ULONG value;
     ULONG bits;
     ULONG ioPin;
+    BoardPinsClass::BOARD_TYPE board;
 
-    // Translate the pin number passed in to a Galileo GPIO Pin number.
-    if ((pin >= 0) && (pin < NUM_ANALOG_PINS))
+    hr = g_pins.getBoardType(board);
+    if (FAILED(hr))
     {
-        ioPin = A0 + pin;
-    }
-    else if ((pin >= A0) && (pin <= A5))
-    {
-        ioPin = pin;
-    }
-    else
-    {
-        ThrowError("Pin: %d is not an analog input pin.", pin);
+        ThrowError("Error getting board type.  Error: 0x%08x", hr);
     }
 
-	hr = g_pins.verifyPinFunction(ioPin, FUNC_AIN, BoardPinsClass::NO_LOCK_CHANGE);
-
-	if (FAILED(hr))
+    switch (board)
     {
-        ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, hr);
+    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
+    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
+    case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
+        // Translate the pin number passed in to a Galileo GPIO Pin number.
+        if ((pin >= 0) && (pin < NUM_ANALOG_PINS))
+        {
+            ioPin = A0 + pin;
+        }
+        else
+        {
+            ioPin = pin;
+        }
+ 
+        // Make sure the pin is configured as an analog input.
+        hr = g_pins.verifyPinFunction(ioPin, FUNC_AIN, BoardPinsClass::NO_LOCK_CHANGE);
+
+        // If we failed to set the pin as an analog input and it is in the range of board pins.
+        if (FAILED(hr))
+        {
+            ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, hr);
+        }
+        break;
+
+    case BoardPinsClass::BOARD_TYPE::MBM_BARE:
+    case BoardPinsClass::BOARD_TYPE::PI2_BARE:
+        // Translate the pin number to a fake pin number.
+        if (pin < A0)
+        {
+            ioPin = A0 + pin;
+        }
+        break;
+
+    default:
+        ThrowError("Unrecognized board type: 0x%08x", board);
     }
 
+    // Perform the read.
 	hr = g_adc.readValue(ioPin, value, bits);
 
 	if (FAILED(hr))

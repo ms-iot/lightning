@@ -46,12 +46,15 @@ const UCHAR D10 = 10;
 const UCHAR D11 = 11;
 const UCHAR D12 = 12;
 const UCHAR D13 = 13;
+
 const UCHAR A0 = 14;
 const UCHAR A1 = 15;
 const UCHAR A2 = 16;
 const UCHAR A3 = 17;
 const UCHAR A4 = 18;
 const UCHAR A5 = 19;
+const UCHAR A6 = 20;
+const UCHAR A7 = 21;
 
 // SPI signal to pin mapping for Arduino compatible pin configuration.
 const UCHAR ARDUINO_PIN_MOSI = D11;     ///< Pin used for Galileo SPI MOSI signal
