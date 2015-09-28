@@ -258,7 +258,7 @@ inline HRESULT BcmSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, U
             do { cs.ALL_BITS = m_registers->CS.ALL_BITS; } while (cs.RXD == 0);
 
             // Read the received data.
-            dataIn = dataIn | (m_registers->FIFO.ALL_BITS & 0x000000FF);
+            dataIn = (dataIn << 8) | (m_registers->FIFO.ALL_BITS & 0x000000FF);
 
             bytesRemaining--;
         }

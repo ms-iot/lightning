@@ -163,7 +163,7 @@ public:
         }
         else
         {
-            dataIn = tmpData & 0xFFFF;
+            dataIn = tmpData & 0xFFFFFF;
         }
 
         return hr;
