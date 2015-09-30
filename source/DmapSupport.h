@@ -43,12 +43,12 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 /// Routine to close a controller that has previously been opened.
 void DmapCloseController(HANDLE & handle);
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	//	If building a Win32 app:
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// Routine to open a controller device in the SOC.
 HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode);
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
-#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)	// If building a UWP app.
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)  // If building a UWP app.
 HRESULT GetControllerLock(HANDLE & handle);
 HRESULT ReleaseControllerLock(HANDLE & handle);
 #endif

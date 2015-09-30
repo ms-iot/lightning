@@ -185,11 +185,11 @@ private:
     // Method to shut down the I2C Controller after a transaction is done with it.
     HRESULT _shutDownI2cAfterTransaction();
 
-	/// Method to acquire the I2C Controller lock for this transaction.
-	HRESULT _acquireI2cLock();
+    /// Method to acquire the I2C Controller lock for this transaction.
+    HRESULT _acquireI2cLock();
 
-	/// Method to release this transaction's lock on the I2C Controller.
-	HRESULT _releaseI2cLock();
+    /// Method to release this transaction's lock on the I2C Controller.
+    HRESULT _releaseI2cLock();
 };
 
 #endif // _I2C_TRANSACTION_H_

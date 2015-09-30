@@ -154,7 +154,7 @@ HRESULT BtI2cControllerClass::_mapController()
             deviceName = mbmI2cDeviceName;
             break;
         default:
-			hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
+            hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
         }
     }
 
@@ -164,8 +164,8 @@ HRESULT BtI2cControllerClass::_mapController()
                                           m_hController,
                                           baseAddress,
                                           FILE_SHARE_READ | FILE_SHARE_WRITE);
-		if (SUCCEEDED(hr))
-		{
+        if (SUCCEEDED(hr))
+        {
             m_registers = (PI2C_CONTROLLER)baseAddress;
         }
     }

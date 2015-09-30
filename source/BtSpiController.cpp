@@ -135,7 +135,7 @@ HRESULT BtSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz,
         {
             // Open the Dmap device for the SPI controller.
             hr = GetControllerBaseAddress(deviceName, m_hController, baseAddress);
-			if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr))
             {
                 m_registers = (PSPI_CONTROLLER)baseAddress;
                 m_registersUpper = (PSPI_CONTROLLER_UPPER)(((PBYTE)baseAddress) + SPI_CONTROLLER_UPPER_OFFSET);
@@ -217,7 +217,7 @@ HRESULT BtSpiControllerClass::setMode(ULONG mode)
     // If we don't have the controller registers mapped, fail.
     if (m_registers == nullptr)
     {
-		hr = DMAP_E_DMAP_INTERNAL_ERROR;
+        hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
     if (SUCCEEDED(hr))

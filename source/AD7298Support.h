@@ -73,7 +73,7 @@ public:
         // Make sure the channel number is in range.
         if (channel >= ADC_CHANNELS)
         {
-			hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
+            hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
         }
 
         //
@@ -89,7 +89,7 @@ public:
 
             hr = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
             
-			if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr))
             {
                 // Write the ADC command register.
                 hr = m_spi.transfer16(dataOut, dataIn);
@@ -107,7 +107,7 @@ public:
 
             hr = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
             
-			if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr))
             {
                 // Write the ADC command register.
                 hr = m_spi.transfer16(dataOut, dataIn);
@@ -131,7 +131,7 @@ public:
 
             hr = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
             
-			if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr))
             {
                 // Send the channel information to the ADC.
                 hr = m_spi.transfer16(dataOut, dataIn);
@@ -150,7 +150,7 @@ public:
             dataOut = 0;
             hr = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
             
-			if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr))
             {
                 hr = m_spi.transfer16(dataOut, dataIn);
                 
@@ -172,7 +172,7 @@ public:
 
             hr = g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);  // Make ADC chip select active
             
-			if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr))
             {
                 // Write the ADC command register and shift out the conversion result.
                 hr = m_spi.transfer16(dataOut, dataIn);

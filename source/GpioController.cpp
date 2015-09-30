@@ -37,7 +37,7 @@ HRESULT QuarkFabricGpioControllerClass::_mapController()
 HRESULT BtFabricGpioControllerClass::_mapS0Controller()
 {
     HRESULT hr = S_OK;
-	PVOID baseAddress = nullptr;
+    PVOID baseAddress = nullptr;
 
     hr = GetControllerBaseAddress(
         mbmGpioS0DeviceName,
@@ -45,7 +45,7 @@ HRESULT BtFabricGpioControllerClass::_mapS0Controller()
         baseAddress,
         FILE_SHARE_READ | FILE_SHARE_WRITE);
 
-	if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr))
     {
         m_s0Controller = (PGPIO_PAD)baseAddress;
     }
@@ -70,8 +70,8 @@ HRESULT BtFabricGpioControllerClass::_mapS5Controller()
         baseAddress,
         FILE_SHARE_READ | FILE_SHARE_WRITE);
 
-	if (SUCCEEDED(hr))
-	{
+    if (SUCCEEDED(hr))
+    {
         m_s5Controller = (PGPIO_PAD)baseAddress;
     }
 

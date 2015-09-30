@@ -50,11 +50,11 @@ public:
     /// Method to begin use of the I2C bus by the code using this library.
     void begin()
     {
-		HRESULT hr;
+        HRESULT hr;
 
         hr = g_i2c.begin();
 
-		if (FAILED(hr))
+        if (FAILED(hr))
         {
             ThrowError("Error beginning I2C use: %08x", hr);
         }
@@ -120,7 +120,7 @@ public:
     */
     ULONG endTransmission(BOOL sendStop)
     {
-		HRESULT hr;
+        HRESULT hr;
 
         ULONG retVal = SUCCESS;
 
@@ -131,9 +131,9 @@ public:
         m_writeBuff.clear();
 
         // Queue a write from the buffer.
-		hr = m_i2cTransaction.queueWrite(m_writeBuffs.back().data(), (ULONG)m_writeBuffs.back().size());
+        hr = m_i2cTransaction.queueWrite(m_writeBuffs.back().data(), (ULONG)m_writeBuffs.back().size());
 
-		if (FAILED(hr))
+        if (FAILED(hr))
         {
             _cleanTransaction();
             ThrowError("An error occurred queueing an I2C write of %d bytes.  Error: 0x%08X", m_writeBuffs.back().size(), hr);
@@ -142,9 +142,9 @@ public:
         // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-			hr = m_i2cTransaction.execute(g_i2c.getController());
+            hr = m_i2cTransaction.execute(g_i2c.getController());
 
-			if (FAILED(hr))
+            if (FAILED(hr))
             {
                 if (m_i2cTransaction.getError() == I2cTransactionClass::ERROR_CODE::ADR_NACK)
                 {
@@ -205,7 +205,7 @@ public:
     */
     ULONG requestFrom(ULONG address, ULONG quantity, BOOL sendStop)
     {
-		HRESULT hr;
+        HRESULT hr;
 
         if (quantity == 0)
         {
@@ -221,9 +221,9 @@ public:
         m_readBuffs.push_back(newBuf);
 
         // Queue a read into the buffer.
-		hr = m_i2cTransaction.queueRead(m_readBuffs.back().data(), quantity);
+        hr = m_i2cTransaction.queueRead(m_readBuffs.back().data(), quantity);
 
-		if (FAILED(hr))
+        if (FAILED(hr))
         {
             _cleanTransaction();
             ThrowError("An error occurred queueing an I2C read of %d bytes to address: 0x%02X.  Error: 0x%08X", quantity, address, hr);
@@ -232,9 +232,9 @@ public:
         // Perform all queued transfers if a STOP was specified.
         if (sendStop)
         {
-			hr = m_i2cTransaction.execute(g_i2c.getController());
+            hr = m_i2cTransaction.execute(g_i2c.getController());
 
-			if (FAILED(hr))
+            if (FAILED(hr))
             {
                 _cleanTransaction();
                 ThrowError("Error encountered performing queued I2C transfers to address: 0x%02X, Error: 0x%08X", address, hr);
@@ -262,7 +262,7 @@ public:
     */
     void _setSlaveAddress(ULONG address)
     {
-		HRESULT hr;
+        HRESULT hr;
 
         if (address != m_i2cTransaction.getAddress())
         {
@@ -273,9 +273,9 @@ public:
             }
             m_i2cTransaction.reset();
             m_writeBuffs.clear();
-			hr = m_i2cTransaction.setAddress(address);
+            hr = m_i2cTransaction.setAddress(address);
 
-			if (FAILED(hr))
+            if (FAILED(hr))
             {
                 _cleanTransaction();
                 ThrowError("Error encountered setting I2C address: 0x%02X, Error: 0x%08X", address, hr);

@@ -23,10 +23,10 @@ public:
     /// Destructor.
     virtual ~AdcClass()
     {
-		if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
-		{
-			m_ikaLureAdc.end();
-		}
+        if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+        {
+            m_ikaLureAdc.end();
+        }
         else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_BARE)
         {
             m_addOnAdc.end();
@@ -36,7 +36,7 @@ public:
             m_addOnAdc.end();
         }
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-		else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
+        else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
         {
             m_gen2Adc.end();
         }
@@ -45,7 +45,7 @@ public:
             m_gen1Adc.end();
         }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-	}
+    }
 
     /// Take a reading with the ADC on the board.
     /**
@@ -73,10 +73,10 @@ public:
  
         if (SUCCEEDED(hr))
         {
-			if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
-			{
+            if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+            {
                 hr = m_ikaLureAdc.readValue(channel, value, bits);
-			}
+            }
             else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_BARE)
             {
                 hr = m_addOnAdc.readValue(channel, value, bits);
@@ -86,16 +86,16 @@ public:
                 hr = m_addOnAdc.readValue(channel, value, bits);
             }
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-			else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
-			{
+            else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
+            {
                 hr = m_gen2Adc.readValue(channel, value, bits);
-			}
-			else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
-			{
+            }
+            else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
+            {
                 hr = m_gen1Adc.readValue(channel, value, bits);
-			}
+            }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-		}
+        }
         
         return hr;
     }
@@ -131,10 +131,10 @@ private:
             
             if (SUCCEEDED(hr))
             {
-				if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
-				{
-					hr = m_ikaLureAdc.begin();
-				}
+                if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+                {
+                    hr = m_ikaLureAdc.begin();
+                }
                 else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_BARE)
                 {
                     hr = m_addOnAdc.begin();
@@ -144,25 +144,25 @@ private:
                     hr = m_addOnAdc.begin();
                 }
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-				else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
-				{
-					hr = m_gen2Adc.begin();
+                else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
+                {
+                    hr = m_gen2Adc.begin();
 
-				}
-				else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
-				{
-					hr = m_gen1Adc.begin();
+                }
+                else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
+                {
+                    hr = m_gen1Adc.begin();
 
-				}
+                }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-				else
-				{
-					// If we have an unrecognized board or one that does not support ADC,
-					// indicate ADC is uninitialized.
-					m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
-				}
-			}
-		}
+                else
+                {
+                    // If we have an unrecognized board or one that does not support ADC,
+                    // indicate ADC is uninitialized.
+                    m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
+                }
+            }
+        }
 
         
         return hr;

@@ -56,6 +56,24 @@ const UCHAR A5 = 19;
 const UCHAR A6 = 20;
 const UCHAR A7 = 21;
 
+// Pseudo pin numbers used PWM "pins" on off-board PWM chips.
+const UCHAR PWM0 = 50;
+const UCHAR PWM1 = 51;
+const UCHAR PWM2 = 52;
+const UCHAR PWM3 = 53;
+const UCHAR PWM4 = 54;
+const UCHAR PWM5 = 55;
+const UCHAR PWM6 = 56;
+const UCHAR PWM7 = 57;
+const UCHAR PWM8 = 58;
+const UCHAR PWM9 = 59;
+const UCHAR PWM10 = 60;
+const UCHAR PWM11 = 61;
+const UCHAR PWM12 = 62;
+const UCHAR PWM13 = 63;
+const UCHAR PWM14 = 64;
+const UCHAR PWM15 = 65;
+
 // SPI signal to pin mapping for Arduino compatible pin configuration.
 const UCHAR ARDUINO_PIN_MOSI = D11;     ///< Pin used for Galileo SPI MOSI signal
 const UCHAR ARDUINO_PIN_MISO = D12;     ///< Pin used for Galileo SPI MISO signal

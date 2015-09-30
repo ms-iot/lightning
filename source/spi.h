@@ -59,12 +59,12 @@ public:
     */
     void begin()
     {
-		HRESULT hr;
+        HRESULT hr;
         BoardPinsClass::BOARD_TYPE board;
 
-		hr = g_pins.getBoardType(board);
+        hr = g_pins.getBoardType(board);
 
-		if (FAILED(hr))
+        if (FAILED(hr))
         {
             ThrowError("An error occurred determining board type: %08x", hr);
         }
@@ -105,9 +105,9 @@ public:
         }
 
         // Map the SPI1 controller registers into memory.
-		hr = m_controller->begin(EXTERNAL_SPI_BUS, m_mode, m_clockKHz, m_dataWidth);
+        hr = m_controller->begin(EXTERNAL_SPI_BUS, m_mode, m_clockKHz, m_dataWidth);
 
-		if (FAILED(hr))
+        if (FAILED(hr))
         {
             ThrowError("An error occurred initializing the SPI controller: %08x", hr);
         }
@@ -119,7 +119,7 @@ public:
     */
     void end()
     {
-		HRESULT hr;
+        HRESULT hr;
 
         if (m_controller != nullptr)
         {
@@ -190,15 +190,15 @@ public:
     */
     void setClockDivider(ULONG clockKHz)
     {
-		HRESULT hr;
+        HRESULT hr;
 
         m_clockKHz = clockKHz;
 
         if (m_controller != nullptr)
         {
-			hr = m_controller->setClock(clockKHz);
+            hr = m_controller->setClock(clockKHz);
 
-			if (FAILED(hr))
+            if (FAILED(hr))
             {
                 ThrowError("An error occurred setting the SPI clock rate: %d", hr);
             }
@@ -213,7 +213,7 @@ public:
     */
     void setDataMode(UINT mode)
     {
-		HRESULT hr;
+        HRESULT hr;
 
         if ((mode != SPI_MODE0) && (mode != SPI_MODE1) && (mode != SPI_MODE2) && (mode != SPI_MODE3))
         {
@@ -223,9 +223,9 @@ public:
 
         if (m_controller != nullptr)
         {
-			hr = m_controller->setMode(mode);
+            hr = m_controller->setMode(mode);
 
-			if (FAILED(hr))
+            if (FAILED(hr))
             {
                 ThrowError("An error occurred setting the SPI mode: %d", hr);
             }

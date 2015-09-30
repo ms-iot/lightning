@@ -90,7 +90,7 @@ public:
             configH.MUX = ANI3;
             break;
         default:
-			hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
+            hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
         }
 
         if (SUCCEEDED(hr))
@@ -144,7 +144,7 @@ public:
             
         }
 
-		while (SUCCEEDED(hr) && !conversionDone)
+        while (SUCCEEDED(hr) && !conversionDone)
         {
             hr = transaction.execute(g_i2c.getController());
             

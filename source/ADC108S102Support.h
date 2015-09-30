@@ -70,7 +70,7 @@ public:
         // Make sure the channel number is in range.
         if (channel >= ADC_CHANNELS)
         {
-			hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
+            hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
         }
 
         if (SUCCEEDED(hr))
@@ -81,7 +81,7 @@ public:
             // Perform a conversion and get the result.
             g_quarkFabricGpio.setPinState(m_csFabricBit, LOW);       // Make ADC chip select active
             
-			if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr))
             {
                 hr = m_spi.transfer32(dataOut, dataIn);
                 

@@ -112,7 +112,7 @@ HRESULT BcmSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz
         {
             // Open the Dmap device for the SPI controller for exclusive access.
             hr = GetControllerBaseAddress(deviceName, m_hController, baseAddress);
-			if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr))
             {
                 m_registers = (PSPI_CONTROLLER)baseAddress;
             }

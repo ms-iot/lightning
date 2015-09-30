@@ -128,7 +128,7 @@ public:
         // Make sure the channel number is in range.
         if (channel >= ADC_CHANNELS)
         {
-			hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
+            hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
         }
 
         if (SUCCEEDED(hr))

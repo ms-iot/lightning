@@ -129,7 +129,7 @@ HRESULT QuarkSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockK
             deviceName = galileoSpi1DeviceName;
             break;
         default:    // Only support the two SPI busses
-			hr = DMAP_E_SPI_BUS_REQUESTED_DOES_NOT_EXIST;
+            hr = DMAP_E_SPI_BUS_REQUESTED_DOES_NOT_EXIST;
         }
 
         if (SUCCEEDED(hr))
@@ -137,8 +137,8 @@ HRESULT QuarkSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockK
             // Open the Dmap device for the SPI controller.
             hr = GetControllerBaseAddress(deviceName, m_hController, baseAddress);
 
-			if (SUCCEEDED(hr))
-			{
+            if (SUCCEEDED(hr))
+            {
                 m_registers = (PSPI_CONTROLLER)baseAddress;
             }
         }
@@ -153,11 +153,11 @@ HRESULT QuarkSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockK
 
             m_registers->SSSR.ROR = 1;                    // Clear any RX Overrun Status bit currently set
 
-			hr = setMode(mode);
+            hr = setMode(mode);
         }
         if (SUCCEEDED(hr))
         {
-			hr = setClock(clockKhz);
+            hr = setClock(clockKhz);
         }
     }
 

@@ -20,31 +20,31 @@
 // 
 
 /// A pin is already locked for use for a function that conflicts with the use requested.
-#define DMAP_E_PIN_FUNCTION_LOCKED 0x80040210
+#define DMAP_E_PIN_FUNCTION_LOCKED 0x80040201
 
 /// A pin number was specified that is beyond the range of pins supported by the board.
-#define DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD 0x80040211
+#define DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD 0x80040202
 
 /// A function has been requested on a pin that does not support that function.
-#define DMAP_E_FUNCTION_NOT_SUPPORTED_ON_PIN 0x80040212
+#define DMAP_E_FUNCTION_NOT_SUPPORTED_ON_PIN 0x80040203
 
 /// A pin direction was specified that was neither INPUT nor OUPUT.
-#define DMAP_E_INVALID_PIN_DIRECTION 0x80040213
+#define DMAP_E_INVALID_PIN_DIRECTION 0x80040204
 
 /// An internal inconsistency in the DMap code has been found.
-#define DMAP_E_DMAP_INTERNAL_ERROR 0x80040214
+#define DMAP_E_DMAP_INTERNAL_ERROR 0x80040205
 
 /// A desited state for a pin was specified that was neither HIGH nor LOW.
-#define DMAP_E_INVALID_PIN_STATE_SPECIFIED 0x80040215
+#define DMAP_E_INVALID_PIN_STATE_SPECIFIED 0x80040206
 
 /// The board type could not be determined.
-#define DMAP_E_BOARD_TYPE_NOT_RECOGNIZED 0x80040216
+#define DMAP_E_BOARD_TYPE_NOT_RECOGNIZED 0x80040207
 
 /// An invalid board type was specified.
-#define DMAP_E_INVALID_BOARD_TYPE_SPECIFIED 0x80040217
+#define DMAP_E_INVALID_BOARD_TYPE_SPECIFIED 0x80040208
 
 /// The port/bit specified does not exist on the device.
-#define DMAP_E_INVALID_PORT_BIT_FOR_DEVICE 0x80040218
+#define DMAP_E_INVALID_PORT_BIT_FOR_DEVICE 0x80040209
 
 //
 // DMap driver related error codes.

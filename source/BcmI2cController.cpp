@@ -184,19 +184,20 @@ HRESULT BcmI2cControllerClass::_performContiguousTransfers(I2cTransferClass* & p
         {
             // If the next transfer is a write, determine if it has a following read.
             tmpXfr = cmdXfr->getNextTransfer();
-            while ((tmpXfr != nullptr) && !tmpXfr->hasCallback() && !tmpXfr->transferIsRead())
+            while ((tmpXfr != nullptr) && !tmpXfr->hasCallback() && !tmpXfr->transferIsRead() && !tmpXfr->preResart())
             {
                 tmpXfr = tmpXfr->getNextTransfer();
             }
 
-            if (tmpXfr == nullptr || tmpXfr->hasCallback())
+            if (tmpXfr == nullptr || tmpXfr->hasCallback() || (tmpXfr->preResart() && !tmpXfr->transferIsRead()))
             {
-                // If the writes end with transaction end, or callback, they are a simple write.
+                // If the write ends with transaction end, or callback, or transfer with a 
+                // pre-restart (that is not also a read transfer) it is a simple write.
                 hr = _performWrites(cmdXfr);
             }
             else
             {
-                // If the writes are followed by a read, do Write-Restart-Read sequence.
+                // If the write is followed by a read, do Write-Restart-Read sequence.
                 hr = _performWriteRead(cmdXfr);
             }
         }
@@ -221,11 +222,17 @@ HRESULT BcmI2cControllerClass::_performWrites(I2cTransferClass* & pXfr)
 
 
     // Calculate the total number of bytes we will be writing in this set of transfers.
-    // The set of transfers can end at end of transaction or callback.  We know it is not 
-    // ended by a read transfer because that would be Write-Restart-Ready transfer type.
+    // The set of transfers can end at end of transaction or callback, or a transfer that
+    // specifies a pre-restart.  We know it is not ended by a read transfer because that 
+    // would be Write-Restart-Read transfer type.
     cmdXfr = pXfr;
     tmpXfr = cmdXfr;
-    while ((tmpXfr != nullptr) && !tmpXfr->hasCallback())
+    if (tmpXfr != nullptr)
+    {
+        cmdsOutstanding += tmpXfr->getBufferSize();
+        tmpXfr = tmpXfr->getNextTransfer();
+    }
+    while ((tmpXfr != nullptr) && !tmpXfr->hasCallback() && !tmpXfr->preResart())
     {
         cmdsOutstanding += tmpXfr->getBufferSize();
         tmpXfr = tmpXfr->getNextTransfer();
@@ -344,8 +351,14 @@ HRESULT BcmI2cControllerClass::_performReads(I2cTransferClass* & pXfr)
     readXfr = pXfr;
     tmpXfr = readXfr;
     readXfr->resetCmd();
-    // The set of transfers can end with transaction, callback, or a write transfer.
-    while ((tmpXfr != nullptr) && !tmpXfr->hasCallback() && tmpXfr->transferIsRead())
+    // The set of transfers can end with transaction, callback, a write transfer, or
+    // a transfer that specifies a pre-restart.
+    if (tmpXfr != nullptr)
+    {
+        cmdsOutstanding += tmpXfr->getBufferSize();
+        tmpXfr = tmpXfr->getNextTransfer();
+    }
+    while ((tmpXfr != nullptr) && !tmpXfr->hasCallback() && tmpXfr->transferIsRead() && !tmpXfr->preResart())
     {
         cmdsOutstanding += tmpXfr->getBufferSize();
         tmpXfr = tmpXfr->getNextTransfer();
@@ -480,7 +493,12 @@ HRESULT BcmI2cControllerClass::_performWriteRead(I2cTransferClass* & pXfr)
     }
 
     // Calculate the number of bytes to read during the 2nd part of the sequence.
-    while ((tmpXfr != nullptr) && tmpXfr->transferIsRead() && !tmpXfr->hasCallback())
+    if (tmpXfr != nullptr)
+    {
+        readsOutstanding += tmpXfr->getBufferSize();
+        tmpXfr = tmpXfr->getNextTransfer();
+    }
+    while ((tmpXfr != nullptr) && tmpXfr->transferIsRead() && !tmpXfr->hasCallback() && !tmpXfr->preResart())
     {
         readsOutstanding += tmpXfr->getBufferSize();
         tmpXfr = tmpXfr->getNextTransfer();
