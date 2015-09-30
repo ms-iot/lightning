@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>ARDUINO=100;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include\avr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include\avr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>embprpusr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MSBuildThisFileDirectory)\lib;</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\eeprom.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\Servo.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\HardwareSerial.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\NetworkSerial.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\PulseIn.cpp" />    
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\WInterrupt.cpp" />    
+    <ClCompile Include="$(MSBuildThisFileDirectory)\Source\arduino.cpp" />    
+  </ItemGroup>
+</Project>
