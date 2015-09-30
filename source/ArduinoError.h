@@ -16,14 +16,14 @@
 class _arduino_fatal_error : public std::runtime_error
 {
 public:
-	typedef std::runtime_error _Mybase;
+    typedef std::runtime_error _Mybase;
 
     /// \brief The error constructor
     /// \param [in] message A contextual message used to help diagnose the error
-	explicit _arduino_fatal_error(const char *_Message)
-		: _Mybase(_Message)
-	{    // construct from message string
-	}
+    explicit _arduino_fatal_error(const char *_Message)
+        : _Mybase(_Message)
+    {    // construct from message string
+    }
 };
 
 /// \brief An exception used to exit the Arduino loop
@@ -37,7 +37,7 @@ class _arduino_quit_exception : public std::exception { };
 /// for stack unwinding and deconstructors to to be called.
 inline void _exit_arduino_loop()
 {
-	throw _arduino_quit_exception();
+    throw _arduino_quit_exception();
 }
 
 /// \brief A wrapper function for _arduino_fatal_error
@@ -50,49 +50,49 @@ inline void ThrowError(_In_ _Printf_format_string_ STRSAFE_LPCSTR pszFormat, ...
 {
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-	HRESULT hr;
-	char buf[BUFSIZ];
+    HRESULT hr;
+    char buf[BUFSIZ];
 
-	va_list argList;
+    va_list argList;
 
-	va_start(argList, pszFormat);
+    va_start(argList, pszFormat);
 
-	hr = StringCbVPrintfA(buf,
-		ARRAYSIZE(buf),
-		pszFormat,
-		argList);
+    hr = StringCbVPrintfA(buf,
+        ARRAYSIZE(buf),
+        pszFormat,
+        argList);
 
-	va_end(argList);
+    va_end(argList);
 
-	if (SUCCEEDED(hr))
-	{
-		throw _arduino_fatal_error(buf);
-	}
-	else
-	{
-		throw _arduino_fatal_error("StringCbVPrintfA() failed while attempting to print exception message");
-	}
+    if (SUCCEEDED(hr))
+    {
+        throw _arduino_fatal_error(buf);
+    }
+    else
+    {
+        throw _arduino_fatal_error("StringCbVPrintfA() failed while attempting to print exception message");
+    }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
-	int result;
-	char buf[BUFSIZ];
-	va_list argList;
+    int result;
+    char buf[BUFSIZ];
+    va_list argList;
 
-	va_start(argList, pszFormat);
+    va_start(argList, pszFormat);
 
-	result = vsprintf_s(buf, BUFSIZ, pszFormat, argList);
+    result = vsprintf_s(buf, BUFSIZ, pszFormat, argList);
 
-	va_end(argList);
+    va_end(argList);
 
-	if (result > 0)
-	{
-		throw _arduino_fatal_error(buf);
-	}
-	else
-	{
-		throw _arduino_fatal_error("vsprintf_s() failed while attempting to print exception message");
-	}
+    if (result > 0)
+    {
+        throw _arduino_fatal_error(buf);
+    }
+    else
+    {
+        throw _arduino_fatal_error("vsprintf_s() failed while attempting to print exception message");
+    }
 #endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 }

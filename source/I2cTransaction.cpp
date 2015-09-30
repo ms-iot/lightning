@@ -186,10 +186,10 @@ HRESULT I2cTransactionClass::execute(I2cControllerClass* controller)
     I2cTransferClass* pReadXfr = nullptr;
     DWORD lockResult = 0;
     BOOL haveLock = FALSE;
-	
-	// Get the I2C Controller mapped if it is not mapped yet.
+    
+    // Get the I2C Controller mapped if it is not mapped yet.
     m_controller = controller;
-	hr = m_controller->mapIfNeeded();
+    hr = m_controller->mapIfNeeded();
 
     if (SUCCEEDED(hr))
     {
@@ -198,32 +198,32 @@ HRESULT I2cTransactionClass::execute(I2cControllerClass* controller)
 
     if (SUCCEEDED(hr))
     {
-		// Lock the I2C bus for access exclusively by this transaction.
-		hr = _acquireI2cLock();
+        // Lock the I2C bus for access exclusively by this transaction.
+        hr = _acquireI2cLock();
     }
 
-	// If we have the I2C bus locked:
+    // If we have the I2C bus locked:
     if (SUCCEEDED(hr))
     {
-		// Initialize the controller.
-		hr = m_controller->_initializeForTransaction(m_slaveAddress, m_useHighSpeed);
+        // Initialize the controller.
+        hr = m_controller->_initializeForTransaction(m_slaveAddress, m_useHighSpeed);
 
-		if (SUCCEEDED(hr))
-		{
-			// Process each transfer on the queue.
-			hr = _processTransfers();
-		}
+        if (SUCCEEDED(hr))
+        {
+            // Process each transfer on the queue.
+            hr = _processTransfers();
+        }
 
-		if (SUCCEEDED(hr))
-		{
-			// Shut down the controller.
-			hr = _shutDownI2cAfterTransaction();
-		}
+        if (SUCCEEDED(hr))
+        {
+            // Shut down the controller.
+            hr = _shutDownI2cAfterTransaction();
+        }
 
-		// Release the I2C lock, ignoring any error returned because it is likely
-		// we already have an error that we don't want to cover up.
-		_releaseI2cLock();
-	}
+        // Release the I2C lock, ignoring any error returned because it is likely
+        // we already have an error that we don't want to cover up.
+        _releaseI2cLock();
+    }
 
     return hr;
 }
@@ -319,51 +319,51 @@ done before the lock is acquired to execute the I2C transaction.
 */
 HRESULT I2cTransactionClass::_acquireI2cLock()
 {
-	HRESULT hr = S_OK;
+    HRESULT hr = S_OK;
 
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
-	if (m_hI2cLock == INVALID_HANDLE_VALUE)
-	{
-		hr = DMAP_E_INVALID_LOCK_HANDLE_SPECIFIED;
-	}
+    if (m_hI2cLock == INVALID_HANDLE_VALUE)
+    {
+        hr = DMAP_E_INVALID_LOCK_HANDLE_SPECIFIED;
+    }
 
-	if (SUCCEEDED(hr))
-	{
-		hr = GetControllerLock(m_hI2cLock);
-	}
+    if (SUCCEEDED(hr))
+    {
+        hr = GetControllerLock(m_hI2cLock);
+    }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-	if (m_hI2cLock == INVALID_HANDLE_VALUE)
-	{
-		m_hI2cLock = CreateMutex(NULL, FALSE, L"Global\\I2c_Controller_Mutex");
-		if (m_hI2cLock == NULL)
-		{
-			m_hI2cLock = INVALID_HANDLE_VALUE;
-			hr = HRESULT_FROM_WIN32(GetLastError());
-		}
-	}
+    if (m_hI2cLock == INVALID_HANDLE_VALUE)
+    {
+        m_hI2cLock = CreateMutex(NULL, FALSE, L"Global\\I2c_Controller_Mutex");
+        if (m_hI2cLock == NULL)
+        {
+            m_hI2cLock = INVALID_HANDLE_VALUE;
+            hr = HRESULT_FROM_WIN32(GetLastError());
+        }
+    }
 
-	if (SUCCEEDED(hr))
-	{
-		// Claim the I2C controller.
-		lockResult = WaitForSingleObject(m_hI2cLock, 5000);
-		if ((lockResult == WAIT_OBJECT_0) || (lockResult == WAIT_ABANDONED))
-		{
-			haveLock = TRUE;
-		}
-		else if (lockResult == WAIT_TIMEOUT)
-		{
-			hr = DMAP_E_I2C_BUS_LOCK_TIMEOUT;
-		}
-		else
-		{
-			hr = HRESULT_FROM_WIN32(GetLastError());
-		}
-	}
+    if (SUCCEEDED(hr))
+    {
+        // Claim the I2C controller.
+        lockResult = WaitForSingleObject(m_hI2cLock, 5000);
+        if ((lockResult == WAIT_OBJECT_0) || (lockResult == WAIT_ABANDONED))
+        {
+            haveLock = TRUE;
+        }
+        else if (lockResult == WAIT_TIMEOUT)
+        {
+            hr = DMAP_E_I2C_BUS_LOCK_TIMEOUT;
+        }
+        else
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+        }
+    }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
-	return hr;
+    return hr;
 }
 
 /**
@@ -373,23 +373,23 @@ on the m_hI2cLock handle for this transaction.
 */
 HRESULT I2cTransactionClass::_releaseI2cLock()
 {
-	HRESULT hr = S_OK;
+    HRESULT hr = S_OK;
 
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
-	if (m_hI2cLock == INVALID_HANDLE_VALUE)
-	{
-		hr = DMAP_E_INVALID_LOCK_HANDLE_SPECIFIED;
-	}
+    if (m_hI2cLock == INVALID_HANDLE_VALUE)
+    {
+        hr = DMAP_E_INVALID_LOCK_HANDLE_SPECIFIED;
+    }
 
-	if (SUCCEEDED(hr))
-	{
-		hr = ReleaseControllerLock(m_hI2cLock);
-	}
+    if (SUCCEEDED(hr))
+    {
+        hr = ReleaseControllerLock(m_hI2cLock);
+    }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-	ReleaseMutex(m_hI2cLock);
+    ReleaseMutex(m_hI2cLock);
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
-	return hr;
+    return hr;
 }

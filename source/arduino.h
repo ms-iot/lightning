@@ -187,11 +187,11 @@ inline bool _IsAnalogPin(int num)
 //
 inline void digitalWrite(unsigned int pin, unsigned int state)
 {
-	HRESULT hr;
+    HRESULT hr;
 
-	hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
+    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
 
-	if (FAILED(hr))
+    if (FAILED(hr))
     {
         ThrowError("Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
     }
@@ -203,8 +203,8 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
         state = HIGH;
     }
 
-	hr = g_pins.setPinState(pin, state);
-	if (FAILED(hr))
+    hr = g_pins.setPinState(pin, state);
+    if (FAILED(hr))
     {
         ThrowError("Error occurred setting pin: %d to state: %d, Error: %08x", pin, state, hr);
     }
@@ -225,15 +225,15 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
 //
 inline int digitalRead(int pin)
 {
-	HRESULT hr;
+    HRESULT hr;
     ULONG readData = 0;
 
-	hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
-	if (SUCCEEDED(hr))
-	{
-		hr = g_pins.getPinState(pin, readData);
-	}
-	if (FAILED(hr))
+    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
+    if (SUCCEEDED(hr))
+    {
+        hr = g_pins.getPinState(pin, readData);
+    }
+    if (FAILED(hr))
     {
         // On error return LOW per docs.
         readData = LOW;
@@ -255,35 +255,60 @@ analogReadResolution() API.  By default ten bits are returned (0-1023 for 0-5v p
 */
 inline int analogRead(int pin)
 {
-	HRESULT hr;
+    HRESULT hr;
     ULONG value;
     ULONG bits;
     ULONG ioPin;
+    BoardPinsClass::BOARD_TYPE board;
 
-    // Translate the pin number passed in to a Galileo GPIO Pin number.
-    if ((pin >= 0) && (pin < NUM_ANALOG_PINS))
+    hr = g_pins.getBoardType(board);
+    if (FAILED(hr))
     {
-        ioPin = A0 + pin;
-    }
-    else if ((pin >= A0) && (pin <= A5))
-    {
-        ioPin = pin;
-    }
-    else
-    {
-        ThrowError("Pin: %d is not an analog input pin.", pin);
+        ThrowError("Error getting board type.  Error: 0x%08x", hr);
     }
 
-	hr = g_pins.verifyPinFunction(ioPin, FUNC_AIN, BoardPinsClass::NO_LOCK_CHANGE);
-
-	if (FAILED(hr))
+    switch (board)
     {
-        ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, hr);
+    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
+    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
+    case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
+        // Translate the pin number passed in to a Galileo GPIO Pin number.
+        if ((pin >= 0) && (pin < NUM_ANALOG_PINS))
+        {
+            ioPin = A0 + pin;
+        }
+        else
+        {
+            ioPin = pin;
+        }
+ 
+        // Make sure the pin is configured as an analog input.
+        hr = g_pins.verifyPinFunction(ioPin, FUNC_AIN, BoardPinsClass::NO_LOCK_CHANGE);
+
+        // If we failed to set the pin as an analog input and it is in the range of board pins.
+        if (FAILED(hr))
+        {
+            ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, hr);
+        }
+        break;
+
+    case BoardPinsClass::BOARD_TYPE::MBM_BARE:
+    case BoardPinsClass::BOARD_TYPE::PI2_BARE:
+        // Translate the pin number to a fake pin number.
+        if (pin < A0)
+        {
+            ioPin = A0 + pin;
+        }
+        break;
+
+    default:
+        ThrowError("Unrecognized board type: 0x%08x", board);
     }
 
-	hr = g_adc.readValue(ioPin, value, bits);
+    // Perform the read.
+    hr = g_adc.readValue(ioPin, value, bits);
 
-	if (FAILED(hr))
+    if (FAILED(hr))
     {
         ThrowError("Error performing analogRead on pin: %d, Error: 0x%08x", pin, hr);
     }
@@ -340,7 +365,9 @@ __declspec (selectany) ULONG g_pwmResolutionBits = 8;
 
 /// Set the PWM duty cycle for a pin.
 /**
-\param[in] pin The number of the GPIO pin for the PWM output.
+\param[in] pin The number of the pin for the PWM output.  On boards with built-in PWM support
+this is a GPIO pin, on boards that use an external PWM chip, this is a pseudo pin number named 
+PWM0-PWMn, where "n" is one less than the number of PWM pins.
 \param[in] dutyCycle The high pulse time, range 0 to pwm_resolution_count - 1, (defaults 
 to a count of 255, for 8-bit PWM resolution.)
 \Note: This call throws an error if the pin number is outside the range supported
@@ -348,15 +375,49 @@ on the board, or if a pin that does not support PWM is specified.
 */
 inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
 {
-	HRESULT hr;
+    HRESULT hr;
+    ULONG ioPin;
+    BoardPinsClass::BOARD_TYPE board;
     ULONGLONG scaledDutyCycle;
 
-    // Verify the pin is in PWM mode, and configure it for PWM use if not.
-	hr = g_pins.verifyPinFunction(pin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE);
-
-	if (FAILED(hr))
+    hr = g_pins.getBoardType(board);
+    if (FAILED(hr))
     {
-        ThrowError("Error occurred verifying pin: %d function: PWM, Error: %08x", pin, hr);
+        ThrowError("Error getting board type.  Error: 0x%08x", hr);
+    }
+
+    switch (board)
+    {
+    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
+    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
+    case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
+        // The pin number passed in is a GPIO Pin number, use it as is.
+        ioPin = pin;
+
+        // Verify the pin is in PWM mode, and configure it for PWM use if not.
+        hr = g_pins.verifyPinFunction(ioPin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE);
+
+        if (FAILED(hr))
+        {
+            ThrowError("Error occurred verifying pin: %d function: PWM, Error: %08x", ioPin, hr);
+        }
+        break;
+
+    case BoardPinsClass::BOARD_TYPE::MBM_BARE:
+    case BoardPinsClass::BOARD_TYPE::PI2_BARE:
+        // Translate the PWM channel numbers to fake pin numbers.
+        if (pin < PWM0)
+        {
+            ioPin = PWM0 + pin;
+        }
+        else
+        {
+            ioPin = pin;
+        }
+        break;
+
+    default:
+        ThrowError("Unrecognized board type: 0x%08x", board);
     }
 
     // Scale the duty cycle passed in using the current analog write resolution.
@@ -367,11 +428,11 @@ inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
     scaledDutyCycle = (((ULONGLONG)dutyCycle * (1ULL << 32)) + (1ULL << (g_pwmResolutionBits - 1))) / (1ULL << g_pwmResolutionBits);
 
     // Set the PWM duty cycle.
-	hr = g_pins.setPwmDutyCycle(pin, (ULONG)scaledDutyCycle);
+    hr = g_pins.setPwmDutyCycle(ioPin, (ULONG)scaledDutyCycle);
 
-	if (FAILED(hr))
+    if (FAILED(hr))
     {
-        ThrowError("Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", pin, dutyCycle, hr);
+        ThrowError("Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", ioPin, dutyCycle, hr);
     }
 }
 
@@ -395,30 +456,30 @@ inline void analogWriteResolution(int bits)
 */
 inline void pinMode(unsigned int pin, unsigned int mode)
 {
-	HRESULT hr;
+    HRESULT hr;
 
     switch (mode)
     {
     case INPUT:
-		hr = g_pins.setPinMode(pin, DIRECTION_IN, false);
+        hr = g_pins.setPinMode(pin, DIRECTION_IN, false);
 
-		if (FAILED(hr))
+        if (FAILED(hr))
         {
             ThrowError("Error setting mode: INPUT for pin: %d, Error: 0x%08x", pin, hr);
         }
         break;
     case OUTPUT:
-		hr = g_pins.setPinMode(pin, DIRECTION_OUT, false);
+        hr = g_pins.setPinMode(pin, DIRECTION_OUT, false);
 
-		if (FAILED(hr))
+        if (FAILED(hr))
         {
             ThrowError("Error setting mode: OUTPUT for pin: %d, Error: 0x%08x", pin, hr);
         }
         break;
     case INPUT_PULLUP:
-		hr = g_pins.setPinMode(pin, DIRECTION_IN, true);
+        hr = g_pins.setPinMode(pin, DIRECTION_IN, true);
 
-		if (FAILED(hr))
+        if (FAILED(hr))
         {
             ThrowError("Error setting mode: INPUT_PULLUP for pin: %d, Error: 0x%08x", pin, hr);
         }

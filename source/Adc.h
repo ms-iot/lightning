@@ -9,6 +9,7 @@
 #include "ADC108S102Support.h"
 #include "AD7298Support.h"
 #include "ADS1015Support.h"
+#include "MCP3008support.h"
 
 class AdcClass
 {
@@ -22,12 +23,20 @@ public:
     /// Destructor.
     virtual ~AdcClass()
     {
-		if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
-		{
-			m_ikaLureAdc.end();
-		}
+        if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+        {
+            m_ikaLureAdc.end();
+        }
+        else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_BARE)
+        {
+            m_addOnAdc.end();
+        }
+        else if (m_boardType == BoardPinsClass::BOARD_TYPE::PI2_BARE)
+        {
+            m_addOnAdc.end();
+        }
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-		else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
+        else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
         {
             m_gen2Adc.end();
         }
@@ -36,7 +45,7 @@ public:
             m_gen1Adc.end();
         }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-	}
+    }
 
     /// Take a reading with the ADC on the board.
     /**
@@ -54,36 +63,39 @@ public:
         ULONG channel;
 
 
-        // Translate the pin number passed in analog channel 0-5.
+        // Translate the pin number passed in to analog channel 0-5.
         // This calculation is based on the fact that all the ADCs we work with
         // have A0-An mapped to channels 0-n on the ADC.
         channel = pin - A0;
 
         // Verify we have initialized the correct ADC.
         hr = _verifyAdcInitialized();
-        
-
+ 
         if (SUCCEEDED(hr))
         {
-			if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
-			{
-				hr = m_ikaLureAdc.readValue(channel, value, bits);
-
-			}
+            if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+            {
+                hr = m_ikaLureAdc.readValue(channel, value, bits);
+            }
+            else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_BARE)
+            {
+                hr = m_addOnAdc.readValue(channel, value, bits);
+            }
+            else if (m_boardType == BoardPinsClass::BOARD_TYPE::PI2_BARE)
+            {
+                hr = m_addOnAdc.readValue(channel, value, bits);
+            }
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-			else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
-			{
-				hr = m_gen2Adc.readValue(channel, value, bits);
-
-			}
-			else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
-			{
-				hr = m_gen1Adc.readValue(channel, value, bits);
-
-			}
+            else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
+            {
+                hr = m_gen2Adc.readValue(channel, value, bits);
+            }
+            else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
+            {
+                hr = m_gen1Adc.readValue(channel, value, bits);
+            }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-		}
-
+        }
         
         return hr;
     }
@@ -103,12 +115,13 @@ private:
 
     ADS1015Device m_ikaLureAdc;
 
+    MCP3008Device m_addOnAdc;
+
     /// Initialize this object if it has not already been done.
     inline HRESULT _verifyAdcInitialized()
     {
         HRESULT hr = S_OK;
         
-
 
         // If the ADC has not yet been initialized:
         if (m_boardType == BoardPinsClass::BOARD_TYPE::NOT_SET)
@@ -118,31 +131,38 @@ private:
             
             if (SUCCEEDED(hr))
             {
-				if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
-				{
-					hr = m_ikaLureAdc.begin();
-
-				}
+                if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+                {
+                    hr = m_ikaLureAdc.begin();
+                }
+                else if (m_boardType == BoardPinsClass::BOARD_TYPE::MBM_BARE)
+                {
+                    hr = m_addOnAdc.begin();
+                }
+                else if (m_boardType == BoardPinsClass::BOARD_TYPE::PI2_BARE)
+                {
+                    hr = m_addOnAdc.begin();
+                }
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-				else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
-				{
-					hr = m_gen2Adc.begin();
+                else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
+                {
+                    hr = m_gen2Adc.begin();
 
-				}
-				else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
-				{
-					hr = m_gen1Adc.begin();
+                }
+                else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
+                {
+                    hr = m_gen1Adc.begin();
 
-				}
+                }
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-				else
-				{
-					// If we have an unrecognized board or one that does not support ADC,
-					// indicate ADC is uninitialized.
-					m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
-				}
-			}
-		}
+                else
+                {
+                    // If we have an unrecognized board or one that does not support ADC,
+                    // indicate ADC is uninitialized.
+                    m_boardType = BoardPinsClass::BOARD_TYPE::NOT_SET;
+                }
+            }
+        }
 
         
         return hr;

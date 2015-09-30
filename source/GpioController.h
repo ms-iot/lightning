@@ -37,8 +37,8 @@ public:
 
     /// Method to map the Fabric GPIO controller registers if they are not already mapped.
     /**
-	\return HRESULT error or success code.
-	*/
+    \return HRESULT error or success code.
+    */
     inline HRESULT mapIfNeeded()
     {
         if (m_hController == INVALID_HANDLE_VALUE)
@@ -47,7 +47,7 @@ public:
         }
         else
         {
-			return S_OK;
+            return S_OK;
         }
     }
 
@@ -263,8 +263,8 @@ public:
 
     /// Method to open the Legacy GPIO controller if it is not already open.
     /**
-	\return HRESULT error or success code.
-	*/
+    \return HRESULT error or success code.
+    */
     inline HRESULT openIfNeeded()
     {
         if (m_hController == INVALID_HANDLE_VALUE)
@@ -273,9 +273,9 @@ public:
         }
         else
         {
-			return S_OK;
+            return S_OK;
         }
-	}
+    }
 
     /// Method to set the state of a Legacy Core Well GPIO port bit.
     inline HRESULT setCorePinState(ULONG portBit, ULONG state);
@@ -329,22 +329,22 @@ private:
         inp.Bank = QUARKLGPIO_BANK_COREWELL;
         inp.Mask = 0x1 << portBit;
 
-		if (!DeviceIoControl(
-			m_hController,
-			IOCTL_QUARKLGPIO_SET_DIR_INPUT,
-			&inp,
-			sizeof(inp),
-			nullptr,
-			0,
-			&bytesReturned,
-			nullptr))
-		{
-			return HRESULT_FROM_WIN32(GetLastError());
-		}
-		else
-		{
-			return S_OK;
-		}
+        if (!DeviceIoControl(
+            m_hController,
+            IOCTL_QUARKLGPIO_SET_DIR_INPUT,
+            &inp,
+            sizeof(inp),
+            nullptr,
+            0,
+            &bytesReturned,
+            nullptr))
+        {
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+        else
+        {
+            return S_OK;
+        }
     }
 
     /// Method to set a Legacy Core Well GPIO pin as an output
@@ -356,22 +356,22 @@ private:
         inp.Bank = QUARKLGPIO_BANK_COREWELL;
         inp.Mask = 0x1 << portBit;
 
-		if (!DeviceIoControl(
-			m_hController,
-			IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
-			&inp,
-			sizeof(inp),
-			nullptr,
-			0,
-			&bytesReturned,
-			nullptr))
-		{
-			return HRESULT_FROM_WIN32(GetLastError());
-		}
-		else
-		{
-			return S_OK;
-		}
+        if (!DeviceIoControl(
+            m_hController,
+            IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
+            &inp,
+            sizeof(inp),
+            nullptr,
+            0,
+            &bytesReturned,
+            nullptr))
+        {
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+        else
+        {
+            return S_OK;
+        }
     }
 
     /// Method to set a Legacy Resume Well GPIO pin as an input.
@@ -383,22 +383,22 @@ private:
         inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
         inp.Mask = 0x1 << portBit;
 
-		if (!DeviceIoControl(
-			m_hController,
-			IOCTL_QUARKLGPIO_SET_DIR_INPUT,
-			&inp,
-			sizeof(inp),
-			nullptr,
-			0,
-			&bytesReturned,
-			nullptr))
-		{
-			return HRESULT_FROM_WIN32(GetLastError());
-		}
-		else
-		{
-			return S_OK;
-		}
+        if (!DeviceIoControl(
+            m_hController,
+            IOCTL_QUARKLGPIO_SET_DIR_INPUT,
+            &inp,
+            sizeof(inp),
+            nullptr,
+            0,
+            &bytesReturned,
+            nullptr))
+        {
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+        else
+        {
+            return S_OK;
+        }
     }
 
     /// Method to set a Legacy Resume Well GPIO pin as an output
@@ -410,22 +410,22 @@ private:
         inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
         inp.Mask = 0x1 << portBit;
 
-		if (!DeviceIoControl(
-			m_hController,
-			IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
-			&inp,
-			sizeof(inp),
-			nullptr,
-			0,
-			&bytesReturned,
-			nullptr))
-		{
-			return HRESULT_FROM_WIN32(GetLastError());
-		}
-		else
-		{
-			return S_OK;
-		}
+        if (!DeviceIoControl(
+            m_hController,
+            IOCTL_QUARKLGPIO_SET_DIR_OUTPUT,
+            &inp,
+            sizeof(inp),
+            nullptr,
+            0,
+            &bytesReturned,
+            nullptr))
+        {
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+        else
+        {
+            return S_OK;
+        }
     }
 };
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
@@ -461,8 +461,8 @@ public:
 
     /// Method to map the S0 GPIO controller registers if they are not already mapped.
     /**
-	\return HRESULT error or success code.
-	*/
+    \return HRESULT error or success code.
+    */
     inline HRESULT mapS0IfNeeded()
     {
         if (m_hS0Controller == INVALID_HANDLE_VALUE)
@@ -471,14 +471,14 @@ public:
         }
         else
         {
-			return S_OK;
+            return S_OK;
         }
     }
 
     /// Method to map the S5 GPIO controller registers if they are not already mapped.
     /**
-	\return HRESULT error or success code.
-	*/
+    \return HRESULT error or success code.
+    */
     inline HRESULT mapS5IfNeeded()
     {
         if (m_hS5Controller == INVALID_HANDLE_VALUE)
@@ -747,7 +747,7 @@ private:
         ULONG   _Test;              //   0xB0
     } volatile BCM_GPIO, *PBCM_GPIO;
 
-	//
+    //
     // BcmGpioControllerClass private data members.
     //
 
@@ -922,18 +922,18 @@ inline HRESULT QuarkLegacyGpioControllerClass::setCorePinState(ULONG portBit, UL
             ioCtl = IOCTL_QUARKLGPIO_SET_PINS_HIGH;
         }
 
-		if (!DeviceIoControl(
-			m_hController,
-			ioCtl,
-			&inp,
-			sizeof(inp),
-			nullptr,
-			0,
-			&bytesReturned,
-			nullptr))
-		{
-			hr = HRESULT_FROM_WIN32(GetLastError());
-		}
+        if (!DeviceIoControl(
+            m_hController,
+            ioCtl,
+            &inp,
+            sizeof(inp),
+            nullptr,
+            0,
+            &bytesReturned,
+            nullptr))
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+        }
     }
 
     return hr;
@@ -956,29 +956,29 @@ inline HRESULT QuarkLegacyGpioControllerClass::getCorePinState(ULONG portBit, UL
 
     hr = openIfNeeded();
 
-	if (SUCCEEDED(hr))
-	{
-		inp.Bank = QUARKLGPIO_BANK_COREWELL;
-		inp.Mask = 0x1 << portBit;
+    if (SUCCEEDED(hr))
+    {
+        inp.Bank = QUARKLGPIO_BANK_COREWELL;
+        inp.Mask = 0x1 << portBit;
 
-		if (!DeviceIoControl(
-			m_hController,
-			IOCTL_QUARKLGPIO_READ_PINS,
-			&inp,
-			sizeof(inp),
-			&portContents,
-			sizeof(portContents),
-			&bytesReturned,
-			nullptr))
-		{
-			hr = HRESULT_FROM_WIN32(GetLastError());
-		}
-	}
+        if (!DeviceIoControl(
+            m_hController,
+            IOCTL_QUARKLGPIO_READ_PINS,
+            &inp,
+            sizeof(inp),
+            &portContents,
+            sizeof(portContents),
+            &bytesReturned,
+            nullptr))
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+        }
+    }
 
-	if (SUCCEEDED(hr))
-	{
-		state = (portContents >> portBit) & 0x01;
-	}
+    if (SUCCEEDED(hr))
+    {
+        state = (portContents >> portBit) & 0x01;
+    }
 
     return hr;
 }
@@ -1039,18 +1039,18 @@ inline HRESULT QuarkLegacyGpioControllerClass::getCorePinDirection(ULONG portBit
         inp.Bank = QUARKLGPIO_BANK_COREWELL;
         inp.Mask = 0xFF;                // Not used, but if it were, we would want all 8 bits
 
-		if (!DeviceIoControl(
-			m_hController,
-			IOCTL_QUARKLGPIO_GET_DIR,
-			&inp,
-			sizeof(inp),
-			&readValue,
-			sizeof(readValue),
-			&bytesReturned,
-			nullptr))
-		{
-			hr = HRESULT_FROM_WIN32(GetLastError());
-		}
+        if (!DeviceIoControl(
+            m_hController,
+            IOCTL_QUARKLGPIO_GET_DIR,
+            &inp,
+            sizeof(inp),
+            &readValue,
+            sizeof(readValue),
+            &bytesReturned,
+            nullptr))
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+        }
 
         if (SUCCEEDED(hr))
         {
@@ -1094,18 +1094,18 @@ inline HRESULT QuarkLegacyGpioControllerClass::getResumePinDirection(ULONG portB
         inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
         inp.Mask = 0xFF;                // Not used, but if it were, we would want all 8 bits
 
-		if (!DeviceIoControl(
-			m_hController,
-			IOCTL_QUARKLGPIO_GET_DIR,
-			&inp,
-			sizeof(inp),
-			&readValue,
-			sizeof(readValue),
-			&bytesReturned,
-			nullptr))
-		{
-			hr = HRESULT_FROM_WIN32(GetLastError());
-		}
+        if (!DeviceIoControl(
+            m_hController,
+            IOCTL_QUARKLGPIO_GET_DIR,
+            &inp,
+            sizeof(inp),
+            &readValue,
+            sizeof(readValue),
+            &bytesReturned,
+            nullptr))
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+        }
 
         if (SUCCEEDED(hr))
         {
@@ -1185,18 +1185,18 @@ inline HRESULT QuarkLegacyGpioControllerClass::setResumePinState(ULONG portBit, 
             ioCtl = IOCTL_QUARKLGPIO_SET_PINS_HIGH;
         }
 
-		if (!DeviceIoControl(
-			m_hController,
-			ioCtl,
-			&inp,
-			sizeof(inp),
-			nullptr,
-			0,
-			&bytesReturned,
-			nullptr))
-		{
-			hr = HRESULT_FROM_WIN32(GetLastError());
-		}
+        if (!DeviceIoControl(
+            m_hController,
+            ioCtl,
+            &inp,
+            sizeof(inp),
+            nullptr,
+            0,
+            &bytesReturned,
+            nullptr))
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+        }
     }
 
     return hr;
@@ -1224,18 +1224,18 @@ inline HRESULT QuarkLegacyGpioControllerClass::getResumePinState(ULONG portBit, 
         inp.Bank = QUARKLGPIO_BANK_RESUMEWELL;
         inp.Mask = 0x1 << portBit;
 
-		if (!DeviceIoControl(
-			m_hController,
-			IOCTL_QUARKLGPIO_READ_PINS,
-			&inp,
-			sizeof(inp),
-			&portContents,
-			sizeof(portContents),
-			&bytesReturned,
-			nullptr))
-		{
-			hr = HRESULT_FROM_WIN32(GetLastError());
-		}
+        if (!DeviceIoControl(
+            m_hController,
+            IOCTL_QUARKLGPIO_READ_PINS,
+            &inp,
+            sizeof(inp),
+            &portContents,
+            sizeof(portContents),
+            &bytesReturned,
+            nullptr))
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+        }
     }
 
     if (SUCCEEDED(hr))
@@ -1270,8 +1270,8 @@ inline HRESULT BtFabricGpioControllerClass::setS0PinState(ULONG gpioNo, ULONG st
         {
             padVal.PAD_VAL = 1;
         }
-		m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
-	}
+        m_s0Controller[gpioNo].PAD_VAL.ALL_BITS = padVal.ALL_BITS;
+    }
 
     return hr;
 }
@@ -1377,7 +1377,7 @@ inline HRESULT BtFabricGpioControllerClass::setS0PinDirection(ULONG gpioNo, ULON
         }
     }
 
-	return hr;
+    return hr;
 }
 #endif // defined(_M_IX86) || defined(_M_X64)
 
@@ -1432,7 +1432,7 @@ inline HRESULT BtFabricGpioControllerClass::setS0PinFunction(ULONG gpioNo, ULONG
         m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
     }
 
-	return hr;
+    return hr;
 }
 #endif // defined(_M_IX86) || defined(_M_X64)
 
@@ -1517,7 +1517,7 @@ inline void BtFabricGpioControllerClass::_setS0PinOutput(ULONG gpioNo)
     padConfig.ALL_BITS = m_s0Controller[gpioNo].PCONF0.ALL_BITS;
     padConfig.BYPASS_FLOP = 0;         // Enable flop
     padConfig.PULL_ASSIGN = 0;         // No pull resistor
-	padConfig.FUNC_PIN_MUX = 0;        // Mux function 0 (GPIO)
+    padConfig.FUNC_PIN_MUX = 0;        // Mux function 0 (GPIO)
     m_s0Controller[gpioNo].PCONF0.ALL_BITS = padConfig.ALL_BITS;
 
     _PAD_VAL padVal;
@@ -1562,12 +1562,12 @@ This method assumes the caller has checked the input parameters.
 */
 inline HRESULT BcmGpioControllerClass::setPinState(ULONG gpioNo, ULONG state)
 {
-	HRESULT hr = mapIfNeeded();
+    HRESULT hr = mapIfNeeded();
 
     ULONG bitMask = 1 << gpioNo;
     if (SUCCEEDED(hr))
     {
-		if (state == 0)
+        if (state == 0)
         {
             m_registers->GPCLR0 = bitMask;
         }
@@ -1575,7 +1575,7 @@ inline HRESULT BcmGpioControllerClass::setPinState(ULONG gpioNo, ULONG state)
         {
             m_registers->GPSET0 = bitMask;
         }
-	}
+    }
 
     return hr;
 }
@@ -1638,7 +1638,7 @@ inline HRESULT BcmGpioControllerClass::setPinDirection(ULONG gpioNo, ULONG mode)
 
         m_registers->GPFSELN[gpioNo / 10] = funcSelData;   // Write function register data back
 
-		ReleaseControllerLock(m_hController);
+        ReleaseControllerLock(m_hController);
     }
 
     return hr;
@@ -1672,19 +1672,19 @@ inline HRESULT BcmGpioControllerClass::setPinFunction(ULONG gpioNo, ULONG functi
 
         funcSelData = m_registers->GPFSELN[gpioNo / 10];   // Read function register data
 
-		// If the function is already set to GPIO, and the new function is GPIO, leave it 
-		// alone (so we don't change the pin direction trying to set the pin function).
-		if (((funcSelData & (0x06 << ((gpioNo % 10) * 3))) != 0) || (function != 0))
-		{
-			funcSelData &= ~(0x07 << ((gpioNo % 10) * 3));      // Clear bits for (make GPIO input)
+        // If the function is already set to GPIO, and the new function is GPIO, leave it 
+        // alone (so we don't change the pin direction trying to set the pin function).
+        if (((funcSelData & (0x06 << ((gpioNo % 10) * 3))) != 0) || (function != 0))
+        {
+            funcSelData &= ~(0x07 << ((gpioNo % 10) * 3));      // Clear bits for (make GPIO input)
 
-			if (function == 1)                                  // If alternate function 0 is wanted:
-			{
-				funcSelData |= (0x04 << ((gpioNo % 10) * 3));   // Set function code to 100b
-			}
+            if (function == 1)                                  // If alternate function 0 is wanted:
+            {
+                funcSelData |= (0x04 << ((gpioNo % 10) * 3));   // Set function code to 100b
+            }
 
-			m_registers->GPFSELN[gpioNo / 10] = funcSelData;   // Write function register data back
-		}
+            m_registers->GPFSELN[gpioNo / 10] = funcSelData;   // Write function register data back
+        }
 
         ReleaseControllerLock(m_hController);
     }

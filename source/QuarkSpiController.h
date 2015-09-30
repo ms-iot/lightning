@@ -208,7 +208,7 @@ inline HRESULT QuarkSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn,
 
     if (m_registers == nullptr)
     {
-		hr = DMAP_E_DMAP_INTERNAL_ERROR;
+        hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
     if (SUCCEEDED(hr))

@@ -93,7 +93,10 @@ public:
     */
     inline BOOL errorOccurred() override
     {
-        return (m_registers->S.ERR == 1);
+        _S sReg;
+        sReg.ALL_BITS = m_registers->S.ALL_BITS;
+        return (sReg.ERR == 1);
+//        return (m_registers->S.ERR == 1);
     }
 
     /// Determine if an I2C address was sent but not acknowledged by any slave.

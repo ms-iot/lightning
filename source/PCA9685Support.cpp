@@ -56,8 +56,8 @@ HRESULT PCA9685Device::SetBitState(ULONG i2cAdr, ULONG portBit, ULONG state)
     if (SUCCEEDED(hr))
     {
         // Make sure the PWM chip is initialized.
-		hr = _InitializeChip(i2cAdr);
-	}
+        hr = _InitializeChip(i2cAdr);
+    }
 
     if (SUCCEEDED(hr))
     {
@@ -122,8 +122,8 @@ HRESULT PCA9685Device::GetBitState(ULONG i2cAdr, ULONG portBit, ULONG & state)
 
     if (SUCCEEDED(hr))
     {
-		// Make sure the PWM chip is initialized.
-		hr = _InitializeChip(i2cAdr);
+        // Make sure the PWM chip is initialized.
+        hr = _InitializeChip(i2cAdr);
     }
 
     if (SUCCEEDED(hr))
@@ -195,7 +195,7 @@ HRESULT PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCy
 
     if (channel >= LED_COUNT)
     {
-		hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
+        hr = DMAP_E_INVALID_PORT_BIT_FOR_DEVICE;
     }
 
     if (SUCCEEDED(hr))
