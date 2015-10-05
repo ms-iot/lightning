@@ -11,14 +11,6 @@ Run the Nuget package builder from the .\source folder:
 build-nupkg.cmd
 ~~~
 
-##Configure Visual Studio
-You'll want to redirect visual studio's *user templates* to the repository you are working in.
-*Tools -> Options*
-
-![Template Config](images/Nuget_TemplateConfig.png)
-
-Under *Projects and Solutions*, select *General*,
-
 ###Nuget Package sources
 
 In order to install nuget packages from your local builds, you'll need to add both the lightning nuget and arduino-sdk to the nuget package manager sources. Following the below instructions for each sdk source:
@@ -27,7 +19,6 @@ For Visual Studio Express, nativate to *Tools -> Nuget Package Manager -> Packag
 For Other editions of Visual Studio, nativate to *Tools -> Library Package Manager -> Package Manager Settings*
 
 ![Package Config](images/Nuget_PackageSourceConfig_VS2015.png)
-
 
 1. Click the "+" button to add a new source
 1. Set the name to something descriptive
@@ -45,3 +36,31 @@ In order to install prerelease (current) version of Lighning as well as receive 
 1. Select package sources for Lightning nuget
 1. Click "Include prerelease".
 
+###Add required UWP Extensions
+
+The IOT and Desktop UWP SDK Extensions are both required for building Lightning applications.
+
+![Package Config](images/Add_SDK_Extensions.png.PNG)
+
+1. Right click "References" in your Visual C++ UWP Project
+1. Choose "Add Reference..."
+1. Open Universal Windows | Extensions
+1. Choose Both "Windows Desktop Extensions for the UWP" and "Windows IoT Extensions for the UWP".
+
+###Update Application Package manifest
+
+Also, you need to update the Application Package manifest manually to reference the DMAP device interface.
+
+![Package Config](images/Update_Manifest.png
+
+1. Right click "Package.appxmanifest" in your Visual C++ UWP Project
+1. Click "Open With.."
+1. In the "Open With" dialog box, choose XML (Text) Editor and click OK
+1. Edit the the Capabilities section in your application to add the following:
+1.     <iot:Capability Name="lowLevelDevices" />
+1.     <DeviceCapability Name="109b86ad-f53d-4b76-aa5f-821e2ddf2141"/>
+1. The first is a capability that will enable the application to access custom devices.
+1. The second is the device guid id for the DMAP interface
+1. Save the file
+
+Build your project to verify all prerequisites to use Lightning were successfully added.
