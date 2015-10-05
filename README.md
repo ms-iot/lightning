@@ -35,6 +35,7 @@ In order to install prerelease (current) version of Lighning as well as receive 
 1. Click "Manager Nuget Packages..."
 1. Select package sources for Lightning nuget
 1. Click "Include prerelease".
+1. Click "Install" to install the nuget package to your project
 
 ###Add required UWP Extensions
 
@@ -57,8 +58,8 @@ Also, you need to update the Application Package manifest manually to reference 
 1. Click "Open With.."
 1. In the "Open With" dialog box, choose XML (Text) Editor and click OK
 1. Edit the the Capabilities section in your application to add the following:
-1.     <iot:Capability Name="lowLevelDevices" />
-1.     <DeviceCapability Name="109b86ad-f53d-4b76-aa5f-821e2ddf2141"/>
+1.<iot:Capability Name="lowLevelDevices" />
+1.<DeviceCapability Name="109b86ad-f53d-4b76-aa5f-821e2ddf2141"/>
 1. The first is a capability that will enable the application to access custom devices.
 1. The second is the device guid id for the DMAP interface
 1. Save the file
