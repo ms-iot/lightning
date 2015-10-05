@@ -33,6 +33,7 @@
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\Servo.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\Spi.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\SpiController.cpp" />
+    <LightningSources Include="$(MSBuildThisFileDirectory)\Source\QuarkSpiController.cpp" />
   </ItemGroup>
 
   <ItemGroup>
