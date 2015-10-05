@@ -144,6 +144,12 @@ public:
     /// Method to test whether a pin number is safe to use as an array index.
     inline BOOL pinNumberIsSafe(ULONG pin);
 
+    /// Method to map the GPIO controller registers if they are not already mapped
+    inline HRESULT mapIfNeeded();
+
+    /// Method to get the number of GPIO pins present on the current board
+    inline HRESULT getGpioPinCount(ULONG & pinCount);
+
 private:
 
     /// Pointer to the array of pin attributes.
@@ -224,6 +230,45 @@ private:
 
 /// Global object used to configure and use the I/O pins.
 __declspec (selectany) BoardPinsClass g_pins;
+
+/**
+This method maps the GPIO controller registers if they are not already mapped.
+\return HRESULT error or success code.
+*/
+inline HRESULT BoardPinsClass::mapIfNeeded()
+{
+    HRESULT hr = S_OK;
+#if defined(_M_ARM)
+    hr = g_bcmGpio.mapIfNeeded();
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
+    hr = g_btFabricGpio.mapS0IfNeeded();
+    if (SUCCEEDED(hr))
+    {
+        hr = g_btFabricGpio.mapS5IfNeeded();
+    }
+#endif // defined(_M_IX86) || defined(_M_X64)
+    return hr;
+}
+
+/**
+Method to get the number of GPIO pins present on the current board.
+\param[out] pinCount the number of GPIO pins present.
+\return HRESULT error or success code.
+*/
+inline HRESULT BoardPinsClass::getGpioPinCount(ULONG & pinCount)
+{
+    HRESULT hr = S_OK;
+
+    if (m_boardType == NOT_SET)
+    {
+        hr = _determineBoardType();
+    }
+
+    pinCount = m_GpioPinCount;
+
+    return hr;
+}
 
 /**
 This method determines the board type if it is not yet known.
