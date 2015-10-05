@@ -29,7 +29,7 @@ For Other editions of Visual Studio, nativate to *Tools -> Library Package Manag
 
 In order to install prerelease (current) version of Lighning as well as receive prerelease updates to the Lightning package, make sure to set the "Include prerelease" option in the Nuget Package Manager.
 
-![Package Config](images/Nuget_PackageManager.PNG)
+![Package Config](images/Nuget_PackageManager.png)
 
 1. Right click References in your project
 1. Click "Manager Nuget Packages..."
@@ -41,7 +41,7 @@ In order to install prerelease (current) version of Lighning as well as receive 
 
 The IOT and Desktop UWP SDK Extensions are both required for building Lightning applications.
 
-![Package Config](images/Add_SDK_Extensions.png.PNG)
+![Package Config](images/Add_SDK_Extensions.png)
 
 1. Right click "References" in your Visual C++ UWP Project
 1. Choose "Add Reference..."
@@ -52,7 +52,7 @@ The IOT and Desktop UWP SDK Extensions are both required for building Lightning 
 
 Also, you need to update the Application Package manifest manually to reference the DMAP device interface.
 
-![Package Config](images/Update_Manifest.png
+![Package Config](images/Update_Manifest.png)
 
 1. Right click "Package.appxmanifest" in your Visual C++ UWP Project
 1. Click "Open With.."
