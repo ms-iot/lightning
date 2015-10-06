@@ -27,7 +27,7 @@ For Other editions of Visual Studio, nativate to *Tools -> Library Package Manag
 
 ###Nuget Package Manager
 
-In order to install prerelease (current) version of Lighning as well as receive prerelease updates to the Lightning package, make sure to set the "Include prerelease" option in the Nuget Package Manager.
+In order to install prerelease (current) version of Lightning as well as receive prerelease updates to the Lightning package, make sure to set the "Include prerelease" option in the Nuget Package Manager.
 
 ![Package Config](images/Nuget_PackageManager.png)
 
