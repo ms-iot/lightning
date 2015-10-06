@@ -16,8 +16,8 @@
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\arduino.cpp" />    
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\BoardPins.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\BcmI2cController.cpp" />
-    <LightningSources Include="$(MSBuildThisFileDirectory)\Source\BtI2cController.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\BcmSpiController.cpp" />
+    <LightningSources Include="$(MSBuildThisFileDirectory)\Source\BtI2cController.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\BtSpiController.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\CY8C9540ASupport.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\DmapSupport.cpp" />
@@ -33,6 +33,7 @@
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\Servo.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\Spi.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\SpiController.cpp" />
+    <LightningSources Include="$(MSBuildThisFileDirectory)\Source\QuarkSpiController.cpp" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,16 +42,43 @@
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
   </ItemDefinitionGroup>
 
     <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
   </ItemDefinitionGroup>
 
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  
+ 
   <ItemGroup>
     <GeneratedFilesOutputGroup Include="$(MSBuildThisFileDirectory)\include\Arduino.h" />    
   </ItemGroup>
