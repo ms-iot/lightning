@@ -50,7 +50,7 @@ The IOT and Desktop UWP SDK Extensions are both required for building Lightning 
 
 ###Update Application Package manifest
 
-Also, you need to update the Application Package manifest manually to reference the DMAP device interface.
+Also, you need to update the Application Package manifest manually to reference the Lightning device interface.
 
 ![Package Config](images/Update_Manifest.png)
 
@@ -63,7 +63,7 @@ Also, you need to update the Application Package manifest manually to reference 
 <DeviceCapability Name="109b86ad-f53d-4b76-aa5f-821e2ddf2141"/>
 ```
 5. The first is a capability that will enable the application to access custom devices.
-6. The second is the device guid id for the DMAP interface
+6. The second is the device guid id for the Lightning interface
 7. Save the file
 
 Build your project to verify all prerequisites to use Lightning were successfully added.
