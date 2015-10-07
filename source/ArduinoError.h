@@ -10,7 +10,6 @@
 #include <stdexcept>
 #include <strsafe.h>
 #include <ErrorCodes.h>
-#include <roerrorapi.h>
 
 /// \brief The error class for the Arduino
 /// \details The Arduino platform does not handle exceptions. This class is

@@ -5,6 +5,9 @@
 #ifndef _ERROR_CODES_H_
 #define _ERROR_CODES_H_
 
+#include <Windows.h>
+#include <map>
+
 //
 // A map of DMap error codes and related messages.
 //
