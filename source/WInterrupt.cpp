@@ -105,7 +105,7 @@ void attachInterrupt(uint8_t pin, InterruptFunction fxn, int mode)
         if (SetWaitableTimer(s_sharedInterruptTimer, &li, INTERRUPT_FREQUENCY, InterruptTimerHandler, nullptr, FALSE) == 0)
         {
             DWORD err = GetLastError();
-            ThrowError("Error setting timer for interrupts: %d", err);		
+            ThrowError(HRESULT_FROM_WIN32(err) , "Error setting timer for interrupts: %d", err);
         }
     }
 

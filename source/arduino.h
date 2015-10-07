@@ -193,7 +193,7 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
 
     if (FAILED(hr))
     {
-        ThrowError("Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
+        ThrowError(hr, "Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
     }
 
     if (state != LOW)
@@ -206,7 +206,7 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
     hr = g_pins.setPinState(pin, state);
     if (FAILED(hr))
     {
-        ThrowError("Error occurred setting pin: %d to state: %d, Error: %08x", pin, state, hr);
+        ThrowError(hr, "Error occurred setting pin: %d to state: %d, Error: %08x", pin, state, hr);
     }
 }
 
@@ -264,7 +264,7 @@ inline int analogRead(int pin)
     hr = g_pins.getBoardType(board);
     if (FAILED(hr))
     {
-        ThrowError("Error getting board type.  Error: 0x%08x", hr);
+        ThrowError(hr, "Error getting board type.  Error: 0x%08x", hr);
     }
 
     switch (board)
@@ -288,7 +288,7 @@ inline int analogRead(int pin)
         // If we failed to set the pin as an analog input and it is in the range of board pins.
         if (FAILED(hr))
         {
-            ThrowError("Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, hr);
+            ThrowError(hr, "Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, hr);
         }
         break;
 
@@ -302,7 +302,7 @@ inline int analogRead(int pin)
         break;
 
     default:
-        ThrowError("Unrecognized board type: 0x%08x", board);
+        ThrowError(hr, "Unrecognized board type: 0x%08x", board);
     }
 
     // Perform the read.
@@ -310,7 +310,7 @@ inline int analogRead(int pin)
 
     if (FAILED(hr))
     {
-        ThrowError("Error performing analogRead on pin: %d, Error: 0x%08x", pin, hr);
+        ThrowError(hr, "Error performing analogRead on pin: %d, Error: 0x%08x", pin, hr);
     }
 
     // Scale the digitized analog value to the currently set analog read resolution.
@@ -340,7 +340,7 @@ inline void analogReadResolution(int bits)
 {
     if ((bits < 1) || (bits > 32))
     {
-        ThrowError("Attempt to set analog read resolution to %d bits.  Supported range: 1-32.", bits);
+        ThrowError(E_INVALIDARG, "Attempt to set analog read resolution to %d bits.  Supported range: 1-32.", bits);
     }
     g_analogValueBits = bits;
 }
@@ -356,7 +356,7 @@ inline void analogReference(int type)
 {
     if (type != DEFAULT)
     {
-        ThrowError("The only supported analog reference is DEFAULT.");
+        ThrowError(E_INVALIDARG, "The only supported analog reference is DEFAULT.");
     }
 }
 
@@ -383,7 +383,7 @@ inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
     hr = g_pins.getBoardType(board);
     if (FAILED(hr))
     {
-        ThrowError("Error getting board type.  Error: 0x%08x", hr);
+        ThrowError(hr, "Error getting board type.  Error: 0x%08x", hr);
     }
 
     switch (board)
@@ -399,7 +399,7 @@ inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
 
         if (FAILED(hr))
         {
-            ThrowError("Error occurred verifying pin: %d function: PWM, Error: %08x", ioPin, hr);
+            ThrowError(hr, "Error occurred verifying pin: %d function: PWM, Error: %08x", ioPin, hr);
         }
         break;
 
@@ -417,13 +417,13 @@ inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
         break;
 
     default:
-        ThrowError("Unrecognized board type: 0x%08x", board);
+        ThrowError(E_INVALIDARG, "Unrecognized board type: 0x%08x", board);
     }
 
     // Scale the duty cycle passed in using the current analog write resolution.
     if ((g_pwmResolutionBits < 32) && (dutyCycle >= (1UL << g_pwmResolutionBits)))
     {
-        ThrowError("Specified duty cycle: %d is greater than PWM resolution: %d bits.", dutyCycle, g_pwmResolutionBits);
+        ThrowError(E_INVALIDARG, "Specified duty cycle: %d is greater than PWM resolution: %d bits.", dutyCycle, g_pwmResolutionBits);
     }
     scaledDutyCycle = (((ULONGLONG)dutyCycle * (1ULL << 32)) + (1ULL << (g_pwmResolutionBits - 1))) / (1ULL << g_pwmResolutionBits);
 
@@ -432,7 +432,7 @@ inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
 
     if (FAILED(hr))
     {
-        ThrowError("Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", ioPin, dutyCycle, hr);
+        ThrowError(hr, "Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", ioPin, dutyCycle, hr);
     }
 }
 
@@ -444,7 +444,7 @@ inline void analogWriteResolution(int bits)
 {
     if ((bits < 1) || (bits > 32))
     {
-        ThrowError("Attempt to set analog write resolution to %d bits.  Supported range: 1-32.", bits);
+        ThrowError(E_INVALIDARG, "Attempt to set analog write resolution to %d bits.  Supported range: 1-32.", bits);
     }
     g_pwmResolutionBits = bits;
 }
@@ -465,7 +465,7 @@ inline void pinMode(unsigned int pin, unsigned int mode)
 
         if (FAILED(hr))
         {
-            ThrowError("Error setting mode: INPUT for pin: %d, Error: 0x%08x", pin, hr);
+            ThrowError(hr, "Error setting mode: INPUT for pin: %d, Error: 0x%08x", pin, hr);
         }
         break;
     case OUTPUT:
@@ -473,7 +473,7 @@ inline void pinMode(unsigned int pin, unsigned int mode)
 
         if (FAILED(hr))
         {
-            ThrowError("Error setting mode: OUTPUT for pin: %d, Error: 0x%08x", pin, hr);
+            ThrowError(hr, "Error setting mode: OUTPUT for pin: %d, Error: 0x%08x", pin, hr);
         }
         break;
     case INPUT_PULLUP:
@@ -481,11 +481,11 @@ inline void pinMode(unsigned int pin, unsigned int mode)
 
         if (FAILED(hr))
         {
-            ThrowError("Error setting mode: INPUT_PULLUP for pin: %d, Error: 0x%08x", pin, hr);
+            ThrowError(hr, "Error setting mode: INPUT_PULLUP for pin: %d, Error: 0x%08x", pin, hr);
         }
         break;
     default:
-        ThrowError("Invalid mode: %d specified for pin: %d.", mode, pin);
+        ThrowError(E_INVALIDARG, "Invalid mode: %d specified for pin: %d.", mode, pin);
     }
 }
 

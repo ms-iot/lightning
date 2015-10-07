@@ -68,7 +68,7 @@ void Servo::write(int value)
 {
     if (!attached())
     {
-        ThrowError("Error when calling write, servo is not attached.\n");
+        ThrowError(HRESULT_FROM_WIN32(ERROR_INVALID_STATE), "Error when calling write, servo is not attached.");
         return;
     }
 
@@ -98,7 +98,7 @@ void Servo::writeMicroseconds(int value)
 {
     if (!attached())
     {
-        ThrowError("Error when calling writeMicroseconds, servo is not attached.\n");
+        ThrowError(HRESULT_FROM_WIN32(ERROR_INVALID_STATE), "Error when calling writeMicroseconds, servo is not attached.");
         return;
     }
 
@@ -117,21 +117,21 @@ void Servo::writeMicroseconds(int value)
     int frequency = (int)((double) 1 / ((double) REFRESH_INTERVAL / 1000000));
     
     // Validation of the pin to make sure PWM functionality is allowed
-    if (!g_pins.verifyPinFunction(_attachedPin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE))
+    HRESULT hr = g_pins.verifyPinFunction(_attachedPin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE);
+    if (FAILED(hr))
     {
-        ThrowError("Error occurred verifying pin: %d function: PWM, Error: %08x", _attachedPin, GetLastError());
+        ThrowError(hr, "Error occurred verifying pin: %d function: PWM, Error: %08x", _attachedPin, hr);
     }
-
-    HRESULT hr = ERROR_SUCCESS;
 
     // Scale the duty cycle to the range used by the driver.
     // From 0-255 to 0-PWM_MAX_DUTYCYCLE, rounding to nearest value.
     ULONG dutyCycle = (ULONG) ((((double) alternateValue / REFRESH_INTERVAL * 255UL * PWM_MAX_DUTYCYCLE) + 127UL) / 255UL);
 
     // Prepare the pin for PWM use.
-    if (!g_pins.setPwmDutyCycle(_attachedPin, (ULONG) dutyCycle))
+    hr = g_pins.setPwmDutyCycle(_attachedPin, (ULONG)dutyCycle);
+    if (FAILED(hr))
     {
-        ThrowError("Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", _attachedPin, dutyCycle, GetLastError());
+        ThrowError(hr, "Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", _attachedPin, dutyCycle, hr);
     }
 
     double servoIndexDouble = (double) (alternateValue - _min) / (_max - _min) * 180;
