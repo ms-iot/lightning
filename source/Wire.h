@@ -130,46 +130,50 @@ public:
         // Empty the write buffer now that it's contents are queued.
         m_writeBuff.clear();
 
-        // Queue a write from the buffer.
-        hr = m_i2cTransaction.queueWrite(m_writeBuffs.back().data(), (ULONG)m_writeBuffs.back().size());
-
-        if (FAILED(hr))
+        // If we have data to write, perform the write. If there is no data to write, do nothing.
+        if (m_writeBuffs.back().size() > 0)
         {
-            _cleanTransaction();
-            ThrowError(hr, "An error occurred queueing an I2C write of %d bytes.  Error: 0x%08X", m_writeBuffs.back().size(), hr);
-        }
-
-        // Perform all queued transfers if a STOP was specified.
-        if (sendStop)
-        {
-            hr = m_i2cTransaction.execute(g_i2c.getController());
+            // Queue a write from the buffer.
+            hr = m_i2cTransaction.queueWrite(m_writeBuffs.back().data(), (ULONG)m_writeBuffs.back().size());
 
             if (FAILED(hr))
             {
-                if (m_i2cTransaction.getError() == I2cTransactionClass::ERROR_CODE::ADR_NACK)
-                {
-                    retVal = ADDR_NACK_RECV;
-                }
-                else if (m_i2cTransaction.getError() == I2cTransactionClass::ERROR_CODE::DATA_NACK)
-                {
-                    retVal = DATA_NACK_RECV;
-                }
-                else
-                {
-                    retVal = OTHER_ERROR;
-                }
-                m_readBuffs.clear();
+                _cleanTransaction();
+                ThrowError(hr, "An error occurred queueing an I2C write of %d bytes.  Error: 0x%08X", m_writeBuffs.back().size(), hr);
             }
 
-            // Clean up all queued transfers now that they have been performed (or failed).
-            m_writeBuffs.clear();
+            // Perform all queued transfers if a STOP was specified.
+            if (sendStop)
+            {
+                hr = m_i2cTransaction.execute(g_i2c.getController());
 
-            // Clean out the transaction so it can be used again in the future.
-            m_i2cTransaction.reset();
+                if (FAILED(hr))
+                {
+                    if (m_i2cTransaction.getError() == I2cTransactionClass::ERROR_CODE::ADR_NACK)
+                    {
+                        retVal = ADDR_NACK_RECV;
+                    }
+                    else if (m_i2cTransaction.getError() == I2cTransactionClass::ERROR_CODE::DATA_NACK)
+                    {
+                        retVal = DATA_NACK_RECV;
+                    }
+                    else
+                    {
+                        retVal = OTHER_ERROR;
+                    }
+                    m_readBuffs.clear();
+                }
 
-            // Get the current count of bytes available in the read buffer.  Any read buffers
-            // queued should be full of data (or gone, if the transfer failed).
-            _calculateReadBytesInBuffer();
+                // Clean up all queued transfers now that they have been performed (or failed).
+                m_writeBuffs.clear();
+
+                // Clean out the transaction so it can be used again in the future.
+                m_i2cTransaction.reset();
+
+                // Get the current count of bytes available in the read buffer.  Any read buffers
+                // queued should be full of data (or gone, if the transfer failed).
+                _calculateReadBytesInBuffer();
+            }
         }
 
         return retVal;
