@@ -66,7 +66,7 @@ public:
 
         if (FAILED(hr))
         {
-            ThrowError("An error occurred determining board type: %08x", hr);
+            ThrowError(hr, "An error occurred determining board type: %08x", hr);
         }
 
         // Create and initialize the SPI Controller object if we don't already have one.
@@ -90,7 +90,7 @@ public:
 
             if (FAILED(hr))
             {
-                ThrowError("An error occurred configuring pins for SPI use: %08x", hr);
+                ThrowError(hr, "An error occurred configuring pins for SPI use: %08x", hr);
             }
         }
 
@@ -109,7 +109,7 @@ public:
 
         if (FAILED(hr))
         {
-            ThrowError("An error occurred initializing the SPI controller: %08x", hr);
+            ThrowError(hr, "An error occurred initializing the SPI controller: %08x", hr);
         }
     }
 
@@ -128,7 +128,7 @@ public:
 
             if (FAILED(hr))
             {
-                ThrowError("An error occurred reverting SPI pins to GPIO: %08x", hr);
+                ThrowError(hr, "An error occurred reverting SPI pins to GPIO: %08x", hr);
             }
 
             // Get rid of the underlying SPI Controller object.  This closes the handle
@@ -148,7 +148,7 @@ public:
     {
         if ((bitOrder != MSBFIRST) && (bitOrder != LSBFIRST))
         {
-            ThrowError("SPI bit order must be MSBFIRST or LSBFIRST.");
+            ThrowError(E_INVALIDARG, "SPI bit order must be MSBFIRST or LSBFIRST.");
         }
         m_bitOrder = bitOrder;
 
@@ -200,7 +200,7 @@ public:
 
             if (FAILED(hr))
             {
-                ThrowError("An error occurred setting the SPI clock rate: %d", hr);
+                ThrowError(hr, "An error occurred setting the SPI clock rate: %d", hr);
             }
         }
     }
@@ -217,7 +217,7 @@ public:
 
         if ((mode != SPI_MODE0) && (mode != SPI_MODE1) && (mode != SPI_MODE2) && (mode != SPI_MODE3))
         {
-            ThrowError("Spi Mode must be SPI_MODE0, SPI_MODE1, SPI_MODE2 or SPI_MODE3.");
+            ThrowError(E_INVALIDARG, "Spi Mode must be SPI_MODE0, SPI_MODE1, SPI_MODE2 or SPI_MODE3.");
         }
         m_mode = mode;
 
@@ -227,7 +227,7 @@ public:
 
             if (FAILED(hr))
             {
-                ThrowError("An error occurred setting the SPI mode: %d", hr);
+                ThrowError(hr, "An error occurred setting the SPI mode: %d", hr);
             }
         }
     }
@@ -256,7 +256,7 @@ public:
 
         if (m_controller == nullptr)
         {
-            ThrowError("Can't transfer on SPI bus until an SPI.begin() has been done.");
+            ThrowError(HRESULT_FROM_WIN32(ERROR_INVALID_STATE), "Can't transfer on SPI bus until an SPI.begin() has been done.");
         }
 
         // Transfer the data.
@@ -264,7 +264,7 @@ public:
 
         if (FAILED(hr))
         {
-            ThrowError("An error occurred atempting to transfer SPI data: %d", hr);
+            ThrowError(hr, "An error occurred atempting to transfer SPI data: %d", hr);
         }
 
         return dataReturn;
@@ -282,7 +282,7 @@ public:
 
         if (m_controller == nullptr)
         {
-            ThrowError("Can't transfer on SPI bus until an SPI.begin() has been done.");
+            ThrowError(HRESULT_FROM_WIN32(ERROR_INVALID_STATE), "Can't transfer on SPI bus until an SPI.begin() has been done.");
         }
 
         // Transfer the data.
@@ -290,7 +290,7 @@ public:
 
         if (FAILED(hr))
         {
-            ThrowError("An error occurred atempting to transfer SPI data: %d", hr);
+            ThrowError(hr, "An error occurred atempting to transfer SPI data: %d", hr);
         }
 
         return dataReturn;
@@ -308,7 +308,7 @@ public:
 
         if (m_controller == nullptr)
         {
-            ThrowError("Can't transfer on SPI bus until an SPI.begin() has been done.");
+            ThrowError(HRESULT_FROM_WIN32(ERROR_INVALID_STATE), "Can't transfer on SPI bus until an SPI.begin() has been done.");
         }
 
         // Transfer the data.
@@ -316,7 +316,7 @@ public:
 
         if (FAILED(hr))
         {
-            ThrowError("An error occurred atempting to transfer SPI data: %d", hr);
+            ThrowError(hr, "An error occurred atempting to transfer SPI data: %d", hr);
         }
 
         return dataReturn;
@@ -334,7 +334,7 @@ public:
 
         if (m_controller == nullptr)
         {
-            ThrowError("Can't transfer on SPI bus until an SPI.begin() has been done.");
+            ThrowError(HRESULT_FROM_WIN32(ERROR_INVALID_STATE), "Can't transfer on SPI bus until an SPI.begin() has been done.");
         }
 
         // Transfer the data.
@@ -342,7 +342,7 @@ public:
 
         if (FAILED(hr))
         {
-            ThrowError("An error occurred atempting to transfer SPI data: %d", hr);
+            ThrowError(hr, "An error occurred atempting to transfer SPI data: %d", hr);
         }
 
         return dataReturn;

@@ -56,7 +56,7 @@ public:
 
         if (FAILED(hr))
         {
-            ThrowError("Error beginning I2C use: %08x", hr);
+            ThrowError(hr, "Error beginning I2C use: %08x", hr);
         }
 
         m_writeBuffs.clear();
@@ -136,7 +136,7 @@ public:
         if (FAILED(hr))
         {
             _cleanTransaction();
-            ThrowError("An error occurred queueing an I2C write of %d bytes.  Error: 0x%08X", m_writeBuffs.back().size(), hr);
+            ThrowError(hr, "An error occurred queueing an I2C write of %d bytes.  Error: 0x%08X", m_writeBuffs.back().size(), hr);
         }
 
         // Perform all queued transfers if a STOP was specified.
@@ -210,7 +210,7 @@ public:
         if (quantity == 0)
         {
             _cleanTransaction();
-            ThrowError("Zero byte I2C reads are not allowed.");
+            ThrowError(E_INVALIDARG, "Zero byte I2C reads are not allowed.");
         }
 
         // Set the address of the I2C slave we are working with.
@@ -226,7 +226,7 @@ public:
         if (FAILED(hr))
         {
             _cleanTransaction();
-            ThrowError("An error occurred queueing an I2C read of %d bytes to address: 0x%02X.  Error: 0x%08X", quantity, address, hr);
+            ThrowError(hr, "An error occurred queueing an I2C read of %d bytes to address: 0x%02X.  Error: 0x%08X", quantity, address, hr);
         }
 
         // Perform all queued transfers if a STOP was specified.
@@ -237,7 +237,7 @@ public:
             if (FAILED(hr))
             {
                 _cleanTransaction();
-                ThrowError("Error encountered performing queued I2C transfers to address: 0x%02X, Error: 0x%08X", address, hr);
+                ThrowError(hr, "Error encountered performing queued I2C transfers to address: 0x%02X, Error: 0x%08X", address, hr);
             }
 
             // Clear out queued transfers now that we are done with them.
@@ -269,7 +269,7 @@ public:
             if ((m_i2cTransaction.getAddress() != 0) && m_i2cTransaction.isIncomplete())
             {
                 _cleanTransaction();
-                ThrowError("Previous I2C operation to address: 0x%02X must be completed before starting new operation to address: 0x%02X", m_i2cTransaction.getAddress(), address);
+                ThrowError(HRESULT_FROM_WIN32(ERROR_INVALID_STATE), "Previous I2C operation to address: 0x%02X must be completed before starting new operation to address: 0x%02X", m_i2cTransaction.getAddress(), address);
             }
             m_i2cTransaction.reset();
             m_writeBuffs.clear();
@@ -278,7 +278,7 @@ public:
             if (FAILED(hr))
             {
                 _cleanTransaction();
-                ThrowError("Error encountered setting I2C address: 0x%02X, Error: 0x%08X", address, hr);
+                ThrowError(hr, "Error encountered setting I2C address: 0x%02X, Error: 0x%08X", address, hr);
             }
         }
     }

@@ -1,7 +1,10 @@
-## Microsoft.IoT.Lightning Nuget package
-This repository is for generating the Windows Developer Program for IoT Nuget package. This package contains code which is compiled into the maker's application which can be deployed to a board running Microsoft Windows. 
+## **Microsoft.IoT.Lightning Nuget package**
 
-This nuget package depends on Microsoft.IoT.SDKFromArduino, which contains source files written by the Arduino community. Together these packages ensure compatibility with existing sketches running on Microsoft Windows.
+This repository is for generating the Microsoft.IoT.Lightning Nuget package. This package contains code which is compiled into the maker's application which can be deployed to a board running Microsoft Windows IoT Core.
+
+The nuget package is also published periodically to nuget.org. For more information on installing the published nuget package, please refer to [https://www.nuget.org/packages/Microsoft.IoT.Lightning/](https://www.nuget.org/packages/Microsoft.IoT.Lightning/)
+
+Additionally, Microsoft.IoT.Lightning depends on [Microsoft.IoT.SDKFromArduino nuget package](https://www.nuget.org/packages/Microsoft.IoT.SDKFromArduino/), which contains source files written by the Arduino community. Together these packages ensure compatibility with existing sketches running on Microsoft Windows. For more information on the Arduino SDK, please visit the [arduino-sdk GittHub repository](https://github.com/ms-iot/arduino-sdk/).
 
 ##Build the Nuget package
 Please download the Nuget command line utility [nuget.exe](http://nuget.org/nuget.exe) into the lightning and arduino-sdk .\source folders.

@@ -83,11 +83,14 @@ const UCHAR ARDUINO_PIN_SCK = D13;      ///< Pin used for Galileo SPI Clock sign
 const UCHAR MBM_PIN_MISO = 7;           ///< Pin used for MBM SPI MISO signal
 const UCHAR MBM_PIN_MOSI = 9;           ///< Pin used for MBM SPI MOSI signal
 const UCHAR MBM_PIN_SCK = 11;           ///< Pin used for MBM SPI Clock signal
+const UCHAR MBM_PIN_CS0 = 5;            ///< Pin used for MBM SPI Chip select
 
 // SPI signal to pin mapping for bare PI2 SPI0.
 const UCHAR PI2_PIN_SPI0_MISO = 21;     ///< Pin used for PI2 SPI0 MISO signal
 const UCHAR PI2_PIN_SPI0_MOSI = 19;     ///< Pin used for PI2 SPI0 MOSI signal
 const UCHAR PI2_PIN_SPI0_SCK = 23;      ///< Pin used for PI2 SPI0 Clock signal
+const UCHAR PI2_PIN_SPI0_CS0 = 24;      ///< Pin used for PI2 SPI0 Chip select 0
+const UCHAR PI2_PIN_SPI0_CS1 = 26;      ///< Pin used for PI2 SPI0 Chip select 1
 
 // SPI signal to pin mapping for bare PI2 SPI1.
 const UCHAR PI2_PIN_SPI1_MISO = 35;     ///< Pin used for PI2 SPI1 MISO signal

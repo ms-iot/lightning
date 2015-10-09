@@ -11,6 +11,7 @@
 #include "ArduinoCommon.h"
 #include "DmapSupport.h"
 #include "HiResTimer.h"
+#include "concrt.h"
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 #include "quarklgpio.h"
@@ -465,14 +466,21 @@ public:
     */
     inline HRESULT mapS0IfNeeded()
     {
+        HRESULT hr = S_OK;
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
+        m_s0ControllerMutex.lock();
+#endif
+
         if (m_hS0Controller == INVALID_HANDLE_VALUE)
         {
-            return _mapS0Controller();
+            hr = _mapS0Controller();
         }
-        else
-        {
-            return S_OK;
-        }
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
+        m_s0ControllerMutex.unlock();
+#endif
+        return hr;
     }
 
     /// Method to map the S5 GPIO controller registers if they are not already mapped.
@@ -481,14 +489,21 @@ public:
     */
     inline HRESULT mapS5IfNeeded()
     {
+        HRESULT hr = S_OK;
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
+        m_s5ControllerMutex.lock();
+#endif
+
         if (m_hS5Controller == INVALID_HANDLE_VALUE)
         {
-            return _mapS5Controller();
+            hr = _mapS5Controller();
         }
-        else
-        {
-            return S_OK;
-        }
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
+        m_s5ControllerMutex.unlock();
+#endif
+        return hr;
     }
 
     /// Method to set the state of an S0 GPIO port bit.
@@ -620,6 +635,12 @@ private:
     */
     PGPIO_PAD m_s5Controller;
 
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
+    /// Initialization synchronization variables
+    Concurrency::critical_section m_s0ControllerMutex;
+    Concurrency::critical_section m_s5ControllerMutex;
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
     //
     // QuarkFabricGpioControllerClass private methods.
     //
@@ -673,14 +694,22 @@ public:
     */
     inline HRESULT mapIfNeeded()
     {
+        HRESULT hr = S_OK;
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
+        m_controllerMutex.lock();
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
         if (m_hController == INVALID_HANDLE_VALUE)
         {
-            return _mapController();
+            hr = _mapController();
         }
-        else
-        {
-            return S_OK;
-        }
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
+        m_controllerMutex.unlock();
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+        return hr;
     }
 
     /// Method to set the state of a GPIO port bit.
@@ -764,6 +793,11 @@ private:
     they are mapped into this process' virtual address space.
     */
     PBCM_GPIO m_registers;
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
+    /// Initialization synchronization variables
+    Concurrency::critical_section m_controllerMutex;
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
     //
     // BcmGpioControllerClass private methods.
