@@ -36,7 +36,7 @@ HRESULT I2cTransactionClass::setAddress(ULONG slaveAdr)
 {
     HRESULT hr = S_OK;
 
-    if ((slaveAdr < 0x08) || (slaveAdr >= 0x77))
+    if ((slaveAdr < 0x08) || (slaveAdr > 0x77))
     {
         hr = DMAP_E_I2C_ADDRESS_OUT_OF_RANGE;
     }
