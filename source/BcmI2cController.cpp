@@ -374,6 +374,7 @@ HRESULT BcmI2cControllerClass::_performReads(I2cTransferClass* & pXfr)
     {
         // Prepare to access the read buffer.
         readXfr->resetRead();
+        readPtr = readXfr->getNextReadLocation();
 
         // Tell the controller how many bytes we expect to read.
         m_registers->DLEN.ALL_BITS = cmdsOutstanding;
