@@ -50,9 +50,6 @@ using namespace Windows::Foundation::Collections;
 using namespace Windows::Storage::Streams;
 using namespace Windows::System::Threading;
 using namespace Concurrency;
-
-Concurrency::critical_section InitDriverMutex;
-
 #endif  // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 
@@ -103,8 +100,6 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
     {
         return S_OK; // Initialized already
     }
-
-    InitDriverMutex.lock();
 
     Platform::Guid myGuid = Platform::Guid(DMAP_INTERFACE);
     Platform::String^ myAqs = CustomDevice::GetDeviceSelector(myGuid);
@@ -262,8 +257,6 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
     findCompleted->wait();
 
     baseAddress = (PVOID)controllerAddress;
-
-    InitDriverMutex.unlock();
 
 #endif  // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 

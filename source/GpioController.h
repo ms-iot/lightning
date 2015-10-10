@@ -468,18 +468,11 @@ public:
     {
         HRESULT hr = S_OK;
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
-        m_s0ControllerMutex.lock();
-#endif
-
         if (m_hS0Controller == INVALID_HANDLE_VALUE)
         {
             hr = _mapS0Controller();
         }
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
-        m_s0ControllerMutex.unlock();
-#endif
         return hr;
     }
 
@@ -491,18 +484,11 @@ public:
     {
         HRESULT hr = S_OK;
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
-        m_s5ControllerMutex.lock();
-#endif
-
         if (m_hS5Controller == INVALID_HANDLE_VALUE)
         {
             hr = _mapS5Controller();
         }
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
-        m_s5ControllerMutex.unlock();
-#endif
         return hr;
     }
 
@@ -635,12 +621,6 @@ private:
     */
     PGPIO_PAD m_s5Controller;
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
-    /// Initialization synchronization variables
-    Concurrency::critical_section m_s0ControllerMutex;
-    Concurrency::critical_section m_s5ControllerMutex;
-#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-
     //
     // QuarkFabricGpioControllerClass private methods.
     //
@@ -696,18 +676,10 @@ public:
     {
         HRESULT hr = S_OK;
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
-        m_controllerMutex.lock();
-#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-
         if (m_hController == INVALID_HANDLE_VALUE)
         {
             hr = _mapController();
         }
-
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
-        m_controllerMutex.unlock();
-#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
         return hr;
     }
@@ -793,11 +765,6 @@ private:
     they are mapped into this process' virtual address space.
     */
     PBCM_GPIO m_registers;
-
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARITION_APP)
-    /// Initialization synchronization variables
-    Concurrency::critical_section m_controllerMutex;
-#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
     //
     // BcmGpioControllerClass private methods.
