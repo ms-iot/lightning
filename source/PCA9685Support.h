@@ -20,6 +20,12 @@ public:
     /// Set the PWM pulse width.
     static HRESULT SetPwmDutyCycle(ULONG i2cAdr, ULONG bit, ULONG pulseWidth);
 
+    /// Set the PWM pulse repetition rate.
+    static HRESULT SetPwmFrequency(ULONG i2cAdr, ULONG frequencyHz);
+
+    /// Get the actual PWM pulse repetition rate.
+    static ULONG GetActualPwmFrequency(ULONG i2cAdr);
+
     /// Method to get the resolution of this PWM chip.
     static ULONG GetResolution()
     {
@@ -31,8 +37,8 @@ private:
     static const ULONG MODE1_ADR;       ///< Address of MODE1 register
     static const ULONG MODE2_ADR;       ///< Address of MODE2 register
     static const ULONG SUBADR1_ADR;     ///< Address of SUBADR1 register
-    static const ULONG SUBADR2_ADR;     //< Address of SUBADR1 register
-    static const ULONG SUBADR3_ADR;     ///< Address of SUBADR1 register
+    static const ULONG SUBADR2_ADR;     //< Address of SUBADR2 register
+    static const ULONG SUBADR3_ADR;     ///< Address of SUBADR3 register
     static const ULONG ALLCALLADR_ADR;  ///< Address of ALLCALLADR register
     static const ULONG LEDS_BASE_ADR;   ///< Base address of LED output registers
     static const ULONG REGS_PER_LED;    ///< Number of registers for each LED
@@ -75,6 +81,9 @@ private:
     virtual ~PCA9685Device()
     {
     }
+
+    // TODO: if/when multiple PCA9685 chips are supported, the data unique to the chip
+    //       indexed by I2C address.
 
     /// Set to TRUE when the chip is known to have been initialized.
     static BOOL m_chipIsInitialized;

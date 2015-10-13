@@ -9,11 +9,12 @@
 ///
 /// \brief Creates a servo object
 ///
-Servo::Servo()
-    : _servoIndex(0)
-    , _min(MIN_PULSE_WIDTH)
-    , _max(MAX_PULSE_WIDTH)
-    , _attachedPin(-1)
+Servo::Servo() :
+    _min(MIN_PULSE_WIDTH),
+    _max(MAX_PULSE_WIDTH),
+    _attachedPin(-1),
+    _currentPulseMicroseconds(0),
+    _actualPeriodMicroseconds(0)
 {
 
 }
@@ -21,33 +22,85 @@ Servo::Servo()
 ///
 /// \brief Attaches a servo instance to a pin
 /// \details This will designate which pin the Servo instance will change.
-/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse.
-///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
+/// \param [in] pin - The PWM pin on which to generate the pulse (PWM0 - PWM15)
 ///
-uint8_t Servo::attach(int pin)
+void Servo::attach(int pin)
 {
-    _attachedPin = pin;
-    _min = MIN_PULSE_WIDTH;
-    _max = MAX_PULSE_WIDTH;
-
-    return 0;
+    attach(pin, MIN_PULSE_WIDTH, MAX_PULSE_WIDTH);
 }
 
 ///
-/// \brief Attaches a servo instance to a pin
+/// \brief Attaches a servo instance to a pin, specifying pulse width range.
 /// \details This will designate which pin the Servo instance will change.
-/// \param [in] pin - The Arduino GPIO pin on which to generate the pulse.
-///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
-/// \param [in] min - The minimum value for write calls to the Servo
-/// \param [in] max - The maximum value for write calls to the Servo
+/// \param [in] pin - The PWM pin on which to generate the pulse (PWM0 - PWM15)
+/// \param [in] min - The minimum microseconds for servo pulses, range: 0 - (max-1) )
+/// \param [in] max - The maximum microseconds for servo pulses, range: (min+1) - 10000
 ///
-uint8_t Servo::attach(int pin, int min, int max)
+void Servo::attach(int pin, int min, int max)
 {
-    _attachedPin = pin;
+    HRESULT hr;
+    ULONG ioPin;
+    BoardPinsClass::BOARD_TYPE board;
+    ULONG actualPwmFrequency = 0;
+
+    if ((min < 0) || (max < (min + 1)) || (max > 10000))
+    {
+        ThrowError(E_INVALIDARG, "Servo pulse microsecond range specified is invalid");
+    }
     _min = min;
     _max = max;
 
-    return 0;
+    hr = g_pins.getBoardType(board);
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error getting board type.  Error: 0x%08x", hr);
+    }
+
+    switch (board)
+    {
+    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
+    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
+    case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
+        // The pin number passed in is a GPIO Pin number, use it as is.
+        ioPin = pin;
+
+        // Verify the pin is in PWM mode, and configure it for PWM use if not.
+        hr = g_pins.verifyPinFunction(ioPin, FUNC_PWM, BoardPinsClass::LOCK_FUNCTION);
+        if (FAILED(hr))
+        {
+            ThrowError(hr, "Error occurred verifying pin: %d function: PWM, Error: %08x", ioPin, hr);
+        }
+        break;
+
+    case BoardPinsClass::BOARD_TYPE::MBM_BARE:
+    case BoardPinsClass::BOARD_TYPE::PI2_BARE:
+        // Translate the PWM channel numbers to fake pin numbers.
+        if (pin < PWM0)
+        {
+            ioPin = PWM0 + pin;
+        }
+        else
+        {
+            ioPin = pin;
+        }
+        break;
+
+    default:
+        ThrowError(E_INVALIDARG, "Unrecognized board type: 0x%08x", board);
+    }
+
+    // Set the frequency on the PWM channel.
+    hr = g_pins.setPwmFrequency(ioPin, SERVO_FREQUENCY_HZ);
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred setting PWM frequency for servo use.");
+    }
+
+    // Record the information we need to drive a servo signal on the PWM pin.
+    actualPwmFrequency = g_pins.getActualPwmFrequency(ioPin);
+    _actualPeriodMicroseconds = (1000000 + (actualPwmFrequency / 2)) / actualPwmFrequency;
+    _attachedPin = ioPin;
+
 }
 
 ///
@@ -66,26 +119,29 @@ void Servo::detach()
 ///
 void Servo::write(int value)
 {
+    ULONG pulseMicroseconds;
+
     if (!attached())
     {
         ThrowError(HRESULT_FROM_WIN32(ERROR_INVALID_STATE), "Error when calling write, servo is not attached.");
         return;
     }
 
-    // value is in angles and needs to be converted to microSeconds
+    // Value is in degrees from 0-180, convert it to microSeconds
     if (value <= 0)
     {
-        writeMicroseconds(_min);
+        pulseMicroseconds = _min;
     }
     else if (value >= 180)
     {
-        writeMicroseconds(_max);
+        pulseMicroseconds = _max;
     }
     else
     {
-        double alternateValue = (double) value / 180 * (_max - _min) + _min;
-        writeMicroseconds((int) alternateValue);
+        pulseMicroseconds = ( (((_max - _min) * value) + 90) / 180 ) + _min;
     }
+
+    writeMicroseconds(pulseMicroseconds);
 }
 
 ///
@@ -96,36 +152,32 @@ void Servo::write(int value)
 ///
 void Servo::writeMicroseconds(int value)
 {
+    ULONGLONG pulseMicroseconds;
+    ULONG dutyCycle;
+    HRESULT hr;
+
     if (!attached())
     {
         ThrowError(HRESULT_FROM_WIN32(ERROR_INVALID_STATE), "Error when calling writeMicroseconds, servo is not attached.");
         return;
     }
 
-    // validating that the value inputted is within the bounds of the min and max
-    int alternateValue = value;
+    // Limit the pulse microseconds to the range previously specifed as the min and max.
     if (value < _min)
     {
-        alternateValue = _min;
+        pulseMicroseconds = _min;
     }
     else if (value > _max)
     {
-        alternateValue = _max;
+        pulseMicroseconds = _max;
     }
-
-    // Making the frequency 50 Hz which is equal to a 20ms period
-    int frequency = (int)((double) 1 / ((double) REFRESH_INTERVAL / 1000000));
-    
-    // Validation of the pin to make sure PWM functionality is allowed
-    HRESULT hr = g_pins.verifyPinFunction(_attachedPin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE);
-    if (FAILED(hr))
+    else
     {
-        ThrowError(hr, "Error occurred verifying pin: %d function: PWM, Error: %08x", _attachedPin, hr);
+        pulseMicroseconds = value;
     }
 
-    // Scale the duty cycle to the range used by the driver.
-    // From 0-255 to 0-PWM_MAX_DUTYCYCLE, rounding to nearest value.
-    ULONG dutyCycle = (ULONG) ((((double) alternateValue / REFRESH_INTERVAL * 255UL * PWM_MAX_DUTYCYCLE) + 127UL) / 255UL);
+    // Scale the duty cycle to the range used by the driver (0-0xFFFFFFFF)
+    dutyCycle = (ULONG)(((pulseMicroseconds * 0xFFFFFFFFLL) + (ULONGLONG)(_actualPeriodMicroseconds / 2)) / ((ULONGLONG)_actualPeriodMicroseconds));
 
     // Prepare the pin for PWM use.
     hr = g_pins.setPwmDutyCycle(_attachedPin, (ULONG)dutyCycle);
@@ -134,8 +186,8 @@ void Servo::writeMicroseconds(int value)
         ThrowError(hr, "Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", _attachedPin, dutyCycle, hr);
     }
 
-    double servoIndexDouble = (double) (alternateValue - _min) / (_max - _min) * 180;
-    _servoIndex = static_cast<uint8_t>(servoIndexDouble);
+    // Record the currently set pulse time in microseconds.
+    _currentPulseMicroseconds = (ULONG)pulseMicroseconds;
 }
 
 ///
@@ -143,29 +195,8 @@ void Servo::writeMicroseconds(int value)
 ///
 int Servo::read()
 {
-    return _servoIndex;
+    int servoDegrees;
+    servoDegrees = (((_currentPulseMicroseconds - _min) * 180) + ((_max - _min) / 2)) / (_max - _min);
+    return servoDegrees;
 }
 
-///
-/// \brief Returns the last value written to the servo in microseconds
-///
-int Servo::readMicroseconds()
-{
-    return (int)(((double) _servoIndex / 180) * (_max - _min) + _min);
-}
-
-///
-/// \brief Returns a boolean value describing whether or not the
-///        Servo instance has been attached to a pin
-///
-bool Servo::attached()
-{
-    if (_attachedPin == -1)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
