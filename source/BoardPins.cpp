@@ -1549,6 +1549,126 @@ HRESULT BoardPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
     return hr;
 }
 
+
+/**
+This method expects the call to have verified the pin number is in range, supports
+PWM functions, and is in PWM mode.
+\param[in] pin The number of the GPIO pin in question.
+\param[in] frequency The desired PWM pulse repetition frequency in Hz.
+\return HRESULT success or error code.
+\note The actual frequency set may be different than the frequency requested because
+of hardware limitations and clock uncertainty.  Use getActualPwmFrequency() to get the 
+approximate frequency that was actually set.
+*/
+HRESULT BoardPinsClass::setPwmFrequency(ULONG pin, ULONG frequency)
+{
+    HRESULT hr = S_OK;
+    ULONG expNo;
+    ULONG expType;
+    ULONG i2cAdr;
+
+
+    hr = _verifyBoardType();
+
+    if (SUCCEEDED(hr))
+    {
+        switch (m_boardType)
+        {
+        case BOARD_TYPE::GALILEO_GEN1:
+        case BOARD_TYPE::GALILEO_GEN2:
+        case BOARD_TYPE::MBM_IKA_LURE:
+            expNo = m_PwmChannels[pin].expander;
+            expType = m_ExpAttributes[expNo].Exp_Type;
+            i2cAdr = m_ExpAttributes[expNo].I2c_Address;
+
+            // Dispatch to the correct code based on the PWM chip type:
+            switch (expType)
+            {
+            case PCA9685:
+                hr = PCA9685Device::SetPwmFrequency(i2cAdr, frequency);
+                break;
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+            case CY8C9540A:
+                hr = DMAP_E_DMAP_INTERNAL_ERROR;        // Not currently supported.
+                break;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+            default:
+                hr = DMAP_E_DMAP_INTERNAL_ERROR;
+            }
+            break;
+
+        case BOARD_TYPE::MBM_BARE:
+        case BOARD_TYPE::PI2_BARE:
+
+            // If we have a PWM chip, it is external to the board.  The only one we
+            // currently support is the PCA9685.  Assume that is what we are using.
+            hr = PCA9685Device::SetPwmFrequency(EXT_PCA9685_I2C_ADR, frequency);
+            break;
+
+        default:
+            hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
+        }
+    }
+
+    return hr;
+}
+
+/**
+This method expects the call to have verified the pin number is in range, supports
+PWM functions, and is in PWM mode.
+\param[in] pin The number of the GPIO pin in question.
+\return ULONG the approximate value of the actual PWM pulse repetition rate in Hz.
+*/
+ULONG BoardPinsClass::getActualPwmFrequency(ULONG pin)
+{
+    HRESULT hr = S_OK;
+    ULONG expNo;
+    ULONG channel;
+    ULONG expType;
+    ULONG i2cAdr;
+    ULONG pwmFrequency = 0;
+
+
+    hr = _verifyBoardType();
+
+    if (SUCCEEDED(hr))
+    {
+        switch (m_boardType)
+        {
+        case BOARD_TYPE::GALILEO_GEN1:
+        case BOARD_TYPE::GALILEO_GEN2:
+        case BOARD_TYPE::MBM_IKA_LURE:
+            expNo = m_PwmChannels[pin].expander;
+            channel = m_PwmChannels[pin].channel;
+            expType = m_ExpAttributes[expNo].Exp_Type;
+            i2cAdr = m_ExpAttributes[expNo].I2c_Address;
+
+            // Dispatch to the correct code based on the PWM chip type:
+            switch (expType)
+            {
+            case PCA9685:
+                pwmFrequency = PCA9685Device::GetActualPwmFrequency(i2cAdr);
+                break;
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+            case CY8C9540A:
+                pwmFrequency = CY8C9540ADevice::GetActualPwmFrequency(i2cAdr, channel);
+                break;
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+            }
+            break;
+
+        case BOARD_TYPE::MBM_BARE:
+        case BOARD_TYPE::PI2_BARE:
+            // If we have a PWM chip, it is external to the board.  The only one we
+            // currently support is the PCA9685.  Assume that is what we are using.
+            pwmFrequency = PCA9685Device::GetActualPwmFrequency(EXT_PCA9685_I2C_ADR);
+            break;
+        }
+    }
+
+    return pwmFrequency;
+}
+
 /**
 The board type is determined by parsing the processor identifier string 
 in the Registry.

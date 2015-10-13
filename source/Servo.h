@@ -7,22 +7,44 @@
 #define DEFAULT_PULSE_WIDTH 1500
 #define REFRESH_INTERVAL 20000 // 20 ms
 
+// Use a pulse rate of 50 pulses per second to drive servos
+#define SERVO_FREQUENCY_HZ 50
+
 class Servo
 {
+private:
     int _attachedPin;
-    uint8_t _servoIndex;
     int _min;
     int _max;
+    ULONG _currentPulseMicroseconds;
+    ULONG _actualPeriodMicroseconds;
 
 public:
     Servo();
-    uint8_t attach(int pin);
-    uint8_t attach(int pin, int min, int max);
+    void attach(int pin);
+    void attach(int pin, int min, int max);
     void detach();
     void write(int angle);
     void writeMicroseconds(int value);
     int read();
-    int readMicroseconds();
-    bool attached();
+    inline ULONG readMicroseconds();
+    inline bool attached();
 
 };
+
+/// Determine if attach() has been called successfully for this servo object.
+/**
+\return True if this object is attached, False otherwise.
+*/
+inline bool Servo::attached()
+{
+    return (_attachedPin != -1);
+}
+
+/// Get the currently set pulse width in microseconds.
+/// \return the last pulse width that was set, in microseconds.
+inline ULONG Servo::readMicroseconds()
+{
+    return _currentPulseMicroseconds;
+}
+

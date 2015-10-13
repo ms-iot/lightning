@@ -135,6 +135,12 @@ public:
     /// Method to set the PWM duty cycle for a pin.
     HRESULT setPwmDutyCycle(ULONG pin, ULONG dutyCycle);
 
+    /// Method to set the PWM pulse repetition frequency.
+    HRESULT setPwmFrequency(ULONG pin, ULONG frequency);
+
+    // Method to get the actual PWM pulse repetition frequncy that is set.
+    ULONG getActualPwmFrequency(ULONG pin);
+
     /// Method to override auto-detection of board type.
     HRESULT setBoardType(BOARD_TYPE board);
 

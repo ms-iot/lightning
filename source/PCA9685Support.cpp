@@ -243,6 +243,126 @@ HRESULT PCA9685Device::SetPwmDutyCycle(ULONG i2cAdr, ULONG channel, ULONG dutyCy
     return hr;
 }
 
+/**
+Set the pulse repetition rate for the PWM channels on the specified chip.
+\param[in] i2cAdr The I2C address of the PWM chip.
+\param[in] frequency The desired PWM pulse repetition rate in pulses per second.
+\return HRESULT success or error code.
+*/
+HRESULT PCA9685Device::SetPwmFrequency(ULONG i2cAdr, ULONG frequency)
+{
+    HRESULT hr = S_OK;
+    I2cTransactionClass transaction;
+    ULONG preScale;
+    UCHAR readBuf[1] = { 0 };                       // Buffer for reading data from chip
+    UCHAR mode1RegAdr[1] = { MODE1_ADR };           // Buffer for MODE1 register address
+    UCHAR preScaleAdr[1] = { PRE_SCALE_ADR };       // Buffer for PRE_SCALE register address
+    MODE1 mode1Sleep = { 0, 0, 0, 0, 1, 1, 0, 0 };  // Sleep, auto-increment, internal clock
+    MODE1 mode1Run = { 0, 0, 0, 0, 0, 1, 0, 0 };    // No sleep, auto-increment, internal clock
+
+
+                                                    // Make sure the PWM chip is initialized.
+    hr = _InitializeChip(i2cAdr);
+
+    if (SUCCEEDED(hr))
+    {
+        // Set the I2C address of the PWM chip.
+        hr = transaction.setAddress(i2cAdr);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        // Indicate this chip supports high speed I2C transfers.
+        transaction.useHighSpeed();
+
+        // Calculate the nearest prescale value for the requested pulse rate.
+        if (frequency < 24)
+        {
+            preScale = 0xFF;
+        }
+        else
+        {
+            // From PCA9685 datasheet: prescale = round(25,000,000 / (4096 * pulse_rate)) - 1
+            preScale = (((25000000 + ((4096 * frequency) / 2))) / (4096 * frequency)) - 1;
+        }
+        preScale = preScale & 0xFF;
+    }
+
+    // If we need to set a new prescale value.
+    if (SUCCEEDED(hr) && (m_freqPreScale != preScale))
+    {
+        // Queue a write to set the Sleep bit (so we can change the PWM frequency).
+        hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1RegAdr));
+        if (SUCCEEDED(hr))
+        {
+            hr = transaction.queueWrite((PUCHAR)&mode1Sleep, 1);
+        }
+
+        // Queue a write to set the frequency prescale value.
+        if (SUCCEEDED(hr))
+        {
+            hr = transaction.queueWrite(preScaleAdr, sizeof(preScaleAdr), TRUE);
+        }
+        if (SUCCEEDED(hr))
+        {
+            hr = transaction.queueWrite((PUCHAR)&preScale, 1);
+        }
+
+        // Queue a write to clear the Sleep bit.
+        if (SUCCEEDED(hr))
+        {
+            hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1RegAdr), TRUE);
+        }
+        if (SUCCEEDED(hr))
+        {
+            hr = transaction.queueWrite((PUCHAR)&mode1Run, 1);
+        }
+
+        // Delay for 500 microseconds for clock to start.
+        for (int i = 0; SUCCEEDED(hr) && (i < 5); i++)
+        {
+            hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1RegAdr), TRUE);
+            if (SUCCEEDED(hr))
+            {
+                hr = transaction.queueRead(readBuf, sizeof(readBuf));
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            // Actually perform the I2C transfers specified above.
+            hr = transaction.execute(g_i2c.getController());
+        }
+
+        // Record the prescale value just set.
+        if (SUCCEEDED(hr))
+        {
+            m_freqPreScale = (UCHAR)preScale;
+        }
+    }
+
+    return hr;
+}
+
+/**
+Get the actual pulse repetition rate for the PWM channels on the specified chip.
+\param[in] i2cAdr The I2C address of the PWM chip.
+\return The approximate actual pulse repetion rate of the PWM channels.
+*/
+ULONG PCA9685Device::GetActualPwmFrequency(ULONG i2cAdr)
+{
+    HRESULT hr = S_OK;
+    ULONG frequency;
+    ULONG divisor;
+
+    // From PCA9685 datasheet: prescale = round(25,000,000 / (4096 * pulse_rate)) - 1
+    // so pulse_rate = round( 25,000,000 / ((prescale + 1) * 4096) )
+
+    divisor = (m_freqPreScale + 1) * 4096;
+    frequency = (25000000 + (divisor / 2)) / divisor;
+
+    return frequency;
+}
 
 /**
 This method takes any actions needed to initialize the PWM chip for use by other methods.
@@ -280,7 +400,7 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
             transaction.useHighSpeed();
 
             // Queue sending the address of the MODE1 regeister to the PWM chip.
-            hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1Reg));
+            hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1RegAdr));
         }
 
         if (SUCCEEDED(hr))
