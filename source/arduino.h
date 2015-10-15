@@ -458,6 +458,14 @@ inline void pinMode(unsigned int pin, unsigned int mode)
 {
     HRESULT hr;
 
+    // Make sure this pin is not already locked for a conflicting use.
+    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
+
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
+    }
+
     switch (mode)
     {
     case INPUT:
