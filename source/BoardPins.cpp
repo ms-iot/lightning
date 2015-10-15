@@ -110,8 +110,8 @@ const ULONG NUM_MBM_PINS = 27;  ///< Number of entries in a zero based array ind
 // The I2C Address of the MBM Ika Lure ADC.
 const ULONG MBM_IKA_LURE_ADC_ADR = 0x48;    ///< I2C address of ADC on MBM Ika Lure
                                             
-// The number of connector pins on an PI2 plus one (to allow for 0 not being used).
-const ULONG NUM_PI2_PINS = 41;  ///< Number of entries in a zero based array indexed by PI2 pin number.
+// The number of connector pins on an PI2 plus one for zero, plus one for onboard led.
+const ULONG NUM_PI2_PINS = 42;  ///< Number of entries in a zero based array indexed by PI2 pin number.
 
 // The expected I2C address of an external PCA9685 PWM chip.
 const UCHAR EXT_PCA9685_I2C_ADR = 0x40;
@@ -527,7 +527,8 @@ const BoardPinsClass::PORT_ATTRIBUTES g_Pi2PinAttributes[] =
     { GPIO_BCM,   26,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 37
     { GPIO_BCM,   20,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 38
     { GPIO_NONE,   0,    NO_X, 0,    NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_NUL },             // 39
-    { GPIO_BCM,   21,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO }              // 40
+    { GPIO_BCM,   21,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },             // 40
+    { GPIO_BCM,   47,    MUX0, 0,    NO_X, 0,    MUX0,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO }              // 41 - LED
 };
 
 /// The global table of mux attributes for the PI2 board.
@@ -558,6 +559,7 @@ const BoardPinsClass::MUX_ATTRIBUTES g_Pi2MuxAttributes[MAX_MUXES] =
 /**
 This table contains the information needed to drive the PWM channels.  It is indexed by the
 PI2 connector pin number, and specifies the chip and port-bit that implements PWM for that pin.
+This is currently not used, but is included here for compatibility with the other boards.
 */
 const BoardPinsClass::PWM_CHANNEL g_Pi2PwmChannels[] =
 {
@@ -601,7 +603,8 @@ const BoardPinsClass::PWM_CHANNEL g_Pi2PwmChannels[] =
     { NO_X, 0, 0, 0 },          ///< 37
     { NO_X, 0, 0, 0 },          ///< 38
     { NO_X, 0, 0, 0 },          ///< 39
-    { NO_X, 0, 0, 0 }           ///< 40
+    { NO_X, 0, 0, 0 },          ///< 40
+    { NO_X, 0, 0, 0 }           ///< 41 - PI2 Onboard LED
 };
 #endif // defined(_M_ARM)
 
@@ -671,7 +674,8 @@ BoardPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
     { FUNC_NUL, false },    ///< 37
     { FUNC_NUL, false },    ///< 38
     { FUNC_NUL, false },    ///< 39
-    { FUNC_NUL, false }     ///< 40
+    { FUNC_NUL, false },    ///< 40
+    { FUNC_NUL, false }     ///< 41 - PI2 Onboard LED
 };
 
 
