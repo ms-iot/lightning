@@ -1564,17 +1564,33 @@ This method assumes the caller has checked the input parameters.
 inline HRESULT BcmGpioControllerClass::setPinState(ULONG gpioNo, ULONG state)
 {
     HRESULT hr = mapIfNeeded();
+    ULONG bitMask;
 
-    ULONG bitMask = 1 << gpioNo;
     if (SUCCEEDED(hr))
     {
-        if (state == 0)
+        if (gpioNo < 32)
         {
-            m_registers->GPCLR0 = bitMask;
+            bitMask = 1 << gpioNo;
+            if (state == 0)
+            {
+                m_registers->GPCLR0 = bitMask;
+            }
+            else
+            {
+                m_registers->GPSET0 = bitMask;
+            }
         }
         else
         {
-            m_registers->GPSET0 = bitMask;
+            bitMask = 1 << (gpioNo - 32);
+            if (state == 0)
+            {
+                m_registers->GPCLR1 = bitMask;
+            }
+            else
+            {
+                m_registers->GPSET1 = bitMask;
+            }
         }
     }
 
@@ -1595,7 +1611,14 @@ inline HRESULT BcmGpioControllerClass::getPinState(ULONG gpioNo, ULONG & state)
 
     if (SUCCEEDED(hr))
     {
-        state = ((m_registers->GPLEV0) >> gpioNo) & 1;
+        if (gpioNo < 32)
+        {
+            state = ((m_registers->GPLEV0) >> gpioNo) & 1;
+        }
+        else
+        {
+            state = ((m_registers->GPLEV1) >> (gpioNo - 32)) & 1;
+        }
     }
 
     return hr;
