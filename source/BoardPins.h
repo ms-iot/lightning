@@ -14,13 +14,6 @@
 #include "CY8C9540ASupport.h"
 #include "ExpanderDefs.h"
 
-#if defined(_M_ARM)
-// Temporary, special definitions to enable the PI2 Onboard LED.
-// This will be removed once it is in PinNumbers.h.
-#define GPIO_47 41         // PI2 onboard LED uses virtual "pin 41"
-#define LED_BUILTIN 41
-#endif // defined(_M_ARM)
-
 // Pin function type values.
 const UCHAR FUNC_NUL = 0x00;   ///< No function has been set
 const UCHAR FUNC_DIO = 0x01;   ///< Digital I/O function
