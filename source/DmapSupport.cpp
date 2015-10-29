@@ -143,6 +143,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
             {
                 hr = DMAP_E_DEVICE_NOT_FOUND_ON_SYSTEM;
                 findCompleted->set();
+                return;
             }
 
             if (SUCCEEDED(hr))
@@ -166,6 +167,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
                     {
                         hr = DMAP_E_TOO_MANY_DEVICES_MAPPED;
                         findCompleted->set();
+                        return;
                     }
 
                     if (SUCCEEDED(hr))
@@ -184,7 +186,6 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
                             // into the address buffer by the I/O operation.
 
                             // hr should already be S_OK 
-                            // TODO: What happens if result != 8, fail?
                             if (result == 8)
                             {
                                 hr = S_OK;
@@ -350,7 +351,6 @@ HRESULT GetControllerLock(HANDLE & handle)
 
         create_task(device->SendIOControlAsync(LockCode, nullptr, nullptr)).then([&ioControlCompleted, &hr](UINT result)
         {
-            // TODO: Is this correct?
             hr = result;
 
             ioControlCompleted->set();
@@ -389,7 +389,6 @@ HRESULT ReleaseControllerLock(HANDLE & handle)
 
         create_task(device->SendIOControlAsync(UnlockCode, nullptr, nullptr)).then([&ioControlCompleted, &hr](UINT result)
         {
-            // TODO: Is this correct?
             hr = result;
 
             ioControlCompleted->set();
