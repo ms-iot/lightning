@@ -21,6 +21,7 @@
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\BtSpiController.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\CY8C9540ASupport.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\DmapSupport.cpp" />
+    <LightningSources Include="$(MSBuildThisFileDirectory)\Source\DmapErrors.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\eeprom.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\GpioController.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\I2c.cpp" />

@@ -37,6 +37,7 @@
 #include "binary.h"
 #include "wire.h"
 #include "Adc.h"
+#include "pins_arduino.h"
 
 #include <memory>
 #include <map>
