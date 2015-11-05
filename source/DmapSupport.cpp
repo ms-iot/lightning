@@ -15,6 +15,9 @@ using namespace Windows::Foundation::Collections;
 using namespace Windows::Storage::Streams;
 using namespace Windows::System::Threading;
 using namespace Concurrency;
+
+#define WAIT_TIME_MILLIS 10000 // wait up to 10 seconds
+
 #endif  // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 
@@ -90,7 +93,11 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
     // Would be converted to this device instance name string:
     //  "ACPI\INT33FC\1"
 
-    std::shared_ptr<Concurrency::event> findCompleted = std::make_shared<Concurrency::event>();
+    HANDLE findCompleted = CreateEventEx(nullptr, nullptr, 0 /* auto reset */, EVENT_ALL_ACCESS);
+    if (findCompleted == nullptr)
+    {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
 
     auto workItem = ref new WorkItemHandler(
         [&myAqs, &controllerAddress, &inputDeviceSubstr, &handle, &findCompleted, &hr]
@@ -142,7 +149,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
             if (!foundDevice)
             {
                 hr = DMAP_E_DEVICE_NOT_FOUND_ON_SYSTEM;
-                findCompleted->set();
+                SetEvent(findCompleted);
                 return;
             }
 
@@ -166,7 +173,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
                     if (i == MAX_OPEN_DEVICES)
                     {
                         hr = DMAP_E_TOO_MANY_DEVICES_MAPPED;
-                        findCompleted->set();
+                        SetEvent(findCompleted);
                         return;
                     }
 
@@ -203,7 +210,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
                                 controllerAddress = address;
                             }
 
-                            findCompleted->set();
+                            SetEvent(findCompleted);
 
                         }); // device->SendIOControlAsync()
 
@@ -220,10 +227,21 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 
     auto asyncAction = ThreadPool::RunAsync(workItem);
 
-    findCompleted->wait();
+    DWORD dwError = WaitForSingleObjectEx(findCompleted, WAIT_TIME_MILLIS, FALSE);
+    if (dwError == WAIT_TIMEOUT)
+    {
+        hr = E_ABORT;
+    }
+    else if (dwError != WAIT_OBJECT_0)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+    }
+    else
+    {
+        baseAddress = (PVOID)controllerAddress;
+    }
 
-    baseAddress = (PVOID)controllerAddress;
-
+    CloseHandle(findCompleted);
 #endif  // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app
@@ -327,6 +345,57 @@ HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)  // If building a UWP app
+
+/**
+Send an IO control code to the device driver
+\param[in] handle Handle opened to the device to be locked.
+\return HRESULT success or error code.
+*/
+HRESULT SendIoControl(HANDLE & handle, IOControlCode^ iOControlCode)
+{
+    HRESULT hr = S_OK;
+    CustomDevice^ device;
+
+    if ((handle < &g_devices[0]) || (handle >= &g_devices[MAX_OPEN_DEVICES]))
+    {
+        return DMAP_E_INVALID_LOCK_HANDLE_SPECIFIED;
+    }
+
+    device = *(CustomDevice^*)handle;
+
+    HANDLE ioControlCompleted = CreateEventEx(nullptr, nullptr, 0 /* auto reset */, EVENT_ALL_ACCESS);
+    if (ioControlCompleted == nullptr)
+    {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    auto workItem = ref new WorkItemHandler(
+        [device, iOControlCode, ioControlCompleted, &hr]
+    (IAsyncAction^ workItem)
+    {
+        create_task(device->SendIOControlAsync(iOControlCode, nullptr, nullptr)).then([&ioControlCompleted, &hr](UINT result)
+        {
+            hr = result;
+            SetEvent(ioControlCompleted);
+        });
+    });
+
+    auto asyncAction = ThreadPool::RunAsync(workItem);
+
+    DWORD dwError = WaitForSingleObjectEx(ioControlCompleted, WAIT_TIME_MILLIS, FALSE);
+    if (dwError == WAIT_TIMEOUT)
+    {
+        hr = E_ABORT;
+    }
+    else if (dwError != WAIT_OBJECT_0)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    CloseHandle(ioControlCompleted);
+    return hr;
+}
+
 /**
 Acquire an exclusive access lock on a controller.
 \param[in] handle Handle opened to the device to be locked.
@@ -334,37 +403,11 @@ Acquire an exclusive access lock on a controller.
 */
 HRESULT GetControllerLock(HANDLE & handle)
 {
-    HRESULT hr = S_OK;
-    CustomDevice^ device;
     static IOControlCode^ LockCode = ref new IOControlCode(0x423, 0x103, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
 
-    if ((handle < &g_devices[0]) || (handle >= &g_devices[MAX_OPEN_DEVICES]))
-    {
-        hr = DMAP_E_INVALID_LOCK_HANDLE_SPECIFIED;
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        device = *(CustomDevice^*)handle;
-
-        std::shared_ptr<Concurrency::event> ioControlCompleted = std::make_shared<Concurrency::event>();
-
-        create_task(device->SendIOControlAsync(LockCode, nullptr, nullptr)).then([&ioControlCompleted, &hr](UINT result)
-        {
-            hr = result;
-
-            ioControlCompleted->set();
-        });
-
-        ioControlCompleted->wait();
-
-    } // End - if (SUCCEEDED(hr))
-
-    return hr;
+    return SendIoControl(handle, LockCode);
 }
-#endif  // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
-#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)  // If building a UWP app
 /**
 Release an exclusive access lock on a controller.
 \param[in] handle Handle opened to the locked device.
@@ -372,32 +415,8 @@ Release an exclusive access lock on a controller.
 */
 HRESULT ReleaseControllerLock(HANDLE & handle)
 {
-    HRESULT hr = S_OK;
-    CustomDevice^ device;
     static IOControlCode^ UnlockCode = ref new IOControlCode(0x423, 0x104, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
 
-    if ((handle < &g_devices[0]) || (handle >= &g_devices[MAX_OPEN_DEVICES]))
-    {
-        hr = DMAP_E_INVALID_LOCK_HANDLE_SPECIFIED;
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        device = *(CustomDevice^*)handle;
-
-        std::shared_ptr<Concurrency::event> ioControlCompleted = std::make_shared<Concurrency::event>();
-
-        create_task(device->SendIOControlAsync(UnlockCode, nullptr, nullptr)).then([&ioControlCompleted, &hr](UINT result)
-        {
-            hr = result;
-
-            ioControlCompleted->set();
-        });
-
-        ioControlCompleted->wait();
-
-    } // End - if (SUCCEEDED(hr))
-
-    return hr;
+    return SendIoControl(handle, UnlockCode);
 }
 #endif  // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
