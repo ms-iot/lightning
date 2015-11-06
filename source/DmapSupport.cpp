@@ -228,17 +228,19 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
     auto asyncAction = ThreadPool::RunAsync(workItem);
 
     DWORD dwError = WaitForSingleObjectEx(findCompleted, WAIT_TIME_MILLIS, FALSE);
-    if (dwError == WAIT_TIMEOUT)
+    if (dwError == WAIT_OBJECT_0)
     {
-        hr = E_ABORT;
+        baseAddress = (PVOID)controllerAddress;
     }
-    else if (dwError != WAIT_OBJECT_0)
+    else if (dwError == WAIT_TIMEOUT ||
+        dwError == WAIT_ABANDONED ||
+        dwError == WAIT_IO_COMPLETION)
     {
-        hr = HRESULT_FROM_WIN32(GetLastError());
+        hr = HRESULT_FROM_WIN32(dwError);
     }
     else
     {
-        baseAddress = (PVOID)controllerAddress;
+        hr = HRESULT_FROM_WIN32(GetLastError());
     }
 
     CloseHandle(findCompleted);
@@ -351,7 +353,7 @@ Send an IO control code to the device driver
 \param[in] handle Handle opened to the device to be locked.
 \return HRESULT success or error code.
 */
-HRESULT SendIoControl(HANDLE & handle, IOControlCode^ iOControlCode)
+HRESULT SendIOControlCodeToController(HANDLE & handle, IOControlCode^ iOControlCode)
 {
     HRESULT hr = S_OK;
     CustomDevice^ device;
@@ -383,11 +385,17 @@ HRESULT SendIoControl(HANDLE & handle, IOControlCode^ iOControlCode)
     auto asyncAction = ThreadPool::RunAsync(workItem);
 
     DWORD dwError = WaitForSingleObjectEx(ioControlCompleted, WAIT_TIME_MILLIS, FALSE);
-    if (dwError == WAIT_TIMEOUT)
+    if (dwError == WAIT_OBJECT_0)
     {
-        hr = E_ABORT;
+        // success
     }
-    else if (dwError != WAIT_OBJECT_0)
+    else if (dwError == WAIT_TIMEOUT ||
+        dwError == WAIT_ABANDONED ||
+        dwError == WAIT_IO_COMPLETION)
+    {
+        hr = HRESULT_FROM_WIN32(dwError);
+    }
+    else
     {
         hr = HRESULT_FROM_WIN32(GetLastError());
     }
@@ -405,7 +413,7 @@ HRESULT GetControllerLock(HANDLE & handle)
 {
     static IOControlCode^ LockCode = ref new IOControlCode(0x423, 0x103, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
 
-    return SendIoControl(handle, LockCode);
+    return SendIOControlCodeToController(handle, LockCode);
 }
 
 /**
@@ -417,6 +425,6 @@ HRESULT ReleaseControllerLock(HANDLE & handle)
 {
     static IOControlCode^ UnlockCode = ref new IOControlCode(0x423, 0x104, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
 
-    return SendIoControl(handle, UnlockCode);
+    return SendIOControlCodeToController(handle, UnlockCode);
 }
 #endif  // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
