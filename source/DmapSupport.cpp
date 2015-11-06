@@ -349,8 +349,8 @@ HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)  // If building a UWP app
 
 /**
-Send an IO control code to the device driver
-\param[in] handle Handle opened to the device to be locked.
+Send an IO control code to the controller device driver
+\param[in] handle Handle opened to the device.
 \return HRESULT success or error code.
 */
 HRESULT SendIOControlCodeToController(HANDLE & handle, IOControlCode^ iOControlCode)
