@@ -94,7 +94,7 @@ inline void ThrowError(_In_ HRESULT hr, _In_ _Printf_format_string_ STRSAFE_LPCS
         if (it != DmapErrors.end())
         {
             std::wstring exceptionSz(wbuf);
-            exceptionSz.append(L"\n");
+            exceptionSz.append(L": ");
             exceptionSz.append(it->second);
             exceptionString = ref new Platform::String(exceptionSz.c_str());
         }

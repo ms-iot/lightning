@@ -17,7 +17,7 @@ std::map<HRESULT, LPCWSTR> DmapErrors = {
     { DMAP_E_INVALID_PORT_BIT_FOR_DEVICE        , L"The port/bit specified does not exist on the device." },
     { DMAP_E_INVALID_LOCK_HANDLE_SPECIFIED      , L"An invalid handle was specified attempting to get a controller lock." },
     { DMAP_E_TOO_MANY_DEVICES_MAPPED            , L"An attempt was made to map more than the maximum number of devices." },
-    { DMAP_E_DEVICE_NOT_FOUND_ON_SYSTEM         , L"The specified device could not be found on the system. Make sure the current driver is DMAP." },
+    { DMAP_E_DEVICE_NOT_FOUND_ON_SYSTEM         , L"The specified device could not be found on the system. Please Make sure the Lightning driver is enabled. For more information refer to the Lightning Setup Guide: http://ms-iot.github.io/content/en-US/win10/LightningSetup.htm" },
     { DMAP_E_I2C_ADDRESS_OUT_OF_RANGE           , L"The specified I2C address is outside the legal range for 7-bit I2C addresses." },
     { DMAP_E_I2C_NO_OR_EMPTY_WRITE_BUFFER       , L"None or empty, write buffer was specified." },
     { DMAP_E_I2C_NO_OR_ZERO_LENGTH_READ_BUFFER  , L"None or zero length, read buffer was specified." },
