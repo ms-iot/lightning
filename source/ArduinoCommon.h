@@ -29,8 +29,6 @@ const UCHAR CHANGE = 0x01;
 const UCHAR FALLING = 0x02;
 const UCHAR RISING = 0x03;
 
-const uint16_t PWM_MAX_DUTYCYCLE = 0xffff;
-
 // Pin name to number mapping.
 const UCHAR D0 = 0;
 const UCHAR D1 = 1;
