@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include "Arduino.h"
-
 /// \brief Time the duration of the pulse in microseconds
 /// \details Read a pulse on a pin(HIGH or LOW), and returns the duration of
 /// the pulse in microseconds. Returns 0 if the timeout is exceeded while
