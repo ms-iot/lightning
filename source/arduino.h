@@ -38,6 +38,7 @@
 #include "wire.h"
 #include "Adc.h"
 #include "pins_arduino.h"
+#include "PulseIn.h"
 
 #include <memory>
 #include <map>
