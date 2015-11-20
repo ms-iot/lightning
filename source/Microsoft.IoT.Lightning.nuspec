@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Microsoft.IoT.Lightning</id>
-    <version>1.0.1-alpha</version>
+    <version>1.0.2-alpha</version>
     <title>Microsoft IoT Lightning SDK</title>
     <authors>Microsoft Open Technologies, Inc.</authors>
     <owners>Microsoft Open Technologies, Inc.</owners>
@@ -15,7 +15,7 @@
     <copyright>Copyright 2015</copyright>
     <tags>lightning arduino microsoft native nativepackage</tags>
     <dependencies>
-        <dependency id="Microsoft.IoT.SDKFromArduino" version="[1.0.1,)"/>
+        <dependency id="Microsoft.IoT.SDKFromArduino" version="[1.1.1,)"/>
     </dependencies>
   </metadata>
 </package>
