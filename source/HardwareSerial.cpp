@@ -527,10 +527,6 @@ void HardwareSerial::end(void)
 
 void HardwareSerial::flush(void)
 {
-    //concurrency::create_task(
-    //    m_serialDevice->OutputStream->FlushAsync(),
-    //    m_cancellationTokenSource->get_token())
-    //.wait();
 }
 
 int HardwareSerial::peek(void)
