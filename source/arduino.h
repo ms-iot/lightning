@@ -62,7 +62,6 @@
 #define TAU             (M_PI * 2.0f)
 #define TWO_PI          TAU
 
-#define boolean bool
 typedef uint8_t byte;
 
 typedef unsigned short word;
@@ -581,9 +580,6 @@ void loop();
 
 #ifdef SERIAL_EVENT
 void serialEvent();
-#endif
-#ifdef SERIAL_EVENT1
-void serialEvent1();
 #endif
 
 inline int RunArduinoSketch()

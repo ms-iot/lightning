@@ -2,8 +2,28 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+//#include <ppltasks.h>
 #include "arduino.h"
+//#include <concrt.h>   // TODO: Remove.
+
 #ifndef USE_NETWORKSERIAL
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+#define FORMAT_MESSAGE_ALLOCATE_BUFFER 0x00000100       // From WinBase.h
+
+using namespace Windows::Devices::Enumeration;
+using namespace Windows::Devices::Custom;
+using namespace Windows::Foundation;
+using namespace Windows::Foundation::Collections;
+using namespace Windows::Storage::Streams;
+using namespace Windows::System::Threading;
+using namespace Concurrency;
+
+#define SERIAL_READ_LENGTH 1024
+#define REQUEST_TIMED_OUT -1
+#define NO_PEEK_BYTE REQUEST_TIMED_OUT
+
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 void LogLastError()
 {
@@ -11,19 +31,31 @@ void LogLastError()
     DWORD errCode = GetLastError();
     FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&msg, 0, NULL);
     Log(msg);
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+    HeapFree(GetProcessHeap(), 0, msg);
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+    LocalFree(msg);
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 }
 
-HardwareSerial::HardwareSerial(const std::wstring &comPort)
+/// Constructor.
+HardwareSerial::HardwareSerial()
     :
-    _comHandle(INVALID_HANDLE_VALUE),
-    _comPortName(comPort),
-    _storageCount(0),
-    _storageIndex(0),
-    _storageUsed(false),
-    _timeout(1000)
+    m_currentReadNumber(0),
+    m_queuedReadCount(0),
+    m_timeout(1000),
+    m_peekByte(NO_PEEK_BYTE),
+    m_reader(nullptr),
+    m_readThreadCount(0),
+    m_cancellationTokenSource(nullptr)
 {
+    InitializeCriticalSection(&m_readBufferListLock);
 }
 
+/// Destructor.
 HardwareSerial::~HardwareSerial()
 {
     end();
@@ -31,276 +63,559 @@ HardwareSerial::~HardwareSerial()
 
 HardwareSerial & HardwareSerial::operator= (HardwareSerial &) { return *this; }
 
-DCB HardwareSerial::dcbArray[] =
-{
-    // sizeof(DCB)
-    //             Baudrate at which running 
-    //                Binary Mode (skip EOF check)
-    //                   Enable parity checking 
-    //                      CTS handshaking on output
-    //                         DSR handshaking on output  
-    //                            DTR Flow control
-    //                               DSR Sensitivity
-    //                                  Continue TX when Xoff sent
-    //                                     Enable output X-ON/X-OFF
-    //                                        Enable input X-ON/X-OFF
-    //                                           Enable Err Replacement 
-    //                                              Enable Null stripping
-    //                                                 Rts Flow control
-    //                                                    Abort all reads and writes on Error
-    //                                                       Reserved
-    //                                                          Not currently used
-    //                                                             Transmit X-ON threshold
-    //                                                                Transmit X-OFF threshold
-    //                                                                   Number of bits/byte, 4-8
-    //                                                                      0-4=None,Odd,Even,Mark,Space
-    //                                                                                0,1,2 = 1, 1.5, 2 
-    //                                                                                            Tx and Rx X-ON character
-    //                                                                                                Tx and Rx X-OFF character
-    //                                                                                                    Error replacement char
-    //                                                                                                       End of Input character
-    //                                                                                                          Received Event character
-    //                                                                                                             Fill for now.
-    // SERIAL_5N1                                                                                         
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, NOPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_6N1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, NOPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_7N1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, NOPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_8N1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, NOPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_5N2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, NOPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_6N2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, NOPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_7N2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, NOPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_8N2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, NOPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_5E1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, EVENPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_6E1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, EVENPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_7E1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, EVENPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_8E1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, EVENPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_5E2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, EVENPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_6E2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, EVENPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_7E2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, EVENPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_8E2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, EVENPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_5O1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, ODDPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_6O1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, ODDPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_7O1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, ODDPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_8O1
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, ODDPARITY, ONESTOPBIT, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_5O2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, ODDPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_6O2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, ODDPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_7O2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, ODDPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 },
-    // SERIAL_8O2
-    { sizeof(DCB), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, ODDPARITY, TWOSTOPBITS, 17, 19, 0, 0, 0, 0 }
-};
-
 HardwareSerial::operator bool(void)
 {
-    if (_comHandle != NULL && _comHandle != INVALID_HANDLE_VALUE)
-    {
-        return true;
-    }
-    return false;
+    return true;
 }
 
 int HardwareSerial::available(void)
 {
-    if ((_storageCount - _storageIndex) <= 0)
+    std::deque<IBuffer^>::const_iterator iter;
+    int bytesAvailable = 0;
+
+    EnterCriticalSection(&m_readBufferListLock);
+    iter = m_readBufferList.begin();
+    while (iter != m_readBufferList.end())
     {
-        peek();
+        bytesAvailable += (*iter)->Length;
+        ++iter;
     }
-    return _storageCount - _storageIndex;
+    LeaveCriticalSection(&m_readBufferListLock);
+
+    return bytesAvailable;
 }
 
 void HardwareSerial::setTimeout(unsigned long timeout)
 {
-    _timeout = timeout;
-
-    // Sets WIN32 READ/WRITE timeouts
-    COMMTIMEOUTS CommTimeouts;
-    GetCommTimeouts(_comHandle, &CommTimeouts);
-
-    CommTimeouts.ReadIntervalTimeout = 0;
-    CommTimeouts.ReadTotalTimeoutConstant = _timeout;
-    CommTimeouts.ReadTotalTimeoutMultiplier = 0;
-
-    CommTimeouts.WriteTotalTimeoutConstant = _timeout;
-    CommTimeouts.WriteTotalTimeoutMultiplier = 0;
-
-    if (!SetCommTimeouts(_comHandle, &CommTimeouts))
-    {
-#ifdef _DEBUG
-        Log("Error %d when setting Com timeouts: ", GetLastError());
-        LogLastError();
-#endif
-    }
+    m_timeout = timeout;
 }
 
 void HardwareSerial::begin(unsigned long baud, uint8_t config)
 {
-    DCB dcb = dcbArray[config];
+    HRESULT hr = S_OK;
 
-    if ( _comPortName == L"\\\\.\\COM1" )
+    hr = g_pins.verifyPinFunction(m_txPinNo, FUNC_SER, BoardPinsClass::LOCK_FUNCTION);
+    if (FAILED(hr))
     {
-        g_pins.verifyPinFunction(0, FUNC_SER, BoardPinsClass::LOCK_FUNCTION);
-        g_pins.verifyPinFunction(1, FUNC_SER, BoardPinsClass::LOCK_FUNCTION);
-        pinMode(0, DIRECTION_IN);
-        pinMode(1, DIRECTION_OUT);
+        ThrowError(hr, "An error occurred configuring pin %d as for Serial TX use.", m_txPinNo);
     }
 
-    _comHandle = CreateFile(_comPortName.c_str(), GENERIC_WRITE | GENERIC_READ, 0, NULL, OPEN_EXISTING, NULL, NULL);
-
-    if (_comHandle == INVALID_HANDLE_VALUE)
+    hr = g_pins.verifyPinFunction(m_rxPinNo, FUNC_SER, BoardPinsClass::LOCK_FUNCTION);
+    if (FAILED(hr))
     {
-#ifdef _DEBUG
-        Log("Error %d due to invalid handle value: ", GetLastError());
-        LogLastError();
-#endif
-        return;
+        ThrowError(hr, "An error occurred configuring pin %d for Serial RX use.", m_rxPinNo);
     }
 
-    dcb.BaudRate = baud;
+    // Set up objects needed to cancel read threads when .end() is called.
+    m_cancellationTokenSource = new Concurrency::cancellation_token_source();
+    Concurrency::cancellation_token cToken(m_cancellationTokenSource->get_token());
 
-    if (SetCommState(_comHandle, &dcb) == 0)
+    m_serialConfig = (SerialConfigs)config;
+    m_baudRate = baud;
+
+    m_currentReadNumber = 0;
+    m_queuedReadCount = 0;
+    m_peekByte = NO_PEEK_BYTE;
+    m_readThreadCount = 0;
+
+    // Create event we use to determine when the UART open operation has completed.  This is used,
+    // rather than .wait() becaue .begin() may be called from the main thread when an object in a 
+    // library is constructed--and neither .wait() nor .get() can be called from the main thread.
+    std::shared_ptr<Concurrency::event> findCompleted = std::make_shared<Concurrency::event>();
+
+    auto workItem = ref new WorkItemHandler(
+    [this, &hr, &findCompleted]
+    (IAsyncAction^ workItem)
     {
-#ifdef _DEBUG
-        Log("Error %d when setting Com state: ", GetLastError());
-        LogLastError();
-#endif
-        return;
+        OpenUart(hr, findCompleted);
+    }); // workItem
+
+    // Run the async operation to open the UART.
+    auto asyncAction = ThreadPool::RunAsync(workItem);
+
+    // Wait for the UART open operation to complete.
+    findCompleted->wait();
+
+    if (SUCCEEDED(hr))
+    {
+        // setup our data writer for handling outgoing data
+        m_dataWriter = ref new Windows::Storage::Streams::DataWriter(m_serialDevice->OutputStream);
+
+        // Queue up 8 read operations.
+        Listen(cToken);
+        Listen(cToken);
+        Listen(cToken);
+        Listen(cToken);
+        Listen(cToken);
+        Listen(cToken);
+        Listen(cToken);
+        Listen(cToken);
     }
 
-    setTimeout(_timeout);
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "An error occurred attempting to access the UART.");
+    }
 }
 
+void HardwareSerial::Listen(Concurrency::cancellation_token cToken)
+{
+    IBuffer^ newBuffer = ref new Buffer(SERIAL_READ_LENGTH);
+    if (newBuffer == nullptr)
+    {
+        return;
+    }
+
+    EnterCriticalSection(&m_readBufferListLock);
+    uint32_t serialNo = m_queuedReadCount;
+    m_queuedReadCount++;
+    m_readThreadCount++;
+    LeaveCriticalSection(&m_readBufferListLock);
+
+    concurrency::create_task(m_serialDevice->InputStream->ReadAsync(newBuffer, SERIAL_READ_LENGTH, InputStreamOptions::None), cToken)
+    .then([this, serialNo, cToken](IBuffer^ buffer)
+    {
+        if (!cToken.is_canceled())
+        {
+            // Wait for any reads prior to this one that have not completed yet.
+            BOOL bufferIsCurrent = FALSE;
+            do
+            {
+                EnterCriticalSection(&m_readBufferListLock);
+                if (serialNo == m_currentReadNumber)
+                {
+                    bufferIsCurrent = TRUE;
+                    m_readBufferList.push_back(buffer);
+                    m_currentReadNumber++;
+                }
+                LeaveCriticalSection(&m_readBufferListLock);
+                if (!bufferIsCurrent)
+                {
+                    Sleep(0);
+                }
+            } while (!bufferIsCurrent && !cToken.is_canceled());
+
+        }
+    })
+    .then([this, cToken](concurrency::task<void> t)
+    {
+        // This block of code executes whenever the ReadAsyn() operation goes away--whether it
+        // completed or was cancelled.
+        EnterCriticalSection(&m_readBufferListLock);
+        m_readThreadCount--;
+        LeaveCriticalSection(&m_readBufferListLock);
+        try
+        {
+            // This trows an exception if the operation was cancelled.
+            t.get();
+
+            // If we get here, the operation was not cancelled.  Queue up another read operation.
+            Listen(cToken);
+        }
+        catch (concurrency::task_canceled)
+        {
+            // If the operation was cancelled, ignore the exception.
+        }
+    });
+}
+
+/// Find the UART serial device, open it, and configure it.
+void HardwareSerial::OpenUart(HRESULT& hr, std::shared_ptr<Concurrency::event>& findCompleted)
+{
+    m_deviceInformation = nullptr;
+    hr = S_OK;
+    //
+    // Get a list of serial devices available on this device
+    //
+    Concurrency::create_task(ListAvailableSerialDevicesAsync(), m_cancellationTokenSource->get_token())
+    .then([this, &hr, &findCompleted](DeviceInformationCollection ^serialDeviceCollection)
+    {
+        if (m_cancellationTokenSource->get_token().is_canceled())
+        {
+            hr = E_ABORT;
+            findCompleted->set();
+        }
+        else
+        {
+            //
+            // Search the list of serial devices for the one we want.
+            //
+            BOOL foundDevice = FALSE;
+
+            IIterator<DeviceInformation^>^ devIter = serialDeviceCollection->First();
+
+            while (devIter->HasCurrent && !foundDevice)
+            {
+                std::wstring devId = devIter->Current->Id->Data();
+#if defined(_M_ARM)
+                if (devId.find(L"UART0") != std::string::npos)
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
+                if (devId.find(L"UART1") != std::string::npos)
+#endif // defined(_M_IX86) || defined(_M_X64)
+                {
+                    foundDevice = TRUE;
+                    m_deviceInformation = devIter->Current;
+                }
+                else
+                {
+                    devIter->MoveNext();
+                }
+            }
+
+            if (!foundDevice)
+            {
+                hr = E_NOINTERFACE;
+                findCompleted->set();
+            }
+        }
+
+        return;
+    })
+    .then([this, &hr, &findCompleted]()
+    {
+        if (SUCCEEDED(hr))
+        {
+            if (m_cancellationTokenSource->get_token().is_canceled())
+            {
+                hr = E_ABORT;
+                findCompleted->set();
+            }
+            else
+            {
+                //
+                // Open the serial device we found.
+                //
+                Concurrency::create_task(
+                    Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync(m_deviceInformation->Id),
+                    m_cancellationTokenSource->get_token())
+                    .then([this, &hr, &findCompleted](Windows::Devices::SerialCommunication::SerialDevice ^serial_device)
+                {
+                    if (m_cancellationTokenSource->get_token().is_canceled())
+                    {
+                        hr = E_ABORT;
+                        findCompleted->set();
+                    }
+                    else
+                    {
+                        //
+                        // Configure the serial device.
+                        //
+                        Windows::Foundation::TimeSpan _rxTimeOut;
+                        Windows::Foundation::TimeSpan _txTimeOut;
+                        _rxTimeOut.Duration = 1000000L;     // 0.1 seconds
+                        _txTimeOut.Duration = 10000000L;    // 1.0 seconds
+                        m_serialDevice = serial_device;
+
+                        hr = ConfigureSerialSettings(m_serialConfig, m_serialDevice);
+
+                        if (FAILED(hr))
+                        {
+                            findCompleted->set();
+                        }
+                        else // if (SUCCEEDED(hr))
+                        {
+                            try
+                            {
+                                m_serialDevice->WriteTimeout = _txTimeOut;
+                                m_serialDevice->ReadTimeout = _rxTimeOut;
+                                m_serialDevice->BaudRate = m_baudRate;
+                                m_serialDevice->Handshake = Windows::Devices::SerialCommunication::SerialHandshake::None;
+                            }
+                            catch (Platform::Exception ^ex)
+                            {
+                                hr = E_FAIL;
+                                CloseUart();
+                                findCompleted->set();
+                            }
+                        } // if (SUCCEEDED(hr)
+                    }
+
+                    // On success, set the findCompleted event.  On error it is set where the error is flagged,
+                    // so we can't set it again here--the variable may already be gone.
+                    if (SUCCEEDED(hr))
+                    {
+                        findCompleted->set();
+                    }
+                    return;
+                });
+                return;
+            } // if (m_cancellationTokenSource->get_token().is_canceled()) else
+        } // if (SUCCEEDED(hr))
+    });
+}
+
+/// <summary>
+/// Close the comport currently connected
+/// </summary
+void HardwareSerial::CloseUart(void)
+{
+    m_cancellationTokenSource->cancel();
+
+    while (m_readThreadCount > 0)
+    {
+        Sleep(0);
+    }
+
+    delete(m_reader);
+    m_reader = nullptr;
+
+    delete(m_dataWriter);
+    m_dataWriter = nullptr;
+
+    delete(m_serialDevice);
+    m_serialDevice = nullptr;
+
+    delete(m_cancellationTokenSource);
+    m_cancellationTokenSource = nullptr;
+
+    m_readBufferList.clear();
+}
+
+/// <summary>
+/// An asynchronous operation that returns a collection of DeviceInformation objects for all serial devices detected on the device.
+/// </summary>
+Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^HardwareSerial::ListAvailableSerialDevicesAsync(void)
+{
+    // Construct AQS String for all serial devices on system
+    Platform::String ^serialDevices_aqs = Windows::Devices::SerialCommunication::SerialDevice::GetDeviceSelector();
+
+    // Identify all paired devices satisfying query
+    return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(serialDevices_aqs);
+}
+
+/// Configure the serial port with the desired data format settings.
+HRESULT HardwareSerial::ConfigureSerialSettings(SerialConfigs configs, Windows::Devices::SerialCommunication::SerialDevice^ device)
+{
+    HRESULT hr = S_OK;
+
+    switch (m_serialConfig)
+    {
+    case SERIAL_5N1:
+        m_serialDevice->DataBits = 5;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_6N1:
+        m_serialDevice->DataBits = 6;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_7N1:
+        m_serialDevice->DataBits = 7;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_8N1:
+        m_serialDevice->DataBits = 8;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_5N2:
+        m_serialDevice->DataBits = 5;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_6N2:
+        m_serialDevice->DataBits = 6;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_7N2:
+        m_serialDevice->DataBits = 7;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_8N2:
+        m_serialDevice->DataBits = 8;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_5E1:
+        m_serialDevice->DataBits = 5;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_6E1:
+        m_serialDevice->DataBits = 6;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_7E1:
+        m_serialDevice->DataBits = 7;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_8E1:
+        m_serialDevice->DataBits = 8;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_5E2:
+        m_serialDevice->DataBits = 5;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_6E2:
+        m_serialDevice->DataBits = 6;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_7E2:
+        m_serialDevice->DataBits = 7;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_8E2:
+        m_serialDevice->DataBits = 8;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_5O1:
+        m_serialDevice->DataBits = 5;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_6O1:
+        m_serialDevice->DataBits = 6;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_7O1:
+        m_serialDevice->DataBits = 7;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_8O1:
+        m_serialDevice->DataBits = 8;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        break;
+    case SERIAL_5O2:
+        m_serialDevice->DataBits = 5;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_6O2:
+        m_serialDevice->DataBits = 6;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_7O2:
+        m_serialDevice->DataBits = 7;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    case SERIAL_8O2:
+        m_serialDevice->DataBits = 8;
+        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
+        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        break;
+    default:
+        hr = E_INVALIDARG;
+    }
+
+    return hr;
+}
+
+/// Free the serial device and associated resources on a best effort basis.
 void HardwareSerial::end(void)
 {
-    if (_comHandle != INVALID_HANDLE_VALUE)
-    {
-        if (CloseHandle(_comHandle) == 0)
-        {
-            #ifdef _DEBUG
-            Log("Error %d when closing Com Handle: ", GetLastError());
-            LogLastError();
-            #endif
-        }
-        _comHandle = INVALID_HANDLE_VALUE;
-        g_pins.verifyPinFunction(1, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
-        g_pins.verifyPinFunction(0, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
-    }
+    CloseUart();
+
+    g_pins.verifyPinFunction(m_txPinNo, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
+    g_pins.verifyPinFunction(m_rxPinNo, FUNC_DIO, BoardPinsClass::UNLOCK_FUNCTION);
 }
 
 void HardwareSerial::flush(void)
 {
-    if (FlushFileBuffers(_comHandle) == 0)
-    {
-#ifdef _DEBUG
-        Log("Error %d when calling Flush: ", GetLastError());
-        LogLastError();
-#endif
-    }
+    //concurrency::create_task(
+    //    m_serialDevice->OutputStream->FlushAsync(),
+    //    m_cancellationTokenSource->get_token())
+    //.wait();
 }
 
 int HardwareSerial::peek(void)
 {
-    if (!_storageUsed)
+    int returnByte = NO_PEEK_BYTE;
+
+    EnterCriticalSection(&m_readBufferListLock);
+    if (m_peekByte == NO_PEEK_BYTE)
     {
-        if (!ReadFile(_comHandle, &_storage, 64, &_storageCount, NULL))
-        {
-#ifdef _DEBUG
-            Log("Error %d when reading file: ", GetLastError());
-            LogLastError();
-#endif
-            return -1;
-        }
-
-        _storageUsed = true;
-        _storageIndex = 0;
-
-        // if nothing was read, return 0 and dont do anything
-        if (_storageCount == 0)
-        {
-            _storageUsed = false;
-            return -1;
-        }
+        m_peekByte = read();
     }
-    return _storage[_storageIndex];
+    returnByte = m_peekByte;
+    LeaveCriticalSection(&m_readBufferListLock);
+
+    return returnByte;
 }    
 
 int HardwareSerial::read(void)
 {
-    if (_storageUsed)
+    IBuffer^ buffer;
+    int returnByte = NO_PEEK_BYTE;
+
+    EnterCriticalSection(&m_readBufferListLock);
+
+    if (m_peekByte == NO_PEEK_BYTE)
     {
-        if (_storageIndex + 1 >= _storageCount)
+        while ((m_reader == nullptr) && (m_readBufferList.size() > 0))
         {
-            _storageUsed = false;
+            buffer = m_readBufferList.front();
+            m_reader = DataReader::FromBuffer(buffer);
+
+            if (m_reader->UnconsumedBufferLength == 0)
+            {
+                m_readBufferList.pop_front();
+                m_reader = nullptr;
+            }
         }
-        return _storage[_storageIndex++];
+
+        if (m_reader != nullptr)
+        {
+            returnByte = (int)m_reader->ReadByte();
+
+            if (m_reader->UnconsumedBufferLength == 0)
+            {
+                m_readBufferList.pop_front();
+                m_reader = nullptr;
+            }
+        }
     }
     else
     {
-        if (!ReadFile(_comHandle, &_storage, 64, &_storageCount, NULL))
-        {
-#ifdef _DEBUG
-            Log("Error %d when reading file: ", GetLastError());
-            LogLastError();
-#endif
-            return -1;
-        }
-
-        _storageUsed = true;
-        _storageIndex = 0;
-
-        // If only one character was read, then reset it
-        if (_storageIndex + 1 >= _storageCount)
-        {
-            _storageUsed = false;
-        }
-
-        // if nothing was read, return 0 and dont do anything
-        if (_storageCount == 0)
-        {
-            return -1;
-        }
-
-        return _storage[_storageIndex++];
+        returnByte = m_peekByte;
+        m_peekByte = NO_PEEK_BYTE;
     }
+
+    LeaveCriticalSection(&m_readBufferListLock);
+
+    return returnByte;
 }
     
 size_t HardwareSerial::write(uint8_t c)
 {
-    DWORD bytesWritten;
+    m_dataWriter->WriteByte(c);
 
-    WriteFile(_comHandle, &c, sizeof(uint8_t), &bytesWritten, NULL);
-    return bytesWritten;
+    concurrency::create_task(m_dataWriter->StoreAsync())
+    .wait();
+
+    return 1;
 }
 
 size_t HardwareSerial::write(const uint8_t *buffer, size_t size)
 {
-    DWORD bytesWritten;
+    Platform::Array<uint8_t>^ dataArray = ref new Platform::Array<uint8_t>(size);
+    for (size_t i = 0; i < size; i++) { dataArray[i] = buffer[i]; }
 
-    WriteFile(_comHandle, buffer, size, &bytesWritten, NULL);
-    return bytesWritten;
+    m_dataWriter->WriteBytes(dataArray);
+
+    concurrency::create_task(m_dataWriter->StoreAsync(), m_cancellationTokenSource->get_token())
+    .wait();
+
+    return size;
 }
 
 HardwareSerial Serial;
-HardwareSerial Serial1 = HardwareSerial(L"\\\\.\\COM2");
 
 #endif
