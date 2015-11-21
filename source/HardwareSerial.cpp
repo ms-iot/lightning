@@ -197,7 +197,7 @@ void HardwareSerial::Listen(Concurrency::cancellation_token cToken)
     })
     .then([this, cToken](concurrency::task<void> t)
     {
-        // This block of code executes whenever the ReadAsyn() operation goes away--whether it
+        // This block of code executes whenever the ReadAsync() operation goes away--whether it
         // completed or was cancelled.
         EnterCriticalSection(&m_readBufferListLock);
         m_readThreadCount--;
