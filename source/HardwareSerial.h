@@ -14,31 +14,17 @@
 #include "NetworkSerial.h"
 #else
 
+#include <ppltasks.h>
 #include <cstdint>
 #include <string>
+#include <deque>
 
 #include "Stream.h"
 
 /// \brief Used for communication between the Arduino board and a computer
 /// or other devices.
-/// \details
-///   All Arduino boards have at least one serial port (also known as a UART
-///   or USART): Serial. It communicates on digital pins 0 (RX) and 1 (TX)
-///   as well as with the computer via USB. Thus, if you use these functions,
-///   you cannot also use pins 0 and 1 for digital input or output.
 class HardwareSerial : public Stream
 {
-private:
-    HANDLE _comHandle = INVALID_HANDLE_VALUE;
-    BYTE _storage[64];
-    DWORD _storageCount;
-    DWORD _storageIndex;
-    bool _storageUsed;
-    const std::wstring _comPortName;
-    unsigned long _timeout;
-
-    HardwareSerial & operator= (HardwareSerial &);
-
 public:
     enum SerialConfigs
     {
@@ -71,9 +57,7 @@ public:
     static DCB dcbArray[24];
 
     /// \brief Hardware serial constructor
-    /// \param [in] [comPort] Specify which communication port to
-    /// send HardwareSerial transmissions (defaults to COM1)
-    HardwareSerial(const std::wstring &comPort = L"\\\\.\\COM1");
+    HardwareSerial();
 
     virtual ~HardwareSerial();
 
@@ -86,7 +70,7 @@ public:
     /// from the serial port.
     /// \details
     ///   This is data that's already arrived and stored in the serial
-    ///   receive buffer (which holds 64 bytes).
+    ///   receive buffer.
     /// \return The number of bytes available to read
     /// \see <a href="http://arduino.cc/en/Serial/Available" target="_blank">origin: Arduino::Serial::available</a>
     virtual int available(void);
@@ -96,8 +80,7 @@ public:
     ///   For communicating with the computer, use one of these rates: 300,
     ///   600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600,
     ///   or 115200. You can, however, specify other rates - for example,
-    ///   to communicate over pins 0 and 1 with a component that requires a
-    ///   particular baud rate.
+    ///   to communicate with a component that requires a particular baud rate.
     /// \param [in] speed In bits per second (baud)
     /// \param [in] config Sets data, parity, and stop bits
     /// \n Valid values are:
@@ -184,7 +167,7 @@ public:
          return write((uint8_t) c);
      }
     
-     inline size_t write(const String &s)
+     inline size_t write(const std::string &s)
      {
          size_t count = 0;
          for (uint16_t i = 0; i < s.length(); i++) {
@@ -222,13 +205,46 @@ public:
         // at least 16 bits in size
         return write((const uint8_t *) (&n), sizeof(int));
     }
+
+private:
+
+#if defined(_M_ARM)
+    const unsigned int m_txPinNo = 8;
+    const unsigned int m_rxPinNo = 10;
+#endif // defined(_M_ARM)
+
+#if defined(_M_IX86) || defined(_M_X64)
+    const unsigned int m_txPinNo = 6;
+    const unsigned int m_rxPinNo = 8;
+#endif // defined(_M_IX86) || defined(_M_X64)
+
+    std::deque<Windows::Storage::Streams::IBuffer^> m_readBufferList;
+    CRITICAL_SECTION m_readBufferListLock;
+    uint32_t m_currentReadNumber;
+    uint32_t m_queuedReadCount;
+    Windows::Devices::Enumeration::DeviceInformation^ m_deviceInformation;
+    Windows::Devices::SerialCommunication::SerialDevice^ m_serialDevice;
+    SerialConfigs m_serialConfig;
+    ULONG m_baudRate;
+    Windows::Storage::Streams::DataWriter^ m_dataWriter;
+    unsigned long m_timeout;
+    ULONG m_peekByte;
+    Concurrency::cancellation_token_source* m_cancellationTokenSource;
+    Windows::Storage::Streams::DataReader^ m_reader;
+    volatile int32_t m_readThreadCount;
+
+    HardwareSerial & operator= (HardwareSerial &);
+
+    void OpenUart(HRESULT& hr, std::shared_ptr<Concurrency::event>& findCompleted);
+    void CloseUart(void);
+    Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^HardwareSerial::ListAvailableSerialDevicesAsync(void);
+    void Listen(Concurrency::cancellation_token cancellationToken);
+    HRESULT ConfigureSerialSettings(SerialConfigs configs, Windows::Devices::SerialCommunication::SerialDevice^ device);
+
 };
 
-extern HardwareSerial Serial;    ///< This variable will provide global access to
-                                 /// this pseudo-static class, and will be instantiated
-                                 /// in the .cpp file.
+extern HardwareSerial Serial;    ///< This variable provides global access to this
+                                 /// pseudo-static class, which is instantiated in
+                                 /// the .cpp file.
 
-extern HardwareSerial Serial1;   ///< This variable will provide global access to
-                                 /// this pseudo-static class, and will be instantiated
-                                 /// in the .cpp file.
 #endif

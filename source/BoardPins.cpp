@@ -1694,7 +1694,7 @@ HRESULT BoardPinsClass::_determineBoardType()
     hr = _determinePi2Config();
 #endif // defined(_M_IX86) || defined(_M_X64)
 
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
     HKEY baseKey = HKEY_LOCAL_MACHINE;

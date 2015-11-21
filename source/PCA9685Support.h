@@ -82,8 +82,8 @@ private:
     {
     }
 
-    // TODO: if/when multiple PCA9685 chips are supported, the data unique to the chip
-    //       indexed by I2C address.
+    // If/when multiple PCA9685 chips are supported, the data unique to the chip
+    //    should be indexed by I2C address.
 
     /// Set to TRUE when the chip is known to have been initialized.
     static BOOL m_chipIsInitialized;
