@@ -112,4 +112,39 @@ inline void ThrowError(_In_ HRESULT hr, _In_ _Printf_format_string_ STRSAFE_LPCS
 
 }
 
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+inline void ThrowError(_In_ HRESULT hr, _In_ _Printf_format_string_ STRSAFE_LPCWSTR pszFormat, ...)
+{
+    int result;
+    wchar_t wbuf[BUFSIZ];
+    va_list argList;
+    va_start(argList, pszFormat);
+    result = vswprintf_s(wbuf, BUFSIZ, pszFormat, argList);
+
+    va_end(argList);
+
+    if (result > 0)
+    {
+        auto it = DmapErrors.find(hr);
+        Platform::String^ exceptionString;
+        if (it != DmapErrors.end())
+        {
+            std::wstring exceptionSz(wbuf);
+            exceptionSz.append(L"\n");
+            exceptionSz.append(it->second);
+            exceptionString = ref new Platform::String(exceptionSz.c_str());
+        }
+        else
+        {
+            exceptionString = ref new Platform::String(wbuf);
+        }
+        throw ref new Platform::Exception(hr, exceptionString);
+    }
+    else
+    {
+        throw ref new Platform::Exception(hr);
+    }
+}
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
 #endif
