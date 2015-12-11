@@ -24,6 +24,7 @@
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\DmapErrors.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\eeprom.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\GpioController.cpp" />
+    <LightningSources Include="$(MSBuildThisFileDirectory)\Source\HardwareSerial.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\I2c.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\I2cController.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\I2cTransaction.cpp" />
