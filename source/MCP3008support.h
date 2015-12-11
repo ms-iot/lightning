@@ -128,14 +128,19 @@ public:
             hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
         }
 
-        BYTE command = (BYTE)(channel & 0x03);
+        BYTE command = (BYTE)(channel & 0x03);  // Using only 3 bits of the passed in ULONG for channel ID
 
-        command |= 0x8;       // Single-Ended - comparing the sample voltage to AGND
-        command <<= 4;      // Channel & Single-Ended bit is in the upper bits of the command byte
+        command |= 0x08;     // Single-Ended read - comparing the sample voltage to AGND
+        command <<= 4;      // Channel number and Single-Ended bit are in the upper 4 bits of the command byte
 
-        BYTE dataOut[4] = { 0x00, 0x01, command, 0x00};
+        BYTE dataOut[4] = 
+        { 
+            0x00,       // Upper byte is not used (24 bit transfer)
+            0x01,       // Start Bit
+            command,    // 4 Command bits in top of byte
+            0x00        // MCP3008 ignores these bits.
+        };
         ULONG dataIn = 0;
-
 
         if (SUCCEEDED(hr))
         {
