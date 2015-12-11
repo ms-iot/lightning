@@ -122,24 +122,27 @@ public:
     {
         HRESULT hr = S_OK;
         
-        ULONG dataOut = FIXED_CMD_BITS;
-        ULONG dataIn = 0;
-
         // Make sure the channel number is in range.
         if (channel >= ADC_CHANNELS)
         {
             hr = DMAP_E_ADC_DOES_NOT_HAVE_REQUESTED_CHANNEL;
         }
 
+        BYTE command = (BYTE)(channel & 0x03);
+
+        command |= 0x8;       // Single-Ended - comparing the sample voltage to AGND
+        command <<= 4;      // Channel & Single-Ended bit is in the upper bits of the command byte
+
+        BYTE dataOut[4] = { 0x00, 0x01, command, 0x00};
+        ULONG dataIn = 0;
+
+
         if (SUCCEEDED(hr))
         {
-            // Prepare to send the channel number to the SPI controller.
-            dataOut |= channel << CHAN_SHIFT;
-
             // Perform a conversion and get the result.
             g_pins.setPinState(m_csPin, LOW);
 
-            hr = m_spi->transfer24(dataOut, dataIn);
+            hr = m_spi->transfer24(*reinterpret_cast<ULONG*>(&dataOut[0]), dataIn);
                 
             g_pins.setPinState(m_csPin, HIGH);
         }
@@ -163,9 +166,6 @@ private:
 
     /// The shift amount to put the channel number into a 24-bit value.
     const ULONG CHAN_SHIFT = 12;
-
-    /// A 24-bit mask with fixed bits of transfer to MCP3008 pre-configured.
-    const ULONG FIXED_CMD_BITS = 0x018000;
 
     /// The pin number of the CS pin.
     ULONG m_csPin;

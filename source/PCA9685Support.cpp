@@ -2,6 +2,9 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+#include <chrono>  
+#include <thread> 
+#include "arduino.h"
 #include "PCA9685Support.h"
 #include "ExpanderDefs.h"
 #include "I2c.h"
@@ -383,15 +386,27 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
         // Queue a read of the chip MODE1 register to get the state of the SLEEP bit.
         //
 
+
         I2cTransactionClass transaction;
         UCHAR readBuf[1] = { 0 };                   // Buffer for reading data from chip
         UCHAR mode1RegAdr[1] = { MODE1_ADR };       // Buffer for MODE1 register address
         UCHAR mode2RegAdr[1] = { MODE2_ADR };       // Buffer for MODE2 register address
         UCHAR preScaleAdr[1] = { PRE_SCALE_ADR };   // Buffer for PRE_SCALE register address
-        MODE1 mode1Reg = { 0, 0, 0, 0, 0, 1, 0, 0 }; // No sleep, auto-increment, internal clock
-        MODE2 mode2Reg = { 0, 1, 1, 0, 0 };         // Drive outputs both high & low, change on ACK, non-inverted
+		MODE1 mode1Reg	     = { 0, 0, 0, 0, 0, 1, 0, 0 }; // No sleep, auto-increment, internal clock
+		MODE1 mode1RegSleep  = { 0, 0, 0, 1, 0, 1, 0, 0 }; // Sleep, auto-increment, internal clock
+		MODE2 mode2Reg       = { 0, 1, 1, 0, 0 };         // Drive outputs both high & low, change on ACK, non-inverted
 
-        // Set the I2C address of the PWM chip.
+		// Software Reset
+		// 
+		hr = transaction.setAddress(0);
+		UCHAR resetController[1] = { 0x06 };
+		hr = transaction.queueWrite(resetController, sizeof(resetController));
+		hr = transaction.execute(g_i2c.getController());
+
+		// Wait to stabilize
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+		// Set the I2C address of the PWM chip.
         hr = transaction.setAddress(i2cAdr);
 
         if (SUCCEEDED(hr))
@@ -400,32 +415,13 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
             transaction.useHighSpeed();
 
             // Queue sending the address of the MODE1 regeister to the PWM chip.
-            hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1RegAdr));
+            hr = transaction.queueWrite(mode1RegAdr, sizeof(mode1RegAdr), TRUE);
         }
 
         if (SUCCEEDED(hr))
         {
-            // Queue reading the contents of the MODE1 register.
-            hr = transaction.queueRead(readBuf, sizeof(readBuf));
-        }
-
-        //
-        // If the SLEEP bit is clear, the chip has been initialize: abort the rest of the transaction.
-        //
-
-        if (SUCCEEDED(hr))
-        {
-            // Register a callback to test if the chip is initialized.
-            hr = transaction.queueCallback([&readBuf, &transaction]()
-            {
-                PMODE1 mode1RegPtr = (PMODE1)readBuf;
-                if (mode1RegPtr->SLEEP == 0)   // If chip is not in sleep mode,
-                {
-                    transaction.abort();
-                }
-                return S_OK;
-            }
-            );
+            // Put the chip to sleep.
+            hr = transaction.queueWrite((PUCHAR)&mode1RegSleep, 1);
         }
 
         //
@@ -454,16 +450,6 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
         {
             // Queue sending the contents of MODE1 register.
             hr = transaction.queueWrite((PUCHAR)&mode1Reg, 1);
-        }
-
-        if (SUCCEEDED(hr))
-        {
-            // Delay for 500 microseconds for clock to start.
-            for (int i = 0; i < 5; i++)
-            {
-                transaction.queueWrite(mode1RegAdr, sizeof(mode1RegAdr), TRUE);
-                transaction.queueRead(readBuf, sizeof(readBuf));
-            }
         }
 
         if (SUCCEEDED(hr))
