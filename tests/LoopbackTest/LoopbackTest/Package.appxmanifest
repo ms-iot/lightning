@@ -9,14 +9,14 @@
 
   <Identity
     Name="LoopbackTest-uwp"
-    Publisher="CN=lamadio"
+    Publisher="CN=Microsoft"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="d8969098-f1fe-446e-a304-ba649f34e33d" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>LoopbackTest</DisplayName>
-    <PublisherDisplayName>lamadio</PublisherDisplayName>
+    <PublisherDisplayName>Microsoft</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
