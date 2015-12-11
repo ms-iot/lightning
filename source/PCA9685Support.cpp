@@ -392,21 +392,21 @@ HRESULT PCA9685Device::_InitializeChip(ULONG i2cAdr)
         UCHAR mode1RegAdr[1] = { MODE1_ADR };       // Buffer for MODE1 register address
         UCHAR mode2RegAdr[1] = { MODE2_ADR };       // Buffer for MODE2 register address
         UCHAR preScaleAdr[1] = { PRE_SCALE_ADR };   // Buffer for PRE_SCALE register address
-		MODE1 mode1Reg	     = { 0, 0, 0, 0, 0, 1, 0, 0 }; // No sleep, auto-increment, internal clock
-		MODE1 mode1RegSleep  = { 0, 0, 0, 1, 0, 1, 0, 0 }; // Sleep, auto-increment, internal clock
-		MODE2 mode2Reg       = { 0, 1, 1, 0, 0 };         // Drive outputs both high & low, change on ACK, non-inverted
+        MODE1 mode1Reg	     = { 0, 0, 0, 0, 0, 1, 0, 0 }; // No sleep, auto-increment, internal clock
+        MODE1 mode1RegSleep  = { 0, 0, 0, 1, 0, 1, 0, 0 }; // Sleep, auto-increment, internal clock
+        MODE2 mode2Reg       = { 0, 1, 1, 0, 0 };         // Drive outputs both high & low, change on ACK, non-inverted
 
-		// Software Reset
-		// 
-		hr = transaction.setAddress(0);
-		UCHAR resetController[1] = { 0x06 };
-		hr = transaction.queueWrite(resetController, sizeof(resetController));
-		hr = transaction.execute(g_i2c.getController());
+        // Software Reset
+        // 
+        hr = transaction.setAddress(0);
+        UCHAR resetController[1] = { 0x06 };
+        hr = transaction.queueWrite(resetController, sizeof(resetController));
+        hr = transaction.execute(g_i2c.getController());
 
-		// Wait to stabilize
+        // Wait to stabilize
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-		// Set the I2C address of the PWM chip.
+        // Set the I2C address of the PWM chip.
         hr = transaction.setAddress(i2cAdr);
 
         if (SUCCEEDED(hr))
