@@ -14,15 +14,9 @@
 #define IKA_LURE_PWM_I2C_ADR 0x41
 
 // GPIO type values.
-const UCHAR GPIO_FABRIC = 1;    ///< GPIO is from the Quark Fabric sub-system (memory mapped)
-const UCHAR GPIO_LEGRES = 2;    ///< GPIO is from the Quark Legacy sub-system that can resume from sleep
-const UCHAR GPIO_LEGCOR = 3;    ///< GPIO is from the Quark Legacy sub-system that can not resume from sleep
-const UCHAR GPIO_EXP1 = 4;      ///< GPIO is from a port bit on I/O Expander 1
-const UCHAR GPIO_EXP2 = 5;      ///< GPIO is from a port bit on  I/O Expander 2
-const UCHAR GPIO_CY8 = 6;       ///< GPIO is from a port on the CY8 I/O Expander (on Gen1)
-const UCHAR GPIO_S0 = 7;        ///< GPIO is from the MBM SOC S0 sub-system
-const UCHAR GPIO_S5 = 8;        ///< GPIO is from the MBM SOC S5 sub-system
-const UCHAR GPIO_BCM = 9;       ///< GPIO is from the BCM2836 SOC GPIO sub-system
+const UCHAR GPIO_S0 = 1;        ///< GPIO is from the MBM SOC S0 sub-system
+const UCHAR GPIO_S5 = 2;        ///< GPIO is from the MBM SOC S5 sub-system
+const UCHAR GPIO_BCM = 3;       ///< GPIO is from the BCM2836 SOC GPIO sub-system
 const UCHAR GPIO_NONE = 255;    ///< Specifies there is no GPIO pin with this number
 
 // GPIO pin driver selection values.
@@ -30,24 +24,15 @@ const UCHAR GPIO_INPUT_DRIVER_SELECT = 1;   ///< Specify input circuitry should 
 const UCHAR GPIO_OUTPUT_DRIVER_SELECT = 0;  ///< Specify output driver should be enabled
 
 // I/O Expander name values.
-const UCHAR EXP0       =  0;    ///< Value specifies I/O Expander 0
-const UCHAR EXP1       =  1;    ///< Value specifies I/O Expander 1
-const UCHAR EXP2       =  2;    ///< Value specifies I/O Expander 2
-const UCHAR PWMG       =  3;    ///< Value specifies Galileo PWM used as I/O Expander
-const UCHAR CY8        =  4;    ///< Value specifies CY8 I/O Expander (on Gen1)
-const UCHAR SOCBAYT    =  5;    ///< Value specifies BayTrail SOC is the "I/O Expander"
-const UCHAR PWMI       =  6;    ///< Value specifies Ika Lure PWM used as I/O Expander
-const UCHAR SOCBCM     =  7;    ///< Value specifies BCM2836 SOC is the "I/O Expander"
-const UCHAR NUM_IO_EXP =  7;    ///< The number of I/O Expander types
+const UCHAR SOCBAYT    =  0;    ///< Value specifies BayTrail SOC is the "I/O Expander"
+const UCHAR PWMI       =  1;    ///< Value specifies Ika Lure PWM used as I/O Expander
+const UCHAR SOCBCM     =  2;    ///< Value specifies BCM2836 SOC is the "I/O Expander"
 const UCHAR NO_X       = 15;    ///< Value specifies that no I/O Expander is used
 
 // I/O Expander types.
-const UCHAR PCAL9535A = 0;      ///< I/O Expander chip used on Gen2
-const UCHAR PCA9685 = 1;        ///< PWM chip used on Gen2 and Ika Lure
-const UCHAR CY8C9540A = 2;      ///< I/O Expander/PWM chip used on Gen1
-const UCHAR BAYTRAIL = 3;       ///< Muxing is done within the MBM SOC
-const UCHAR BCM2836 = 4;        ///< Muxing is done within the PI2 SOC
-const UCHAR NUM_EXP_TYPSES = 4; ///< The number of I/O Expanders types present
+const UCHAR PCA9685 = 0;        ///< PWM chip used on Gen2 and Ika Lure
+const UCHAR BAYTRAIL = 1;       ///< Muxing is done within the MBM SOC
+const UCHAR BCM2836 = 2;        ///< Muxing is done within the PI2 SOC
 
 // PWM chip bit values.
 const UCHAR LED0  =  0;         ///< PWM chip LED0 output
@@ -67,7 +52,7 @@ const UCHAR LED13 = 13;         ///< PWM chip LED13 output
 const UCHAR LED14 = 14;         ///< PWM chip LED14 output
 const UCHAR LED15 = 15;         ///< PWM chip LED15 output
 
-// MUX name values for Galileo Gen2.
+//// MUX name values.
 const UCHAR MUX0      =  0;     ///< Mux number 0
 const UCHAR MUX1      =  1;     ///< Mux number 1
 const UCHAR MUX2      =  2;     ///< Mux number 2
@@ -75,31 +60,7 @@ const UCHAR MUX3      =  3;     ///< Mux number 3
 const UCHAR MUX4      =  4;     ///< Mux number 4
 const UCHAR MUX5      =  5;     ///< Mux number 5
 const UCHAR MUX6      =  6;     ///< Mux number 6
-const UCHAR MUX7      =  7;     ///< Mux number 7
-const UCHAR MUX8      =  8;     ///< Mux number 8
-const UCHAR MUX9      =  9;     ///< Mux number 9
-const UCHAR MUX10     = 10;     ///< Mux number 10
-const UCHAR AMUX1     = 11;     ///< Dual analog mux number 1
-const UCHAR AMUX2_1   = 12;     ///< Mux number 1 in dual mux package number 2
-const UCHAR AMUX2_2   = 13;     ///< Mux number 2 in dual mux package number 2
 const UCHAR NO_MUX    = 15;     ///< Value indicates no mux is present
-
-// MUX name values for Galileo Gen1.
-const UCHAR MUX_U1_1  =  0;     ///< Mux number 1 in package U1 
-const UCHAR MUX_U1_2  =  1;     ///< Mux number 2 in package U1 
-const UCHAR MUX_U2_1  =  2;     ///< Mux number 1 in package U2 
-const UCHAR MUX_U2_2  =  3;     ///< Mux number 2 in package U2
-const UCHAR MUX_U3_1  =  4;     ///< Mux number 1 in package U3
-const UCHAR MUX_U3_2  =  5;     ///< Mux number 2 in package U3
-const UCHAR MUX_U4_1  =  6;     ///< Mux number 1 in package U4
-const UCHAR MUX_U4_2  =  7;     ///< Mux number 2 in package U4
-const UCHAR MUX_U5_1  =  8;     ///< Mux number 1 in package U5
-const UCHAR MUX_U5_2  =  9;     ///< Mux number 2 in package U5
-const UCHAR MUX_U6_1  = 10;     ///< Mux number 1 in package U6
-const UCHAR MUX_U6_2  = 11;     ///< Mux number 2 in package U6
-const UCHAR MUX_U7    = 12;     ///< Both muxes in pack U7
-const UCHAR MUX_U9_1  = 13;     ///< Mux number 1 in package U9
-const UCHAR MUX_U9_2  = 14;     ///< Mux number 2 in package U9
 
 // Maximum number of MUXes supported in the tables.
 const UCHAR MAX_MUXES = 15;     ///< Maximum number of MUXes on a Gen1 or Gen2 board.
@@ -116,182 +77,6 @@ const ULONG NUM_PI2_PINS = 42;  ///< Number of entries in a zero based array ind
 // The expected I2C address of an external PCA9685 PWM chip.
 const UCHAR EXT_PCA9685_I2C_ADR = 0x40;
 
-
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-/// The global table of pin attributes for the Galileo Gen2 board.
-/**
-This table contains all the pin-specific attributes needed to configure and use an I/O pin.
-It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
-*/
-const BoardPinsClass::PORT_ATTRIBUTES g_Gen2PinAttributes[] =
-{
-    //gpioType           pullupExp   triStExp    muxA               Muxes (A,B) by function:    I2S   triStIn   Function_mask
-    //             portBit     pullupBit   triStBit      muxB     Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
-    { GPIO_FABRIC, 3,    EXP1, P0_1, EXP1, P0_0, NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_SER },            // D0
-    { GPIO_FABRIC, 4,    EXP0, P1_5, EXP0, P1_4, MUX7,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 1,0, 0, 0, 1, 0, FUNC_DIO | FUNC_SER },            // D1
-    { GPIO_FABRIC, 5,    EXP1, P0_3, EXP1, P0_2, MUX10,  NO_MUX,  1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_SER },            // D2
-    { GPIO_FABRIC, 6,    EXP0, P0_1, EXP0, P0_0, MUX0,   MUX9,    0,0, 1,0, 0,0, 0,0, 0,0, 0,1, 0, 0, 1, 0, FUNC_DIO | FUNC_PWM | FUNC_SER }, // D3
-    { GPIO_LEGRES, 4,    EXP1, P0_5, EXP1, P0_4, NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO },                       // D4
-    { GPIO_LEGCOR, 0,    EXP0, P0_3, EXP0, P0_2, MUX1,   NO_MUX,  0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_PWM },            // D5
-    { GPIO_LEGCOR, 1,    EXP0, P0_5, EXP0, P0_4, MUX2,   NO_MUX,  0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_PWM },            // D6
-    { GPIO_EXP1,   P0_6, EXP1, P0_7, NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },                       // D7
-    { GPIO_EXP1,   P1_0, EXP1, P1_1, NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },                       // D8
-    { GPIO_LEGRES, 2,    EXP0, P0_7, EXP0, P0_6, MUX3,   NO_MUX,  0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_PWM },            // D9
-    { GPIO_FABRIC, 2,    EXP0, P1_3, EXP0, P1_2, MUX6,   NO_MUX,  0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_PWM },            // D10
-    { GPIO_LEGRES, 3,    EXP0, P1_1, EXP0, P1_0, MUX4,   MUX5,    0,0, 1,0, 0,0, 0,0, 0,1, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_PWM | FUNC_SPI }, // D11
-    { GPIO_FABRIC, 7,    EXP1, P1_3, EXP1, P1_2, NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_SPI },            // D12
-    { GPIO_LEGRES, 5,    EXP0, P1_7, EXP0, P1_6, MUX8,   NO_MUX,  0,0, 0,0, 0,0, 0,0, 1,0, 0,0, 0, 0, 1, 0, FUNC_DIO | FUNC_SPI },            // D13
-    { GPIO_EXP2,   P0_0, EXP2, P0_1, NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A0
-    { GPIO_EXP2,   P0_2, EXP2, P0_3, NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A1
-    { GPIO_EXP2,   P0_4, EXP2, P0_5, NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A2
-    { GPIO_EXP2,   P0_6, EXP2, P0_7, NO_X, 0,    NO_MUX, NO_MUX,  0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A3
-    { GPIO_EXP2,   P1_0, EXP2, P1_1, NO_X, 0,    AMUX1,  AMUX2_1, 1,1, 0,0, 1,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN | FUNC_I2C }, // A4
-    { GPIO_EXP2,   P1_2, EXP2, P1_3, NO_X, 0,    AMUX1,  AMUX2_2, 1,1, 0,0, 1,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN | FUNC_I2C }  // A5
-};
-
-/// The global table of mux attributes for the Galileo Gen2 board.
-/**
-This table contains the information needed to set each mux to a desired state.  It is indexed by
-mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
-*/
-const BoardPinsClass::MUX_ATTRIBUTES g_Gen2MuxAttributes[MAX_MUXES] =
-{
-    { PWMG,  LED0 },    ///< MUX0
-    { PWMG,  LED2 },    ///< MUX1
-    { PWMG,  LED4 },    ///< MUX2
-    { PWMG,  LED6 },    ///< MUX3
-    { PWMG,  LED8 },    ///< MUX4
-    { EXP1, P1_4 },     ///< MUX5
-    { PWMG,  LED10 },   ///< MUX6
-    { EXP1, P1_5 },     ///< MUX7
-    { EXP1, P1_6 },     ///< MUX8
-    { PWMG,  LED12 },   ///< MUX9
-    { PWMG,  LED13 },   ///< MUX10
-    { EXP2, P1_4 },     ///< AMUX1
-    { PWMG,  LED14 },   ///< AMUX2_1
-    { PWMG,  LED15 },   ///< AMUX2_2
-    { NO_X, 0 }         ///< Not used on Gen2
-};
-
-/// The global table of PWM information for the Galileo Gen2 board.
-/**
-This table contains the information needed to drive the PWM channels.  It is indexed by the
-Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM for that pin.
-*/
-const BoardPinsClass::PWM_CHANNEL g_Gen2PwmChannels[] =
-{
-    { NO_X, 0, 0, 0 },          ///< D0
-    { NO_X, 0, 0, 0 },          ///< D1
-    { NO_X, 0, 0, 0 },          ///< D2
-    { PWMG, LED1, LED1 , 0 },   ///< D3
-    { NO_X, 0, 0, 0 },          ///< D4
-    { PWMG, LED3, LED3, 0 },    ///< D5
-    { PWMG, LED5, LED5, 0 },    ///< D6
-    { NO_X, 0, 0, 0 },          ///< D7
-    { NO_X, 0, 0, 0 },          ///< D8
-    { PWMG, LED7, LED7, 0 },    ///< D9
-    { PWMG, LED11, LED11, 0 },  ///< D10
-    { PWMG, LED9, LED9, 0 },    ///< D11
-    { NO_X, 0, 0, 0 },          ///< D12
-    { NO_X, 0, 0, 0 },          ///< D13
-    { NO_X, 0, 0, 0 },          ///< A0
-    { NO_X, 0, 0, 0 },          ///< A1
-    { NO_X, 0, 0, 0 },          ///< A2
-    { NO_X, 0, 0, 0 },          ///< A3
-    { NO_X, 0, 0, 0 },          ///< A4
-    { NO_X, 0, 0, 0 }           ///< A5
-};
-
-/// The Gen2 I/O expander signature.
-const ULONG g_gen2ExpSig = 0x0F;
-
-/// The Gen1 I/O expander signature.
-const ULONG g_gen1ExpSig = 0x10;
-
-/// The global table of pin attributes for the Galileo Gen1 board.
-/**
-This table contains all the pin-specific attributes needed to configure and use an I/O pin.
-It is indexed by pin number (0 to NUM_ARDUINO_PINS-1).
-*/
-const BoardPinsClass::PORT_ATTRIBUTES g_Gen1PinAttributes[] =
-{
-    //gpioType          pullupExp triStExp muxA                Muxes (A,B) by function:    I2S   triStIn   Function_mask
-    //             portBit     pullupBit triStBit    muxB    Dio  Pwm  AnIn I2C  Spi  Ser     Spk   _pad
-    { GPIO_CY8,    P4_6, NO_X, 0, NO_X, 0, MUX_U2_1, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },            // D0
-    { GPIO_CY8,    P4_7, NO_X, 0, NO_X, 0, MUX_U2_2, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SER },            // D1
-    { GPIO_FABRIC, 6,    NO_X, 0, NO_X, 0, MUX_U9_2, NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },                       // D2
-    { GPIO_FABRIC, 7,    NO_X, 0, NO_X, 0, MUX_U9_1, NO_MUX, 0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D3
-    { GPIO_CY8,    P1_4, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO },                       // D4
-    { GPIO_CY8,    P0_1, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D5
-    { GPIO_CY8,    P1_0, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D6
-    { GPIO_CY8,    P1_3, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D7
-    { GPIO_CY8,    P1_2, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D8
-    { GPIO_CY8,    P0_3, NO_X, 0, NO_X, 0, NO_MUX,   NO_MUX, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D9
-    { GPIO_FABRIC, 2,    NO_X, 0, NO_X, 0, MUX_U1_1, NO_MUX, 0,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM },            // D10
-    { GPIO_CY8,    P1_1, NO_X, 0, NO_X, 0, MUX_U1_2, NO_MUX, 1,0, 1,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_PWM | FUNC_SPI }, // D11
-    { GPIO_CY8,    P3_2, NO_X, 0, NO_X, 0, MUX_U3_1, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },            // D12
-    { GPIO_CY8,    P3_3, NO_X, 0, NO_X, 0, MUX_U3_2, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_SPI },            // D13
-    { GPIO_CY8,    P4_0, NO_X, 0, NO_X, 0, MUX_U4_1, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A0
-    { GPIO_CY8,    P4_1, NO_X, 0, NO_X, 0, MUX_U4_2, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A1
-    { GPIO_CY8,    P4_2, NO_X, 0, NO_X, 0, MUX_U5_1, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A2
-    { GPIO_CY8,    P4_3, NO_X, 0, NO_X, 0, MUX_U5_2, NO_MUX, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN },            // A3
-    { GPIO_CY8,    P4_4, NO_X, 0, NO_X, 0, MUX_U6_1, MUX_U7, 1,1, 0,0, 0,1, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN | FUNC_I2C }, // A4
-    { GPIO_CY8,    P4_5, NO_X, 0, NO_X, 0, MUX_U6_2, MUX_U7, 1,1, 0,0, 0,1, 0,0, 0,0, 0,0, 0, 0, 0, 0, FUNC_DIO | FUNC_AIN | FUNC_I2C }  // A5
-};
-
-/// The global table of mux attributes for the Galileo Gen1 board.
-/**
-This table contains the information needed to set each mux to a desired state.  It is indexed by
-mux number and specifies which port bit of which I/O Expander drives the mux selection signal.
-*/
-const BoardPinsClass::MUX_ATTRIBUTES g_Gen1MuxAttributes[MAX_MUXES] =
-{
-    { CY8, P3_6 },      ///< MUX_U1_1
-    { CY8, P3_7 },      ///< MUX_U1_2
-    { CY8, P3_4 },      ///< MUX_U2_1
-    { CY8, P3_5 },      ///< MUX_U2_2
-    { CY8, P5_2 },      ///< MUX_U3_1
-    { CY8, P5_3 },      ///< MUX_U3_2
-    { CY8, P3_1 },      ///< MUX_U4_1
-    { CY8, P3_0 },      ///< MUX_U4_2
-    { CY8, P0_7 },      ///< MUX_U5_1
-    { CY8, P0_6 },      ///< MUX_U5_2
-    { CY8, P0_5 },      ///< MUX_U6_1
-    { CY8, P0_4 },      ///< MUX_U6_2
-    { CY8, P1_5 },      ///< MUX_U7
-    { CY8, P1_6 },      ///< MUX_U9_1
-    { CY8, P1_7 }       ///< MUX_U9_2
-};
-
-/// The global table of PWM information for the Galileo Gen1 board.
-/**
-This table contains the information needed to drive the PWM channels.  It is indexed by the
-Galileo GPIO pin number, and specifies the chip and PWM channel used for that pin.
-*/
-const BoardPinsClass::PWM_CHANNEL g_Gen1PwmChannels[] =
-{
-    { NO_X, 0, 0, 0 },        ///< D0
-    { NO_X, 0, 0, 0 },        ///< D1
-    { NO_X, 0, 0, 0 },        ///< D2
-    { CY8, 3, P0_2, 0 },      ///< D3
-    { NO_X, 0, 0, 0 },        ///< D4
-    { CY8, 5, P0_1, 0 },      ///< D5
-    { CY8, 6, P1_0, 0 },      ///< D6
-    { CY8, 0, P1_3, 0 },      ///< D7
-    { CY8, 2, P1_2, 0 },      ///< D8
-    { CY8, 1, P0_3, 0 },      ///< D9
-    { CY8, 7, P0_0, 0 },      ///< D10
-    { CY8, 4, P1_1, 0 },      ///< D11
-    { NO_X, 0, 0, 0 },        ///< D12
-    { NO_X, 0, 0, 0 },        ///< D13
-    { NO_X, 0, 0, 0 },        ///< A0
-    { NO_X, 0, 0, 0 },        ///< A1
-    { NO_X, 0, 0, 0 },        ///< A2
-    { NO_X, 0, 0, 0 },        ///< A3
-    { NO_X, 0, 0, 0 },        ///< A4
-    { NO_X, 0, 0, 0 }         ///< A5
-};
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if defined(_M_IX86) || defined(_M_X64)
 /// The global table of pin attributes for the MBM board.
@@ -359,7 +144,7 @@ const BoardPinsClass::MUX_ATTRIBUTES g_MbmMuxAttributes[MAX_MUXES] =
 /// The global table of PWM information for the MBM board.
 /**
 This table contains the information needed to drive the PWM channels.  It is indexed by the
-Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM for that pin.
+connector pin number, and specifies the chip and port-bit that implements PWM for that pin.
 */
 const BoardPinsClass::PWM_CHANNEL g_MbmPwmChannels[] =
 {
@@ -450,7 +235,7 @@ const BoardPinsClass::MUX_ATTRIBUTES g_MbmIkaMuxAttributes[MAX_MUXES] =
 /// The global table of PWM information for the MBM board with an Ika Lure attached.
 /**
 This table contains the information needed to drive the PWM channels.  It is indexed by the
-Galileo GPIO pin number, and specifies the chip and port-bit that implements PWM for that pin.
+connector pin number, and specifies the chip and port-bit that implements PWM for that pin.
 */
 const BoardPinsClass::PWM_CHANNEL g_MbmIkaPwmChannels[] =
 {
@@ -616,14 +401,9 @@ and the address on the I2C bus the chip responds to.
 */
 const BoardPinsClass::EXP_ATTRIBUTES g_GenxExpAttributes[] =
 {
-    { PCAL9535A, 0x25 },                    ///< EXP0 - Galileo Gen2
-    { PCAL9535A, 0x26 },                    ///< EXP1 - Galileo Gen2
-    { PCAL9535A, 0x27 },                    ///< EXP2 - Galileo Gen2
-    { PCA9685,   0x47 },                    ///< PWMG - Galileo Gen2
-    { CY8C9540A, 0x20 },                    ///< CY8 - Galileo Gen1
-    { BAYTRAIL,  0x00 },                    ///< SOC - MBM
+    { BAYTRAIL,  0x00 },                    ///< SOCBAYT - MBM
     { PCA9685,   IKA_LURE_PWM_I2C_ADR },    ///< PWMI - MBM with Ika Lure
-    { BCM2836,   0x00 }                     ///< SOC - PI2
+    { BCM2836,   0x00 }                     ///< SOCBCM - PI2
 };
 
 
@@ -634,26 +414,26 @@ contain at least the number of entries for the number of pins on the "largest" b
 */
 BoardPinsClass::PIN_FUNCTION g_GenxPinFunctions[] =
 {
-    { FUNC_NUL, false },    ///<  0 - (Galileo D0)
-    { FUNC_NUL, false },    ///<  1 - (Galileo D1)
-    { FUNC_NUL, false },    ///<  2 - (Galileo D2)
-    { FUNC_NUL, false },    ///<  3 - (Galileo D3)
-    { FUNC_NUL, false },    ///<  4 - (Galileo D4)
-    { FUNC_NUL, false },    ///<  5 - (Galileo D5)
-    { FUNC_NUL, false },    ///<  6 - (Galileo D6)
-    { FUNC_NUL, false },    ///<  7 - (Galileo D7)
-    { FUNC_NUL, false },    ///<  8 - (Galileo D8)
-    { FUNC_NUL, false },    ///<  9 - (Galileo D9)
-    { FUNC_NUL, false },    ///< 10 - (Galileo D10)
-    { FUNC_NUL, false },    ///< 11 - (Galileo D11)
-    { FUNC_NUL, false },    ///< 12 - (Galileo D12)
-    { FUNC_NUL, false },    ///< 13 - (Galileo D13)
-    { FUNC_NUL, false },    ///< 14 - (Galileo A0)
-    { FUNC_NUL, false },    ///< 15 - (Galileo A1)
-    { FUNC_NUL, false },    ///< 16 - (Galileo A2)
-    { FUNC_NUL, false },    ///< 17 - (Galileo A3)
-    { FUNC_NUL, false },    ///< 18 - (Galileo A4)
-    { FUNC_NUL, false },    ///< 19 - (Galileo A5)
+    { FUNC_NUL, false },    ///<  0
+    { FUNC_NUL, false },    ///<  1
+    { FUNC_NUL, false },    ///<  2
+    { FUNC_NUL, false },    ///<  3
+    { FUNC_NUL, false },    ///<  4
+    { FUNC_NUL, false },    ///<  5
+    { FUNC_NUL, false },    ///<  6
+    { FUNC_NUL, false },    ///<  7
+    { FUNC_NUL, false },    ///<  8
+    { FUNC_NUL, false },    ///<  9
+    { FUNC_NUL, false },    ///< 10
+    { FUNC_NUL, false },    ///< 11
+    { FUNC_NUL, false },    ///< 12
+    { FUNC_NUL, false },    ///< 13
+    { FUNC_NUL, false },    ///< 14
+    { FUNC_NUL, false },    ///< 15
+    { FUNC_NUL, false },    ///< 16
+    { FUNC_NUL, false },    ///< 17
+    { FUNC_NUL, false },    ///< 18
+    { FUNC_NUL, false },    ///< 19
     { FUNC_NUL, false },    ///< 20
     { FUNC_NUL, false },    ///< 21
     { FUNC_NUL, false },    ///< 22
@@ -843,16 +623,6 @@ HRESULT BoardPinsClass::_setPinDigitalIo(ULONG pin)
         hr = _setMux(pin, m_PinAttributes[pin].muxB, m_PinAttributes[pin].digIoMuxB);
     }
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-// If the pin PWM capable and on a CY8C9540A I/O Expander chip, deselect the PWM function.
-    if (SUCCEEDED(hr) && (m_PwmChannels[pin].expander == CY8))
-    {
-        ULONG i2cAdr = m_ExpAttributes[m_PwmChannels[pin].expander].I2c_Address;
-        ULONG portBit = m_PwmChannels[pin].portBit;
-        hr = CY8C9540ADevice::SetPortbitDio(i2cAdr, portBit);
-    }
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-
     return hr;
 }
 
@@ -884,23 +654,8 @@ HRESULT BoardPinsClass::_setPinPwm(ULONG pin)
     // Configure the pin for driving a PWM signal.
     if (SUCCEEDED(hr))
     {
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-        if (m_PwmChannels[pin].expander == CY8)
-        {
-            // If PWM on this pin is from a CY8 I/O expander, configure the pin for PWM.
-            ULONG i2cAdr = m_ExpAttributes[m_PwmChannels[pin].expander].I2c_Address;
-            ULONG portBit = m_PwmChannels[pin].portBit;
-            ULONG pwmChan = m_PwmChannels[pin].channel;
-            hr = CY8C9540ADevice::SetPortbitPwm(i2cAdr, portBit, pwmChan);
-        }
-        else
-        {
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-            // If from a non-CY8 PWM chip, just set the pin to be an output.
-            hr = setPinMode(pin, DIRECTION_OUT, FALSE);
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-        }
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+        // Set the pin to be an output.
+        hr = setPinMode(pin, DIRECTION_OUT, FALSE);
     }
 
     return hr;
@@ -1068,26 +823,6 @@ HRESULT BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
             hr = g_btFabricGpio.setS5PinDirection(m_PinAttributes[pin].portBit, mode);
             break;
 #endif // defined(_M_IX86) || defined(_M_X64)
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-        case GPIO_FABRIC:
-            hr = g_quarkFabricGpio.setPinDirection(m_PinAttributes[pin].portBit, mode);
-            break;
-        case GPIO_LEGRES:
-            hr = g_quarkLegacyGpio.setResumePinDirection(m_PinAttributes[pin].portBit, mode);
-            break;
-        case GPIO_LEGCOR:
-            hr = g_quarkLegacyGpio.setCorePinDirection(m_PinAttributes[pin].portBit, mode);
-            break;
-        case GPIO_EXP1:
-            hr = _setExpBitDirection(EXP1, m_PinAttributes[pin].portBit, mode, pullup);
-            break;
-        case GPIO_EXP2:
-            hr = _setExpBitDirection(EXP2, m_PinAttributes[pin].portBit, mode, pullup);
-            break;
-        case GPIO_CY8:
-            hr = _setExpBitDirection(CY8, m_PinAttributes[pin].portBit, mode, pullup);
-            break;
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
         case GPIO_NONE:
             break;             // No actual GPIO pin here, nothing to do.
         default:
@@ -1105,52 +840,6 @@ HRESULT BoardPinsClass::setPinMode(ULONG pin, ULONG mode, BOOL pullup)
     {
         // Configure the pin pullup as requested.
         hr = _configurePinPullup(pin, pullup);
-    }
-
-    return hr;
-}
-
-/**
-This method sets the direction of an I/O Expander port pin.
-\param[in] expNo The number of the I/O Expander in question.
-\param[in] bitNo Specifies the port and bit number to set (such as: P1_4 for port 1, bit 4)
-\param[in] direction The desired direction: DIRECTION_IN or DIRECTION_OUT.
-\param[in] pullup TRUE - enable pullup resistor on the pin, FALSE - disable pullup resistor.
-\return HRESULT success or error code.
-*/
-HRESULT BoardPinsClass::_setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG direction, BOOL pullup)
-{
-    HRESULT hr = S_OK;
-    
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-    UCHAR i2cAdr = 0;               // I2C address of I/O Expander
-    // Get the I2C Address of the I/O Expander in question.
-    i2cAdr = m_ExpAttributes[expNo].I2c_Address;
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-
-    //
-    // Determine what type of I/O Expander we are dealing with.
-    //
-
-    if (m_ExpAttributes[expNo].Exp_Type == PCA9685)
-    {
-        // Nothing to do here, PCA9685 chip ports are always outputs.
-    }
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-    else if (m_ExpAttributes[expNo].Exp_Type == PCAL9535A)
-    {
-        // Set the bit of the I/O Expander chip to the desired direction.
-        hr = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, direction);
-    }
-    else if (m_ExpAttributes[expNo].Exp_Type == CY8C9540A)
-    {
-        // Set the bit of the I/O Expander chip to the desired direction.
-        hr = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, direction, pullup);
-    }
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-    else
-    {
-        hr = DMAP_E_DMAP_INTERNAL_ERROR;
     }
 
     return hr;
@@ -1187,28 +876,6 @@ HRESULT BoardPinsClass::_setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, U
         hr = g_bcmGpio.setPinFunction(m_PinAttributes[pin].portBit, state);
         break;
 #endif // defined(_M_ARM)
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-    case PCAL9535A:
-        // Set the bit of the I/O Expander chip to the desired state.
-        hr = PCAL9535ADevice::SetBitState(i2cAdr, bitNo, state);
-
-        if (SUCCEEDED(hr))
-        {
-            // Set the bit of the I/O Expander chip to be an output.
-            hr = PCAL9535ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT);
-        }
-        break;
-    case CY8C9540A:
-        // Set the bit of a CY8 I/O Expander chip to the desired state.
-        hr = CY8C9540ADevice::SetBitState(i2cAdr, bitNo, state);
-
-        if (SUCCEEDED(hr))
-        {
-            // Set the bit of the I/O Expander chip to be an output.
-            hr = CY8C9540ADevice::SetBitDirection(i2cAdr, bitNo, DIRECTION_OUT, FALSE);
-        }
-        break;
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 #if defined(_M_IX86) || defined(_M_X64)
     case BAYTRAIL:
         if (m_PinAttributes[pin].gpioType == GPIO_S0)
@@ -1292,32 +959,12 @@ HRESULT BoardPinsClass::_configurePinPullup(ULONG pin, BOOL pullup)
 
     if (SUCCEEDED(hr))
     {
-#if defined(_M_IX86) || defined(_M_X64)
-        // Determine which I/O Expander pin controls the GPIO-pin pullup.
-        ULONG expNo = m_PinAttributes[pin].pullupExp;
-        ULONG bitNo = m_PinAttributes[pin].pullupBit;
-
-        // If this pin has a pullup controlled by an I/O Expander port output pin:
-        if (expNo != NO_X)
-        {
-            // If the pullup is wanted:
-            if (pullup)
-            {
-                // Set the I/O Expander bit high (also sets it as an output)
-                hr = _setExpBitToState(pin, expNo, bitNo, 1);
-            }
-
-            // If no pullup is wanted:
-            else
-            {
-                // Make the I/O Expander bit an input.
-                hr = _setExpBitDirection(expNo, bitNo, DIRECTION_IN, FALSE);
-            }
-        }
-#endif // defined(_M_IX86) || defined(_M_X64)
 #if defined (_M_ARM)
         hr = g_bcmGpio.setPinPullup(m_PinAttributes[pin].portBit, pullup);
 #endif // defined (_M_ARM)
+
+        // Nothing is needed here for MBM pins.  MBM GPIO pins have pullups
+        // from the level converters, whether they are wanted or not.
     }
 
     return hr;
@@ -1395,29 +1042,6 @@ HRESULT BoardPinsClass::setPinState(ULONG pin, ULONG state)
         case GPIO_S5:
             return g_btFabricGpio.setS5PinState(m_PinAttributes[pin].portBit, state);
 #endif // defined(_M_IX86) || defined(_M_X64)
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-        case GPIO_FABRIC:
-            return g_quarkFabricGpio.setPinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_LEGRES:
-            return g_quarkLegacyGpio.setResumePinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_LEGCOR:
-            return g_quarkLegacyGpio.setCorePinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_EXP1:
-            return PCAL9535ADevice::SetBitState(
-                m_ExpAttributes[EXP1].I2c_Address,
-                m_PinAttributes[pin].portBit,
-                state);
-        case GPIO_EXP2:
-            return PCAL9535ADevice::SetBitState(
-                m_ExpAttributes[EXP2].I2c_Address,
-                m_PinAttributes[pin].portBit,
-                state);
-        case GPIO_CY8:
-            return CY8C9540ADevice::SetBitState(
-                m_ExpAttributes[CY8].I2c_Address,
-                m_PinAttributes[pin].portBit,
-                state);
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
         default:
             hr = DMAP_E_DMAP_INTERNAL_ERROR;
         }
@@ -1458,29 +1082,6 @@ HRESULT BoardPinsClass::getPinState(ULONG pin, ULONG & state)
         case GPIO_S5:
             return g_btFabricGpio.getS5PinState(m_PinAttributes[pin].portBit, state);
 #endif // defined(_M_IX86) || defined(_M_X64)
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-        case GPIO_FABRIC:
-            return g_quarkFabricGpio.getPinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_LEGRES:
-            return g_quarkLegacyGpio.getResumePinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_LEGCOR:
-            return g_quarkLegacyGpio.getCorePinState(m_PinAttributes[pin].portBit, state);
-        case GPIO_EXP1:
-            return PCAL9535ADevice::GetBitState(
-                m_ExpAttributes[EXP1].I2c_Address,
-                m_PinAttributes[pin].portBit,
-                state);
-        case GPIO_EXP2:
-            return PCAL9535ADevice::GetBitState(
-                m_ExpAttributes[EXP2].I2c_Address,
-                m_PinAttributes[pin].portBit,
-                state);
-        case GPIO_CY8:
-            return CY8C9540ADevice::GetBitState(
-                m_ExpAttributes[CY8].I2c_Address,
-                m_PinAttributes[pin].portBit,
-                state);
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
         default:
             hr = DMAP_E_DMAP_INTERNAL_ERROR;
         }
@@ -1511,8 +1112,6 @@ HRESULT BoardPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
     {
         switch (m_boardType)
         {
-        case BOARD_TYPE::GALILEO_GEN1:
-        case BOARD_TYPE::GALILEO_GEN2:
         case BOARD_TYPE::MBM_IKA_LURE:
             expNo = m_PwmChannels[pin].expander;
             channel = m_PwmChannels[pin].channel;
@@ -1525,11 +1124,6 @@ HRESULT BoardPinsClass::setPwmDutyCycle(ULONG pin, ULONG dutyCycle)
             case PCA9685:
                 hr = PCA9685Device::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
                 break;
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-            case CY8C9540A:
-                hr = CY8C9540ADevice::SetPwmDutyCycle(i2cAdr, channel, dutyCycle);
-                break;
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
             default:
                 hr = DMAP_E_DMAP_INTERNAL_ERROR;
             }
@@ -1578,8 +1172,6 @@ HRESULT BoardPinsClass::setPwmFrequency(ULONG pin, ULONG frequency)
     {
         switch (m_boardType)
         {
-        case BOARD_TYPE::GALILEO_GEN1:
-        case BOARD_TYPE::GALILEO_GEN2:
         case BOARD_TYPE::MBM_IKA_LURE:
             expNo = m_PwmChannels[pin].expander;
             expType = m_ExpAttributes[expNo].Exp_Type;
@@ -1591,11 +1183,6 @@ HRESULT BoardPinsClass::setPwmFrequency(ULONG pin, ULONG frequency)
             case PCA9685:
                 hr = PCA9685Device::SetPwmFrequency(i2cAdr, frequency);
                 break;
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-            case CY8C9540A:
-                hr = DMAP_E_DMAP_INTERNAL_ERROR;        // Not currently supported.
-                break;
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
             default:
                 hr = DMAP_E_DMAP_INTERNAL_ERROR;
             }
@@ -1639,8 +1226,6 @@ ULONG BoardPinsClass::getActualPwmFrequency(ULONG pin)
     {
         switch (m_boardType)
         {
-        case BOARD_TYPE::GALILEO_GEN1:
-        case BOARD_TYPE::GALILEO_GEN2:
         case BOARD_TYPE::MBM_IKA_LURE:
             expNo = m_PwmChannels[pin].expander;
             channel = m_PwmChannels[pin].channel;
@@ -1653,11 +1238,6 @@ ULONG BoardPinsClass::getActualPwmFrequency(ULONG pin)
             case PCA9685:
                 pwmFrequency = PCA9685Device::GetActualPwmFrequency(i2cAdr);
                 break;
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-            case CY8C9540A:
-                pwmFrequency = CY8C9540ADevice::GetActualPwmFrequency(i2cAdr, channel);
-                break;
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
             }
             break;
 
@@ -1703,7 +1283,6 @@ HRESULT BoardPinsClass::_determineBoardType()
     WCHAR valueName[] = L"Identifier";
     PWCHAR value = NULL;
     ULONG valueBytes = 0;
-    WCHAR galileoId[] = L"x86 Family 5";
     WCHAR mbmId[] = L"Intel64 Family 6";
 
     error = RegOpenKeyEx(baseKey, subKey, 0, KEY_READ, &regKey);
@@ -1733,10 +1312,6 @@ HRESULT BoardPinsClass::_determineBoardType()
                 if ((wcslen(mbmId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, mbmId, wcslen(mbmId)) == 0))
                 {
                     hr = _determineMbmConfig();
-                }
-                else if ((wcslen(galileoId) < (valueBytes / sizeof(WCHAR))) && (wcsncmp(value, galileoId, wcslen(galileoId)) == 0))
-                {
-                    hr = _determineGalileoGen();
                 }
                 else
                 {
@@ -1803,59 +1378,11 @@ HRESULT BoardPinsClass::_determinePi2Config()
     return hr;
 }
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-/**
-The I/O Expanders on the Gen1 and Gen2 boards are at different I2C addresses.
-The generation of a Galileo Board is decided by determining which I/O Expander
-I2C addresses are acknowledged and which are not.
-\return HRESULT success or error code.
-*/
-HRESULT BoardPinsClass::_determineGalileoGen()
-{
-    HRESULT hr = S_OK;
-    ULONG expSig = 0;
-    int i;
-
-    // Start with the assumption this is a Galileo Gen2.  This is done so the 
-    // I2C code will know to configure the Quark I2C controller so it can be use to
-    // determine which generation of Galileo this really is.
-    hr = setBoardType(GALILEO_GEN2);
-
-    if (SUCCEEDED(hr))
-    {
-        for (i = 0; i < NUM_IO_EXP; i++)
-        {
-            if (SUCCEEDED(_testI2cAddress(g_GenxExpAttributes[i].I2c_Address)))
-            {
-                expSig = expSig | (1 << i);
-            }
-        }
-
-        // Compare the signature of expanders found to the Gen1 and Gen2 signatures.
-        if ((expSig & (g_gen2ExpSig)) == g_gen2ExpSig)
-        {
-            hr = setBoardType(GALILEO_GEN2);
-        }
-        else if ((expSig & (g_gen1ExpSig)) == g_gen1ExpSig)
-        {
-            hr = setBoardType(GALILEO_GEN1);
-        }
-        else
-        {
-            m_boardType = NOT_SET;
-            hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
-        }
-    }
-
-    return hr;
-}
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-
 /**
 Method to manually specify the board type.  This can be used to avoid
 board type auto-detection, which could cause problems if the user has
-connect I2C slaves at the addresses of the I/O expanders.
-\param[in] gen The type of board to set (GALILEO_GEN2, etc).
+connect I2C slaves at the addresses we examine to determine board type.
+\param[in] gen The type of board to set (PI2_BARE, etc).
 \return HRESULT success or error code.
 */
 HRESULT BoardPinsClass::setBoardType(BOARD_TYPE board)
@@ -1890,22 +1417,6 @@ HRESULT BoardPinsClass::setBoardType(BOARD_TYPE board)
     }
 #endif // defined(_M_ARM)
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-    else if (board == GALILEO_GEN2)
-    {
-        m_PinAttributes = g_Gen2PinAttributes;
-        m_MuxAttributes = g_Gen2MuxAttributes;
-        m_PwmChannels = g_Gen2PwmChannels;
-        m_GpioPinCount = NUM_ARDUINO_PINS;
-    }
-    else if (board == GALILEO_GEN1)
-    {
-        m_PinAttributes = g_Gen1PinAttributes;
-        m_MuxAttributes = g_Gen1MuxAttributes;
-        m_PwmChannels = g_Gen1PwmChannels;
-        m_GpioPinCount = NUM_ARDUINO_PINS;
-    }
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
     else
     {
         m_boardType = NOT_SET;

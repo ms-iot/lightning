@@ -13,7 +13,7 @@
 
 
 //
-// Class that is used to interact with the BayTrail/Quark I2C Controller hardware.
+// Class that is used to interact with the BayTrail I2C Controller hardware.
 //
 class BtI2cControllerClass : public I2cControllerClass
 {
@@ -209,8 +209,8 @@ private:
     typedef union {
         struct {
             ULONG IC_TAR : 10;                 // Target slave address for an I2C transaction
-            ULONG GC_OR_START : 1;             // Reserved - see Quark datasheet 9.5.1.27
-            ULONG SPECIAL : 1;                 // Reserved - see Quark datasheet 9.5.1.27
+            ULONG GC_OR_START : 1;             // Reserved - see BayTrail datasheet
+            ULONG SPECIAL : 1;                 // Reserved - see BayTrail datasheet
             ULONG IC_10BITADDR_MASTER : 1;     // Clear for 7-bit addressing
             ULONG _rsv : 19;                   // Reserved
         };
@@ -510,7 +510,7 @@ private:
 
     #pragma warning( pop )
 
-    // Layout of the Quark I2C Controller registers in memory.
+    // Layout of the BayTrail I2C Controller registers in memory.
     typedef struct _I2C_CONTROLLER {
         volatile _IC_CON            IC_CON;             // 0x00 - Control Register
         volatile _IC_TAR            IC_TAR;             // 0x04 - Master Target Address
