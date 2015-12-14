@@ -290,7 +290,7 @@ private:
 
 #pragma warning( pop )
 
-    // Layout of the Quark I2C Controller registers in memory.
+    // Layout of the BCM2836 I2C Controller registers in memory.
     typedef struct _I2C_CONTROLLER {
         volatile _C     C;      // 0x00 - Control Register
         volatile _S     S;      // 0x04 - Status Register

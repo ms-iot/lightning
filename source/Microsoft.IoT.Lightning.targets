@@ -19,7 +19,6 @@
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\BcmSpiController.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\BtI2cController.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\BtSpiController.cpp" />
-    <LightningSources Include="$(MSBuildThisFileDirectory)\Source\CY8C9540ASupport.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\DmapSupport.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\DmapErrors.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\eeprom.cpp" />
@@ -30,12 +29,10 @@
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\I2cTransaction.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\NetworkSerial.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\PCA9685Support.cpp" />
-    <LightningSources Include="$(MSBuildThisFileDirectory)\Source\PCAL9535ASupport.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\PulseIn.cpp" />    
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\Servo.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\Spi.cpp" />
     <LightningSources Include="$(MSBuildThisFileDirectory)\Source\SpiController.cpp" />
-    <LightningSources Include="$(MSBuildThisFileDirectory)\Source\QuarkSpiController.cpp" />
   </ItemGroup>
 
   <ItemGroup>

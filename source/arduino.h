@@ -49,8 +49,6 @@
 #define NUM_ARDUINO_PINS 20
 #define NUM_ANALOG_PINS 6
 
-#define GALILEO_A0      14
-
 #define ARDUINO_CLOCK_SPEED 16000000UL    // 16 Mhz
 
 //
@@ -270,10 +268,8 @@ inline int analogRead(int pin)
 
     switch (board)
     {
-    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
-    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
     case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
-        // Translate the pin number passed in to a Galileo GPIO Pin number.
+        // Translate the pin number passed in to an Arduino GPIO Pin number.
         if ((pin >= 0) && (pin < NUM_ANALOG_PINS))
         {
             ioPin = A0 + pin;
@@ -348,7 +344,7 @@ inline void analogReadResolution(int bits)
 
 /// Set the reference voltage used for analog inputs.
 /**
-The Galileo only supports an internal 5v reference.  Attempting to select any other
+The Arduino only supports an internal 5v reference.  Attempting to select any other
 reference than DEFAULT throws an error.
 \param[in] type The type of analong reference desired.
 \note DEFAULT - ok, INTERNAL, INTERNAL1V1, INTERNAL2V56 or EXTERNAL - error.
@@ -389,8 +385,6 @@ inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
 
     switch (board)
     {
-    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
-    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
     case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
         // The pin number passed in is a GPIO Pin number, use it as is.
         ioPin = pin;

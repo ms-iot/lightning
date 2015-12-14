@@ -145,10 +145,6 @@ HRESULT BtI2cControllerClass::_mapController()
     {
         switch (board)
         {
-        case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
-        case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
-            deviceName = galileoI2cDeviceName;
-            break;
         case BoardPinsClass::BOARD_TYPE::MBM_BARE:
         case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
             deviceName = mbmI2cDeviceName;

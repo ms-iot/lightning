@@ -10,7 +10,6 @@
 #include "ArduinoCommon.h"
 #include "ArduinoError.h"
 #include "SpiController.h"
-#include "QuarkSpiController.h"
 #include "BtSpiController.h"
 #include "BcmSpiController.h"
 #include "BoardPins.h"
@@ -82,10 +81,14 @@ public:
                 m_controller = new BcmSpiControllerClass;
                 hr = m_controller->configurePins(PI2_PIN_SPI0_MISO, PI2_PIN_SPI0_MOSI, PI2_PIN_SPI0_SCK);
             }
+            else if (board == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
+            {
+                m_controller = new BtSpiControllerClass;
+                hr = m_controller->configurePins(ARDUINO_PIN_MISO, ARDUINO_PIN_MOSI, ARDUINO_PIN_SCK);
+            }
             else
             {
-                m_controller = new QuarkSpiControllerClass;
-                hr = m_controller->configurePins(ARDUINO_PIN_MISO, ARDUINO_PIN_MOSI, ARDUINO_PIN_SCK);
+                ThrowError(DMAP_E_BOARD_TYPE_NOT_RECOGNIZED, "Board type unrecognized for SPI use: %d", board);
             }
 
             if (FAILED(hr))

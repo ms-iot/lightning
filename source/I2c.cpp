@@ -43,11 +43,6 @@ HRESULT I2cClass::begin()
             m_controller = new BtI2cControllerClass;
             hr = m_controller->configurePins(BARE_MBM_PIN_I2C_DAT, BARE_MBM_PIN_I2C_CLK);
             break;
-        case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
-        case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
-            m_controller = new BtI2cControllerClass;
-            hr = m_controller->configurePins(ARDUINO_PIN_I2C_DAT, ARDUINO_PIN_I2C_CLK);
-            break;
         default:
             hr = DMAP_E_BOARD_TYPE_NOT_RECOGNIZED;
         }
