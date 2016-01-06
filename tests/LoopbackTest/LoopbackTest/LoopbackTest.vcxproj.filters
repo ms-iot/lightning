@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Package Dependencies">
+      <UniqueIdentifier>012ce3b8-1767-4e5e-9640-6879fbdc83b6</UniqueIdentifier>
+      <Extensions>pfx;appxmanifest;config</Extensions>
+    </Filter>
+    <Filter Include="Package Dependencies\Assets">
+      <UniqueIdentifier>235ac649-16a6-40b0-a8ad-2eae4659e01d</UniqueIdentifier>
+      <Extensions>png</Extensions>
+    </Filter>
+    <Filter Include="Package Dependencies\Include">
+      <UniqueIdentifier>8d7e0898-8311-4ec7-a0c2-8f6d43e87ae5</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="StartupTask.cpp">
+      <Filter>Package Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="LoopbackTest.ino" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>Package Dependencies\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="PinNumbers.h">
+      <Filter>Package Dependencies\Include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\LockScreenLogo.scale-200.png">
+      <Filter>Package Dependencies\Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-200.png">
+      <Filter>Package Dependencies\Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-200.png">
+      <Filter>Package Dependencies\Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-200.png">
+      <Filter>Package Dependencies\Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
+      <Filter>Package Dependencies\Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.png">
+      <Filter>Package Dependencies\Assets</Filter>
+    </Image>
+    <Image Include="Assets\Wide310x150Logo.scale-200.png">
+      <Filter>Package Dependencies\Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <Filter>Package Dependencies</Filter>
+    </AppxManifest>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config">
+      <Filter>Package Dependencies</Filter>
+    </None>
+    <None Include="LoopbackTest_TemporaryKey.pfx">
+      <Filter>Package Dependencies</Filter>
+    </None>
+  </ItemGroup>
+</Project>
