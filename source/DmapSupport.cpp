@@ -58,7 +58,7 @@ Get the base address of a memory mapped controller in the SOC.
 */
 HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode)
 {
-    UINT32 controllerAddress = 0;
+    uint64_t controllerAddress = 0;
     HRESULT hr = S_OK;
 
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)  // If building a UWP app
@@ -184,16 +184,16 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
                         g_openDeviceMask |= 1 << i;
 
                         IOControlCode^ IOCTL = ref new IOControlCode(0x423, 0x100, IOControlAccessMode::Any, IOControlBufferingMethod::Buffered);
-                        Buffer^ addressBuffer = ref new Buffer(8);
+                        Buffer^ addressBuffer = ref new Buffer(sizeof(DMAP_MAPMEMORY_OUTPUT_BUFFER));
 
                         create_task(device->SendIOControlAsync(IOCTL, nullptr, addressBuffer))
                             .then([addressBuffer, &controllerAddress, &findCompleted, &hr](UINT32 result)
                         {
-                            // We expect a 4-byte address and a 4-byte length to have been transferred 
+                            // We expect an 8-byte address and a 4-byte length to have been transferred 
                             // into the address buffer by the I/O operation.
 
                             // hr should already be S_OK 
-                            if (result == 8)
+                            if (result == sizeof(DMAP_MAPMEMORY_OUTPUT_BUFFER))
                             {
                                 hr = S_OK;
                             }
@@ -201,11 +201,11 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
                             if (SUCCEEDED(hr))
                             {
                                 auto reader = DataReader::FromBuffer(addressBuffer);
-                                UINT32 address = { 0 };
+                                uint64_t address = { 0 };
                                 int i;
-                                for (i = 0; i < 4; i++)
+                                for (i = 0; i < 8; i++)
                                 {
-                                    address = address | (((UINT32)reader->ReadByte()) << (8 * i));
+                                    address = address | (((uint64_t)reader->ReadByte()) << (8 * i));
                                 }
                                 controllerAddress = address;
                             }
@@ -350,10 +350,19 @@ HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode
 
 /**
 Send an IO control code to the controller device driver
-\param[in] handle Handle opened to the device.
+\param[in] handle Handle opened to the device
+\param[in] iOControlCode The IOControl code to send to the driver
+\param[in] bufferToDriver The buffer to send to the driver (nullptr if none)
+\param[in] bufferFromDriver The buffer for data from the driver (nullptr if none)
+\param[in] timeOutMillis The number of milliseconds to wait for I/O completion (can be INFINITE)
 \return HRESULT success or error code.
 */
-HRESULT SendIOControlCodeToController(HANDLE & handle, IOControlCode^ iOControlCode)
+HRESULT SendIOControlCodeToController(
+    HANDLE handle,
+    IOControlCode^ iOControlCode,
+    IBuffer^ bufferToDriver,
+    IBuffer^ bufferFromDriver,
+    uint32_t timeOutMillis)
 {
     HRESULT hr = S_OK;
     CustomDevice^ device;
@@ -372,19 +381,79 @@ HRESULT SendIOControlCodeToController(HANDLE & handle, IOControlCode^ iOControlC
     }
 
     auto workItem = ref new WorkItemHandler(
-        [device, iOControlCode, ioControlCompleted, &hr]
+        [device, iOControlCode, ioControlCompleted, &hr, &bufferToDriver, &bufferFromDriver]
     (IAsyncAction^ workItem)
     {
-        create_task(device->SendIOControlAsync(iOControlCode, nullptr, nullptr)).then([&ioControlCompleted, &hr](UINT result)
+        create_task(device->SendIOControlAsync(iOControlCode, bufferToDriver, bufferFromDriver)).then([&hr, &ioControlCompleted](task<unsigned int> t)
         {
-            hr = result;
+            try
+            {
+                hr = t.get();
+            }
+            catch (Platform::Exception^ e)
+            {
+                hr = ERROR_OPERATION_ABORTED;
+            }
+            catch (...)
+            {
+                hr = ERROR_OPERATION_ABORTED;
+            }
             SetEvent(ioControlCompleted);
         });
     });
 
+
+        //create_task([n]
+        //{
+        //    wcout << L"In first task. n = ";
+        //    wcout << n << endl;
+
+        //    return n * 2;
+
+        //}).then([](int n)
+        //{
+        //    wcout << L"In second task. n = ";
+        //    wcout << n << endl;
+
+        //    return n * 2;
+
+        //}).then([](int n)
+        //{
+        //    wcout << L"In third task. n = ";
+        //    wcout << n << endl;
+
+        //    // This task throws.
+        //    throw exception();
+        //    // Not reached.
+        //    return n * 2;
+
+        //}).then([](int n)
+        //{
+        //    // This continuation is not run because the previous task throws.
+        //    wcout << L"In fourth task. n = ";
+        //    wcout << n << endl;
+
+        //    return n * 2;
+
+        //}).then([](task<int> previousTask)
+        //{
+        //    // This continuation is run because it is value-based.
+        //    try
+        //    {
+        //        // The call to task::get rethrows the exception.
+        //        wcout << L"In final task. result = ";
+        //        wcout << previousTask.get() << endl;
+        //    }
+        //    catch (const exception&)
+        //    {
+        //        wcout << L"<exception>" << endl;
+        //    }
+        //}).wait();
+
+
     auto asyncAction = ThreadPool::RunAsync(workItem);
 
-    DWORD dwError = WaitForSingleObjectEx(ioControlCompleted, WAIT_TIME_MILLIS, FALSE);
+    DWORD dwError = WaitForSingleObjectEx(ioControlCompleted, timeOutMillis, FALSE);
     if (dwError == WAIT_OBJECT_0)
     {
         // success
@@ -413,7 +482,7 @@ HRESULT GetControllerLock(HANDLE & handle)
 {
     static IOControlCode^ LockCode = ref new IOControlCode(0x423, 0x103, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
 
-    return SendIOControlCodeToController(handle, LockCode);
+    return SendIOControlCodeToController(handle, LockCode, nullptr, nullptr, WAIT_TIME_MILLIS);
 }
 
 /**
@@ -425,6 +494,6 @@ HRESULT ReleaseControllerLock(HANDLE & handle)
 {
     static IOControlCode^ UnlockCode = ref new IOControlCode(0x423, 0x104, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
 
-    return SendIOControlCodeToController(handle, UnlockCode);
+    return SendIOControlCodeToController(handle, UnlockCode, nullptr, nullptr, WAIT_TIME_MILLIS);
 }
 #endif  // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
