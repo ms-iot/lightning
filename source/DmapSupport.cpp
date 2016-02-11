@@ -190,30 +190,44 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
                             .then([addressBuffer, &controllerAddress, &findCompleted, &hr](UINT32 result)
                         {
                             // We expect an 8-byte address and a 4-byte length to have been transferred 
-                            // into the address buffer by the I/O operation.
+                            // into the address buffer by the I/O operation.  If this is an old driver, 
+                            // we could get a 4-byte address and a 4-byte length instead.
 
-                            // hr should already be S_OK 
-                            if (result == sizeof(DMAP_MAPMEMORY_OUTPUT_BUFFER))
+                            if (result < 8)
                             {
-                                hr = S_OK;
+                                hr = E_FAIL;
                             }
-
-                            if (SUCCEEDED(hr))
+                            else
                             {
                                 auto reader = DataReader::FromBuffer(addressBuffer);
-                                uint64_t address = { 0 };
+                                uint64_t address = 0;
                                 int i;
-                                for (i = 0; i < 8; i++)
+
+                                if (result < sizeof(DMAP_MAPMEMORY_OUTPUT_BUFFER))
                                 {
-                                    address = address | (((uint64_t)reader->ReadByte()) << (8 * i));
+                                    // If we are talking to an old driver, parse a 4-byte address.
+                                    for (i = 0; i < 4; i++)
+                                    {
+                                        address = address | (((uint64_t)reader->ReadByte()) << (8 * i));
+                                    }
                                 }
+                                else
+                                {
+                                    // If we are talking to a current driver, parse an 8-byte address.
+                                    for (i = 0; i < 8; i++)
+                                    {
+                                        address = address | (((uint64_t)reader->ReadByte()) << (8 * i));
+                                    }
+
+                                }
+
                                 controllerAddress = address;
+
                             }
 
                             SetEvent(findCompleted);
 
                         }); // device->SendIOControlAsync()
-
 
                     } // End - if (SUCCEEDED(hr))
 
