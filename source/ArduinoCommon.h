@@ -73,9 +73,10 @@ const UCHAR PWM14 = 64;
 const UCHAR PWM15 = 65;
 
 // SPI signal to pin mapping for Arduino compatible pin configuration.
-const UCHAR ARDUINO_PIN_MOSI = D11;     ///< Pin used for Galileo SPI MOSI signal
-const UCHAR ARDUINO_PIN_MISO = D12;     ///< Pin used for Galileo SPI MISO signal
-const UCHAR ARDUINO_PIN_SCK = D13;      ///< Pin used for Galileo SPI Clock signal
+const UCHAR ARDUINO_PIN_CS0 = D10;      ///< Pin used for Arduino SPI Chip Select
+const UCHAR ARDUINO_PIN_MOSI = D11;     ///< Pin used for Arduino SPI MOSI signal
+const UCHAR ARDUINO_PIN_MISO = D12;     ///< Pin used for Arduino SPI MISO signal
+const UCHAR ARDUINO_PIN_SCK = D13;      ///< Pin used for Arduino SPI Clock signal
 
 // SPI signal to pin mapping for bare MBM.
 const UCHAR MBM_PIN_MISO = 7;           ///< Pin used for MBM SPI MISO signal

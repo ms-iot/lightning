@@ -300,12 +300,12 @@ public:
 
     void onReceive(void(*)(int))
     {
-        Log("FEATURE UNAVAILABLE: Galileo cannot act as I2C slave device!");
+        Log("FEATURE UNAVAILABLE: This SOC cannot act as I2C slave device!");
     }
     
     void onRequest(void(*)(void))
     {
-        Log("FEATURE UNAVAILABLE: Galileo cannot act as I2C slave device!");
+        Log("FEATURE UNAVAILABLE: This SOC cannot act as I2C slave device!");
     }
 
     /// Queue an array of bytes write on the I2C bus.

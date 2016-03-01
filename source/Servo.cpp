@@ -58,8 +58,6 @@ void Servo::attach(int pin, int min, int max)
 
     switch (board)
     {
-    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
-    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
     case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
         // The pin number passed in is a GPIO Pin number, use it as is.
         ioPin = pin;

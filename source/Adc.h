@@ -6,8 +6,6 @@
 #define _ADC_H_
 
 #include <Windows.h>
-#include "ADC108S102Support.h"
-#include "AD7298Support.h"
 #include "ADS1015Support.h"
 #include "MCP3008support.h"
 
@@ -35,16 +33,6 @@ public:
         {
             m_addOnAdc.end();
         }
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-        else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
-        {
-            m_gen2Adc.end();
-        }
-        else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
-        {
-            m_gen1Adc.end();
-        }
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
     }
 
     /// Take a reading with the ADC on the board.
@@ -85,16 +73,6 @@ public:
             {
                 hr = m_addOnAdc.readValue(channel, value, bits);
             }
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-            else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
-            {
-                hr = m_gen2Adc.readValue(channel, value, bits);
-            }
-            else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
-            {
-                hr = m_gen1Adc.readValue(channel, value, bits);
-            }
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
         }
         
         return hr;
@@ -143,18 +121,6 @@ private:
                 {
                     hr = m_addOnAdc.begin();
                 }
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-                else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN2)
-                {
-                    hr = m_gen2Adc.begin();
-
-                }
-                else if (m_boardType == BoardPinsClass::BOARD_TYPE::GALILEO_GEN1)
-                {
-                    hr = m_gen1Adc.begin();
-
-                }
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
                 else
                 {
                     // If we have an unrecognized board or one that does not support ADC,

@@ -6,30 +6,6 @@
 
 #include "GpioController.h"
 
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-/**
-\return HRESULT error or success code.
-*/
-HRESULT QuarkFabricGpioControllerClass::_mapController()
-{
-    HRESULT hr = S_OK;
-    PVOID baseAddress = nullptr;
-
-    hr = GetControllerBaseAddress(
-        galileoGpioDeviceName,
-        m_hController,
-        baseAddress,
-        FILE_SHARE_READ | FILE_SHARE_WRITE);
-
-    if (SUCCEEDED(hr))
-    {
-        m_registers = (PFABRIC_GPIO)baseAddress;
-    }
-
-    return hr;
-}
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-
 #if defined(_M_IX86) || defined(_M_X64)
 /**
 \return HRESULT success or error code.
@@ -78,23 +54,6 @@ HRESULT BtFabricGpioControllerClass::_mapS5Controller()
     return hr;
 }
 #endif // defined(_M_IX86) || defined(_M_X64)
-
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
-/**
-\return HRESULT success or error code.
-*/
-HRESULT QuarkLegacyGpioControllerClass::_openController()
-{
-    HRESULT hr = S_OK;
-    
-    hr = OpenControllerDevice(
-        galileoLegacyGpioDeviceName,
-        m_hController,
-        FILE_SHARE_READ | FILE_SHARE_WRITE);
-
-    return hr;
-}
-#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if defined(_M_ARM)
 /**

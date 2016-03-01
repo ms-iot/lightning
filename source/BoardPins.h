@@ -2,16 +2,14 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-#ifndef _GALILEO_PINS_H_
-#define _GALILEO_PINS_H_
+#ifndef _BOARD_PINS_H_
+#define _BOARD_PINS_H_
 
 #include <Windows.h>
 
 #include "ArduinoCommon.h"
 #include "GpioController.h"
-#include "PCAL9535ASupport.h"
 #include "PCA9685Support.h"
-#include "CY8C9540ASupport.h"
 #include "ExpanderDefs.h"
 
 // Pin function type values.
@@ -113,8 +111,6 @@ public:
     /// Enum of board types.
     const enum BOARD_TYPE {
         NOT_SET,               ///< Indicates board type not yet set
-        GALILEO_GEN1,          ///< Original Galileo board
-        GALILEO_GEN2,          ///< Galileo Gen2 board
         MBM_BARE,              ///< MBM without Lure attached
         MBM_IKA_LURE,          ///< MBM with Ika Lure attached
         PI2_BARE               ///< PI2 without expansion attached
@@ -206,9 +202,6 @@ private:
     /// Method to set a mux to a desired state.
     HRESULT _setMux(ULONG pin, ULONG mux, ULONG selection);
 
-    /// Method to set the direction on an I/O Expander port pin.
-    HRESULT _setExpBitDirection(ULONG expNo, ULONG bitNo, ULONG directin, BOOL pullup);
-
     /// Method to set the state of an I/O Expander port pin.
     HRESULT _setExpBitToState(ULONG pin, ULONG expNo, ULONG bitNo, ULONG state);
 
@@ -217,9 +210,6 @@ private:
 
     /// Method to determine what type of board we are running on.
     HRESULT _determineBoardType();
-
-    /// Method to determine the generation of a Galileo board.
-    HRESULT _determineGalileoGen();
 
     /// Method to determine the configuration of an MBM board.
     HRESULT _determineMbmConfig();
@@ -283,8 +273,8 @@ inline BOOL BoardPinsClass::pinNumberIsSafe(ULONG pin)
 }
 
 /**
-Determine if the board generation has been determined yet, and if not, determine the
-board generation and configure the code for that generation.
+Determine if the board type has been determined yet, and if not, determine the
+board type and configure the code for it.
 \return HRESULT error or success code.
 */
 inline HRESULT BoardPinsClass::_verifyBoardType()
@@ -299,4 +289,4 @@ inline HRESULT BoardPinsClass::_verifyBoardType()
     }
 }
 
-#endif // _GALILEO_PINS_H_
+#endif // _BOARD_PINS_H_

@@ -49,8 +49,6 @@
 #define NUM_ARDUINO_PINS 20
 #define NUM_ANALOG_PINS 6
 
-#define GALILEO_A0      14
-
 #define ARDUINO_CLOCK_SPEED 16000000UL    // 16 Mhz
 
 //
@@ -259,7 +257,7 @@ inline int analogRead(int pin)
     HRESULT hr;
     ULONG value;
     ULONG bits;
-    ULONG ioPin;
+    ULONG ioPin = pin;
     BoardPinsClass::BOARD_TYPE board;
 
     hr = g_pins.getBoardType(board);
@@ -270,17 +268,11 @@ inline int analogRead(int pin)
 
     switch (board)
     {
-    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
-    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
     case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
-        // Translate the pin number passed in to a Galileo GPIO Pin number.
+        // Translate the pin number passed in to an Arduino GPIO Pin number.
         if ((pin >= 0) && (pin < NUM_ANALOG_PINS))
         {
             ioPin = A0 + pin;
-        }
-        else
-        {
-            ioPin = pin;
         }
  
         // Make sure the pin is configured as an analog input.
@@ -348,7 +340,7 @@ inline void analogReadResolution(int bits)
 
 /// Set the reference voltage used for analog inputs.
 /**
-The Galileo only supports an internal 5v reference.  Attempting to select any other
+The Arduino only supports an internal 5v reference.  Attempting to select any other
 reference than DEFAULT throws an error.
 \param[in] type The type of analong reference desired.
 \note DEFAULT - ok, INTERNAL, INTERNAL1V1, INTERNAL2V56 or EXTERNAL - error.
@@ -377,7 +369,7 @@ on the board, or if a pin that does not support PWM is specified.
 inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
 {
     HRESULT hr;
-    ULONG ioPin;
+    ULONG ioPin = pin;
     BoardPinsClass::BOARD_TYPE board;
     ULONGLONG scaledDutyCycle;
 
@@ -389,11 +381,7 @@ inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
 
     switch (board)
     {
-    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN1:
-    case BoardPinsClass::BOARD_TYPE::GALILEO_GEN2:
     case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
-        // The pin number passed in is a GPIO Pin number, use it as is.
-        ioPin = pin;
 
         // Verify the pin is in PWM mode, and configure it for PWM use if not.
         hr = g_pins.verifyPinFunction(ioPin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE);
@@ -410,10 +398,6 @@ inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
         if (pin < PWM0)
         {
             ioPin = PWM0 + pin;
-        }
-        else
-        {
-            ioPin = pin;
         }
         break;
 
