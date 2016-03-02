@@ -1452,5 +1452,130 @@ HRESULT BoardPinsClass::_testI2cAddress(ULONG i2cAdr)
     return hr;
 }
 
+/**
+\param[in] pin The number of the board pin for which interrupts are wanted.
+\param[in] fund The function to be called when an interrupt occurs for the specified pin.
+\param[in] mode The type of pin state changes that should cause interrupts.
+\return Success or failure code.
+*/
+HRESULT BoardPinsClass::attachInterrupt(uint8_t pin, std::function<void(void)> func, int mode)
+{
+    HRESULT hr = S_OK;
 
+    if (SUCCEEDED(hr))
+    {
+        hr = _verifyBoardType();
+    }
+
+    if (SUCCEEDED(hr) && !pinNumberIsSafe(pin))
+    {
+        hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
+        switch (m_PinAttributes[pin].gpioType)
+        {
+#if defined(_M_ARM)
+        case GPIO_BCM:
+            return g_bcmGpio.attachInterrupt(m_PinAttributes[pin].portBit, func, mode);
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
+        case GPIO_S0:
+            return g_btFabricGpio.attachS0Interrupt(pin, func, mode);
+        case GPIO_S5:
+            return g_btFabricGpio.attachS5Interrupt(pin, func, mode);
+#endif // defined(_M_IX86) || defined(_M_X64)
+        default:
+            hr = DMAP_E_DMAP_INTERNAL_ERROR;
+        }
+    }
+
+    return hr;
+}
+
+/**
+\param[in] pin The number of the board pin for which interrupts are wanted.
+\param[in] fund The function to be called when an interrupt occurs for the specified pin.
+\param[in] mode The type of pin state changes that should cause interrupts.
+\return Success or failure code.
+*/
+HRESULT BoardPinsClass::attachInterruptEx(uint8_t pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, int mode)
+{
+    HRESULT hr = S_OK;
+
+    if (SUCCEEDED(hr))
+    {
+        hr = _verifyBoardType();
+    }
+
+    if (SUCCEEDED(hr) && !pinNumberIsSafe(pin))
+    {
+        hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
+        switch (m_PinAttributes[pin].gpioType)
+        {
+#if defined(_M_ARM)
+        case GPIO_BCM:
+            return g_bcmGpio.attachInterruptEx(m_PinAttributes[pin].portBit, func, mode);
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
+        case GPIO_S0:
+            return g_btFabricGpio.attachS0InterruptEx(pin, func, mode);
+        case GPIO_S5:
+            return g_btFabricGpio.attachS5InterruptEx(pin, func, mode);
+#endif // defined(_M_IX86) || defined(_M_X64)
+        default:
+            hr = DMAP_E_DMAP_INTERNAL_ERROR;
+        }
+    }
+
+    return hr;
+}
+
+/**
+\param[in] pin The number of the board pin for which interrupts are to be detached.
+\return Success or failure code.
+*/
+HRESULT BoardPinsClass::detachInterrupt(uint8_t pin)
+{
+    HRESULT hr = S_OK;
+
+    if (SUCCEEDED(hr))
+    {
+        hr = _verifyBoardType();
+    }
+
+    if (SUCCEEDED(hr) && !pinNumberIsSafe(pin))
+    {
+        hr = DMAP_E_PIN_NUMBER_TOO_LARGE_FOR_BOARD;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        // Dispatch to the correct method according to the type of GPIO pin we are dealing with.
+        switch (m_PinAttributes[pin].gpioType)
+        {
+#if defined(_M_ARM)
+        case GPIO_BCM:
+            return g_bcmGpio.detachInterrupt(m_PinAttributes[pin].portBit);
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
+        case GPIO_S0:
+            return g_btFabricGpio.detachS0Interrupt(pin);
+        case GPIO_S5:
+            return g_btFabricGpio.detachS5Interrupt(pin);
+#endif // defined(_M_IX86) || defined(_M_X64)
+        default:
+            hr = DMAP_E_DMAP_INTERNAL_ERROR;
+        }
+    }
+
+    return hr;
+}
 

@@ -25,9 +25,11 @@ const UCHAR MSBFIRST = 0x01;
 
 const UCHAR NUM_ARDUINO_PINS = 20;
 
-const UCHAR CHANGE = 0x01;
+const UCHAR RISING = 0x01;
 const UCHAR FALLING = 0x02;
-const UCHAR RISING = 0x03;
+const UCHAR CHANGE = 0x03;
+
+const UCHAR NOT_AN_INTERRUPT = 0xFF;
 
 // Pin name to number mapping.
 const UCHAR D0 = 0;

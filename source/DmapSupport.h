@@ -7,7 +7,7 @@
 
 #include <Windows.h>
 
-#include "public.h"
+#include "DMap.h"
 
 // Define the device name strings used to access the controllers on the MBM.
 #define mbmGpioS0DeviceName   L"\\\\.\\ACPI#INT33FC#1#{109b86ad-f53d-4b76-aa5f-821e2ddf2141}\\0"
@@ -40,6 +40,12 @@ HRESULT OpenControllerDevice(PWCHAR deviceName, HANDLE & handle, DWORD shareMode
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)  // If building a UWP app.
+HRESULT SendIOControlCodeToController(
+    HANDLE handle,
+    Windows::Devices::Custom::IOControlCode^ iOControlCode,
+    Windows::Storage::Streams::IBuffer^ bufferToDriver,
+    Windows::Storage::Streams::IBuffer^ bufferFromDriver,
+    uint32_t timeOutMillis);
 HRESULT GetControllerLock(HANDLE & handle);
 HRESULT ReleaseControllerLock(HANDLE & handle);
 #endif
