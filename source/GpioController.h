@@ -6,12 +6,15 @@
 #define _GPIO_CONTROLLER_H_
 
 #include <Windows.h>
+#include <functional>
+
 #include "ErrorCodes.h"
 
 #include "ArduinoCommon.h"
 #include "DmapSupport.h"
 #include "HiResTimer.h"
 #include "concrt.h"
+#include "GpioInterrupt.h"
 
 
 #if defined(_M_IX86) || defined(_M_X64)
@@ -36,6 +39,7 @@ public:
 
         DmapCloseController(m_hS5Controller);
         m_s5Controller = nullptr;
+
     }
 
     /// Method to map the S0 GPIO controller registers if they are not already mapped.
@@ -93,6 +97,36 @@ public:
 
     /// Method to set the function (mux state) of an S5 GPIO port bit.
     inline HRESULT setS5PinFunction(ULONG gpioNo, ULONG function);
+
+    /// Method to attach to an interrupt on an S0 GPIO port bit.
+    HRESULT attachS0Interrupt(ULONG pin, std::function<void(void)> func, ULONG mode);
+
+    /// Method to attach to an interrupt on an S0 GPIO port bit.
+    HRESULT attachS0InterruptEx(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, ULONG mode);
+
+    /// Method to attach to an interrupt on an S5 GPIO port bit.
+    HRESULT attachS5Interrupt(ULONG pin, std::function<void(void)> func, ULONG mode);
+
+    /// Method to attach to an interrupt on an S5 GPIO port bit.
+    HRESULT attachS5InterruptEx(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, ULONG mode);
+
+    /// Method to detach an interrupt for an S0 GPIO port bit.
+    HRESULT detachS0Interrupt(ULONG pin);
+
+    /// Method to detach an interrupt for an S5 GPIO port bit.
+    HRESULT detachS5Interrupt(ULONG pin);
+
+    /// Method to enable delivery of GPIO interrupts.
+    inline HRESULT enableInterrupts()
+    {
+        return m_gpioInterrupts.enableInterrupts();
+    }
+
+    /// Method to disable delivery of GPIO interrupts.
+    inline HRESULT disableInterrupts()
+    {
+        return m_gpioInterrupts.disableInterrupts();
+    }
 
 private:
 
@@ -156,7 +190,6 @@ private:
         ULONG ALL_BITS;
     } _PAD_VAL;
 
-
 #pragma warning( pop )
 
     /// Layout of the BayTrail GPIO Controller registers in memory for one pad.
@@ -198,6 +231,9 @@ private:
     they are mapped into this process' virtual address space.
     */
     PGPIO_PAD m_s5Controller;
+
+    /// Object used to control and receive GPIO interrupts.
+    GpioInterruptsClass m_gpioInterrupts;
 
     //
     // BtFabricGpioControllerClass private methods.
@@ -277,6 +313,27 @@ public:
     /// Method to turn pin pullup on or off.
     inline HRESULT setPinPullup(ULONG gpioNo, BOOL pullup);
 
+    /// Method to attach to an interrupt on a GPIO port bit.
+    HRESULT attachInterrupt(ULONG pin, std::function<void(void)> func, ULONG mode);
+
+    /// Method to attach to an interrupt on a GPIO port bit, with information return.
+    HRESULT attachInterruptEx(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, ULONG mode);
+
+    /// Method to detach an interrupt for a GPIO port bit.
+    HRESULT detachInterrupt(ULONG pin);
+
+    /// Method to enable delivery of GPIO interrupts.
+    inline HRESULT enableInterrupts()
+    {
+        return m_gpioInterrupts.enableInterrupts();
+    }
+
+    /// Method to disable delivery of GPIO interrupts.
+    inline HRESULT disableInterrupts()
+    {
+        return m_gpioInterrupts.disableInterrupts();
+    }
+
 private:
 
     // Value to write to GPPUD to turn pullup/down off for pins.
@@ -343,6 +400,9 @@ private:
     they are mapped into this process' virtual address space.
     */
     PBCM_GPIO m_registers;
+
+    /// Object used to control and receive GPIO interrupts.
+    GpioInterruptsClass m_gpioInterrupts;
 
     //
     // BcmGpioControllerClass private methods.

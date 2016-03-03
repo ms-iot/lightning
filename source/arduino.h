@@ -552,12 +552,109 @@ void tone(int pin, unsigned int frequency, unsigned long duration);
 void noTone(int pin);
 
 //
+// Interrupt functions.
+//
+
+/// Attach a callback routine to a GPIO interrupt.
+/**
+\param[in] pin The number of the board pin for which interrupts are wanted.
+\param[in] fund The function to be called when an interrupt occurs for the specified pin.
+\param[in] mode The type of pin state changes that should cause interrupts.
+*/
+inline void attachInterrupt(uint8_t pin, std::function<void(void)> func, int mode)
+{
+    HRESULT hr;
+
+    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
+
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
+    }
+
+    hr = g_pins.attachInterrupt(pin, func, mode);
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred attaching interrupt to pin: %d", pin);
+    }
+}
+
+/// Attach a callback routine to a GPIO interrupt, with return of interrupt information.
+/**
+\param[in] pin The number of the board pin for which interrupts are wanted.
+\param[in] fund The function to be called when an interrupt occurs for the specified pin.
+\param[in] mode The type of pin state changes that should cause interrupts.
+*/
+inline void attachInterruptEx(uint8_t pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, int mode)
+{
+    HRESULT hr;
+
+    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
+
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
+    }
+
+    hr = g_pins.attachInterruptEx(pin, func, mode);
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred attaching interrupt to pin: %d", pin);
+    }
+}
+
+/// Indicate GPIO interrupt callbacks are no longer wanted for a pin.
+/**
+\param[in] pin The number of the board pin for which interrupts are to be detached.
+*/
+inline void detachInterrupt(uint8_t pin)
+{
+    HRESULT hr;
+
+    hr = g_pins.detachInterrupt(pin);
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred detaching interrupt for pin: %d", pin);
+    }
+}
+
+/// Turn back on interrupt callbacks that have previously been disabled.
+inline void interrupts()
+{
+    HRESULT hr;
+
+    hr = g_pins.enableInterrupts();
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred enabling interrupts.");
+    }
+}
+
+/// Temporarily disable delivery of all interrupt callbacks.
+inline void noInterrupts()
+{
+    HRESULT hr;
+
+    hr = g_pins.disableInterrupts();
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred disabling interrupts.");
+    }
+}
+
+// Translate a board pin number to an interrupt number.  We use the same value
+// for both (lower software layers translate the pin number to a SOC GPIO number).
+inline uint8_t digitalPinToInterrupt(uint8_t pin)
+{
+    return pin;
+}
+
+//
 // Arduino Sketch Plumbing
 //
 
 #include "Stream.h"
 #include "HardwareSerial.h"
-#include "WInterrupt.h"
 
 void setup();
 void loop();

@@ -6,6 +6,7 @@
 #define _BOARD_PINS_H_
 
 #include <Windows.h>
+#include <functional>
 
 #include "ArduinoCommon.h"
 #include "GpioController.h"
@@ -149,6 +150,21 @@ public:
     /// Method to get the number of GPIO pins present on the current board
     inline HRESULT getGpioPinCount(ULONG & pinCount);
 
+    /// Attach a callback routine to a GPIO interrupt.
+    HRESULT attachInterrupt(uint8_t intNo, std::function<void(void)> func, int mode);
+
+    /// Attach a callback routine to a GPIO interrupt, with interrupt information provided.
+    HRESULT attachInterruptEx(uint8_t intNo, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, int mode);
+
+    /// Indicate GPIO interrupt callbacks are no longer wanted for a intNo.
+    HRESULT detachInterrupt(uint8_t intNo);
+
+    /// Turn back on interrupt callbacks that have previously been disabled.
+    inline HRESULT enableInterrupts();
+
+    /// Temporarily disable delivery of all interrupt callbacks.
+    inline HRESULT disableInterrupts();
+
 private:
 
     /// Pointer to the array of pin attributes.
@@ -287,6 +303,56 @@ inline HRESULT BoardPinsClass::_verifyBoardType()
     {
         return _determineBoardType();
     }
+}
+
+/**
+\return Success or failure code.
+*/
+inline HRESULT BoardPinsClass::enableInterrupts()
+{
+    HRESULT hr = S_OK;
+
+    if (SUCCEEDED(hr))
+    {
+        hr = _verifyBoardType();
+    }
+
+    if (SUCCEEDED(hr))
+    {
+#if defined(_M_ARM)
+        hr = g_bcmGpio.enableInterrupts();
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
+        hr = g_btFabricGpio.enableInterrupts();
+#endif // defined(_M_IX86) || defined(_M_X64)
+    }
+
+    return hr;
+}
+
+/**
+\return Success or failure code.
+*/
+inline HRESULT BoardPinsClass::disableInterrupts()
+{
+    HRESULT hr = S_OK;
+
+    if (SUCCEEDED(hr))
+    {
+        hr = _verifyBoardType();
+    }
+
+    if (SUCCEEDED(hr))
+    {
+#if defined(_M_ARM)
+        hr = g_bcmGpio.disableInterrupts();
+#endif // defined(_M_ARM)
+#if defined(_M_IX86) || defined(_M_X64)
+        hr = g_btFabricGpio.disableInterrupts();
+#endif // defined(_M_IX86) || defined(_M_X64)
+    }
+
+    return hr;
 }
 
 #endif // _BOARD_PINS_H_
