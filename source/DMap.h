@@ -2,7 +2,7 @@
 
 Module Name:
 
-public.h
+DMap.h
 
 Abstract:
 
@@ -51,9 +51,9 @@ typedef struct _DMAP_MAPMEMORY_OUTPUT_BUFFER
 } DMAP_MAPMEMORY_OUTPUT_BUFFER, *PDMAP_MAPMEMORY_OUTPUT_BUFFER;
 
 // Note: These must be bit fields, the first two of which combine to create the third.
-#define DMAP_INTERRUPT_MODE_RISING 1
-#define DMAP_INTERRUPT_MODE_FALLING 2
-#define DMAP_INTERRUPT_MODE_EITHER 3
+#define DMAP_INTERRUPT_MODE_RISING  0x1
+#define DMAP_INTERRUPT_MODE_FALLING 0x2
+#define DMAP_INTERRUPT_MODE_EITHER  0x3
 
 // Struct for the contents of a buffer sent to the driver with IOCTL_DMAP_ATTACH_INTERRUPT
 // to request that future state transitions of the given pin generate interrupts.
