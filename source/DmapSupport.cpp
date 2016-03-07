@@ -159,7 +159,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
                 devIdStr.append(L"\\0");
                 Platform::String^ devId = ref new Platform::String(devIdStr.c_str());
 
-                create_task(CustomDevice::FromIdAsync(devId, DeviceAccessMode::ReadWrite, DeviceSharingMode::Exclusive))
+                create_task(CustomDevice::FromIdAsync(devId, DeviceAccessMode::ReadWrite, DeviceSharingMode::Shared))
                     .then([&controllerAddress, &handle, &findCompleted, &hr]
                         (CustomDevice^ device)
                 {
