@@ -195,7 +195,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 
                             if (result < 8)
                             {
-                                hr = E_FAIL;
+                                hr = E_UNEXPECTED;
                             }
                             else
                             {
@@ -398,7 +398,7 @@ HRESULT SendIOControlCodeToController(
         [device, iOControlCode, ioControlCompleted, &hr, &bufferToDriver, &bufferFromDriver]
     (IAsyncAction^ workItem)
     {
-        create_task(device->SendIOControlAsync(iOControlCode, bufferToDriver, bufferFromDriver)).then([&hr, &ioControlCompleted](task<unsigned int> t)
+        create_task(device->SendIOControlAsync(iOControlCode, bufferToDriver, bufferFromDriver)).then([&hr, ioControlCompleted](task<unsigned int> t)
         {
             try
             {
@@ -415,55 +415,6 @@ HRESULT SendIOControlCodeToController(
             SetEvent(ioControlCompleted);
         });
     });
-
-
-        //create_task([n]
-        //{
-        //    wcout << L"In first task. n = ";
-        //    wcout << n << endl;
-
-        //    return n * 2;
-
-        //}).then([](int n)
-        //{
-        //    wcout << L"In second task. n = ";
-        //    wcout << n << endl;
-
-        //    return n * 2;
-
-        //}).then([](int n)
-        //{
-        //    wcout << L"In third task. n = ";
-        //    wcout << n << endl;
-
-        //    // This task throws.
-        //    throw exception();
-        //    // Not reached.
-        //    return n * 2;
-
-        //}).then([](int n)
-        //{
-        //    // This continuation is not run because the previous task throws.
-        //    wcout << L"In fourth task. n = ";
-        //    wcout << n << endl;
-
-        //    return n * 2;
-
-        //}).then([](task<int> previousTask)
-        //{
-        //    // This continuation is run because it is value-based.
-        //    try
-        //    {
-        //        // The call to task::get rethrows the exception.
-        //        wcout << L"In final task. result = ";
-        //        wcout << previousTask.get() << endl;
-        //    }
-        //    catch (const exception&)
-        //    {
-        //        wcout << L"<exception>" << endl;
-        //    }
-        //}).wait();
-
 
     auto asyncAction = ThreadPool::RunAsync(workItem);
 

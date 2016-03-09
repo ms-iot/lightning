@@ -149,10 +149,16 @@ HRESULT GpioInterruptsClass::attachInterruptEx(ULONG pin, std::function<void(PDM
                     }
 
                     // Wait for interrupt delivery to be enabled.
-                    WaitForSingleObject(hIntEnableEvent, INFINITE);
-
-                    // Call the interrupt callback routine.
-                    func((PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER) rawBuffer);
+                    if (WAIT_FAILED == WaitForSingleObject(hIntEnableEvent, INFINITE))
+                    {
+                        continueIo = FALSE;
+                        hr = ERROR_OPERATION_ABORTED;
+                    }
+                    else
+                    {
+                        // Call the interrupt callback routine.
+                        func((PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)rawBuffer);
+                    }
                 }
 
             } while (continueIo);
