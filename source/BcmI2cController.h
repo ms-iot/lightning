@@ -265,8 +265,8 @@ private:
     const ULONG _DIV_USED_MASK = 0x0000FFFF;  // Mask of non-reserved bits in the Clock Divider Register
 
     // Standard (100khz) and high (400khz) divider values.
-    const ULONG CDIV_100KHZ = 1500;
-    const ULONG CDIV_400KHZ = 376;      // Actually 398.9khz, divider value must be even
+    const ULONG CDIV_100KHZ = 2500;
+    const ULONG CDIV_400KHZ = 626;
 
     // I2C Data Delay Register.
     typedef union {

@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Microsoft.IoT.Lightning</id>
-    <version>1.0.2-alpha</version>
+    <version>1.0.3-alpha</version>
     <title>Microsoft IoT Lightning SDK</title>
     <authors>Microsoft Open Technologies, Inc.</authors>
     <owners>Microsoft Open Technologies, Inc.</owners>
