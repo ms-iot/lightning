@@ -58,7 +58,7 @@ Get the base address of a memory mapped controller in the SOC.
 */
 HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode)
 {
-    uint64_t controllerAddress = 0;
+    void* controllerAddress = 0;
     HRESULT hr = S_OK;
 
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)  // If building a UWP app
@@ -189,39 +189,27 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
                         create_task(device->SendIOControlAsync(IOCTL, nullptr, addressBuffer))
                             .then([addressBuffer, &controllerAddress, &findCompleted, &hr](UINT32 result)
                         {
-                            // We expect an 8-byte address and a 4-byte length to have been transferred 
-                            // into the address buffer by the I/O operation.  If this is an old driver, 
-                            // we could get a 4-byte address and a 4-byte length instead.
+                            // We expect a pointer and a 4-byte length to have been transferred
+                            // into the address buffer by the I/O operation. On x86 and ARM,
+                            // we should get a 4-byte address + 4-byte length. On AMD64, it's 12 bytes.
 
-                            if (result < 8)
+                            if (result < sizeof(DMAP_MAPMEMORY_OUTPUT_BUFFER))
                             {
                                 hr = E_UNEXPECTED;
                             }
                             else
                             {
                                 auto reader = DataReader::FromBuffer(addressBuffer);
+
+                                // The address can be up to 64-bit
                                 uint64_t address = 0;
-                                int i;
 
-                                if (result < sizeof(DMAP_MAPMEMORY_OUTPUT_BUFFER))
+                                for (size_t i = 0; i < sizeof(void*); i++)
                                 {
-                                    // If we are talking to an old driver, parse a 4-byte address.
-                                    for (i = 0; i < 4; i++)
-                                    {
-                                        address = address | (((uint64_t)reader->ReadByte()) << (8 * i));
-                                    }
-                                }
-                                else
-                                {
-                                    // If we are talking to a current driver, parse an 8-byte address.
-                                    for (i = 0; i < 8; i++)
-                                    {
-                                        address = address | (((uint64_t)reader->ReadByte()) << (8 * i));
-                                    }
-
+                                    address = address | (((uint64_t)reader->ReadByte()) << (8 * i));
                                 }
 
-                                controllerAddress = address;
+                                controllerAddress = (void*)address;
 
                             }
 
@@ -244,7 +232,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
     DWORD dwError = WaitForSingleObjectEx(findCompleted, WAIT_TIME_MILLIS, FALSE);
     if (dwError == WAIT_OBJECT_0)
     {
-        baseAddress = (PVOID)controllerAddress;
+        baseAddress = controllerAddress;
     }
     else if (dwError == WAIT_TIMEOUT ||
         dwError == WAIT_ABANDONED ||

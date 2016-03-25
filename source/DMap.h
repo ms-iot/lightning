@@ -46,7 +46,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_DMap, 0x109b86ad, 0xf53d, 0x4b76, 0xaa, 0x5f, 0x82
 
 typedef struct _DMAP_MAPMEMORY_OUTPUT_BUFFER
 {
-    uint64_t Address;
+    void*    Address;
     uint32_t Length;
 } DMAP_MAPMEMORY_OUTPUT_BUFFER, *PDMAP_MAPMEMORY_OUTPUT_BUFFER;
 
