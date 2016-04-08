@@ -17,6 +17,7 @@ using namespace Windows::System::Threading;
 using namespace Concurrency;
 
 #define WAIT_TIME_MILLIS 10000 // wait up to 10 seconds
+#define LEGACY_BUF_SIZE 8  // Required for legacy driver support
 
 #endif  // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
@@ -184,7 +185,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
                         g_openDeviceMask |= 1 << i;
 
                         IOControlCode^ IOCTL = ref new IOControlCode(0x423, 0x100, IOControlAccessMode::Any, IOControlBufferingMethod::Buffered);
-                        Buffer^ addressBuffer = ref new Buffer(sizeof(DMAP_MAPMEMORY_OUTPUT_BUFFER));
+                        Buffer^ addressBuffer = ref new Buffer(sizeof(DMAP_MAPMEMORY_OUTPUT_BUFFER) + LEGACY_BUF_SIZE);
 
                         create_task(device->SendIOControlAsync(IOCTL, nullptr, addressBuffer))
                             .then([addressBuffer, &controllerAddress, &findCompleted, &hr](UINT32 result)

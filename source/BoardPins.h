@@ -156,6 +156,9 @@ public:
     /// Attach a callback routine to a GPIO interrupt, with interrupt information provided.
     HRESULT attachInterruptEx(uint8_t intNo, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, int mode);
 
+    /// Attach a callback routine to a GPIO interrupt, with interrupt information provided and context.
+    HRESULT attachInterruptContext(uint8_t intNo, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, void* context, int mode);
+
     /// Indicate GPIO interrupt callbacks are no longer wanted for a intNo.
     HRESULT detachInterrupt(uint8_t intNo);
 

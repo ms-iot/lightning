@@ -40,6 +40,9 @@ public:
     /// Method to attach to an interrupt on a GPIO port bit with information return.
     HRESULT attachInterruptEx(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, ULONG mode, HANDLE hController);
 
+    /// Method to attach to an interrupt on a GPIO port bit with information return.
+    HRESULT attachInterruptContext(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, PVOID context, ULONG mode, HANDLE hController);
+
     /// Method to detach an interrupt for a GPIO port bit.
     HRESULT detachInterrupt(ULONG pin, HANDLE hController);
 

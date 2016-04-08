@@ -603,6 +603,31 @@ inline void attachInterruptEx(uint8_t pin, std::function<void(PDMAP_WAIT_INTERRU
     }
 }
 
+/// Attach a callback routine to a GPIO interrupt, with return of interrupt information.
+/**
+\param[in] pin The number of the board pin for which interrupts are wanted.
+\param[in] fund The function to be called when an interrupt occurs for the specified pin.
+\param[in] mode The type of pin state changes that should cause interrupts.
+\param[in] context An optional parameter to pass to the callback function.
+*/
+inline void attachInterruptContext(uint8_t pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, void* context, int mode)
+{
+    HRESULT hr;
+
+    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
+
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
+    }
+
+    hr = g_pins.attachInterruptContext(pin, func, context, mode);
+    if (FAILED(hr))
+    {
+        ThrowError(hr, "Error occurred attaching interrupt to pin: %d", pin);
+    }
+}
+
 /// Indicate GPIO interrupt callbacks are no longer wanted for a pin.
 /**
 \param[in] pin The number of the board pin for which interrupts are to be detached.

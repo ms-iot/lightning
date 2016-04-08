@@ -104,11 +104,17 @@ public:
     /// Method to attach to an interrupt on an S0 GPIO port bit.
     HRESULT attachS0InterruptEx(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, ULONG mode);
 
+    /// Method to attach to an interrupt on an S0 GPIO port bit.
+    HRESULT attachS0InterruptContext(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, PVOID context, ULONG mode);
+
     /// Method to attach to an interrupt on an S5 GPIO port bit.
     HRESULT attachS5Interrupt(ULONG pin, std::function<void(void)> func, ULONG mode);
 
     /// Method to attach to an interrupt on an S5 GPIO port bit.
     HRESULT attachS5InterruptEx(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, ULONG mode);
+
+    /// Method to attach to an interrupt on an S5 GPIO port bit.
+    HRESULT attachS5InterruptContext(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, PVOID context, ULONG mode);
 
     /// Method to detach an interrupt for an S0 GPIO port bit.
     HRESULT detachS0Interrupt(ULONG pin);
@@ -318,6 +324,9 @@ public:
 
     /// Method to attach to an interrupt on a GPIO port bit, with information return.
     HRESULT attachInterruptEx(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, ULONG mode);
+
+    /// Method to attach to an interrupt on a GPIO port bit, with information return and context.
+    HRESULT attachInterruptContext(ULONG pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, PVOID context, ULONG mode);
 
     /// Method to detach an interrupt for a GPIO port bit.
     HRESULT detachInterrupt(ULONG pin);
