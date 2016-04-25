@@ -123,6 +123,24 @@ HRESULT BtFabricGpioControllerClass::attachS0InterruptEx(ULONG intNo, std::funct
 #endif // defined(_M_IX86) || defined(_M_X64)
 
 #if defined(_M_IX86) || defined(_M_X64)
+/// Method to attach to an interrupt on an S0 GPIO port bit.
+HRESULT BtFabricGpioControllerClass::attachS0InterruptContext(ULONG intNo, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, PVOID context, ULONG mode)
+{
+    HRESULT hr = S_OK;
+
+    hr = mapS0IfNeeded();
+
+    // Tell the driver to attach the interrupt.
+    if (SUCCEEDED(hr))
+    {
+        hr = m_gpioInterrupts.attachInterruptContext(intNo, func, context, mode, m_hS0Controller);
+    }
+
+    return hr;
+}
+#endif // defined(_M_IX86) || defined(_M_X64)
+
+#if defined(_M_IX86) || defined(_M_X64)
 /// Method to attach to an interrupt on an S5 GPIO port bit.
 HRESULT BtFabricGpioControllerClass::attachS5Interrupt(ULONG intNo, std::function<void(void)> func, ULONG mode)
 {
@@ -152,6 +170,24 @@ HRESULT BtFabricGpioControllerClass::attachS5InterruptEx(ULONG intNo, std::funct
     if (SUCCEEDED(hr))
     {
         hr = m_gpioInterrupts.attachInterruptEx(intNo, func, mode, m_hS5Controller);
+    }
+
+    return hr;
+}
+#endif // defined(_M_IX86) || defined(_M_X64)
+
+#if defined(_M_IX86) || defined(_M_X64)
+/// Method to attach to an interrupt on an S5 GPIO port bit.
+HRESULT BtFabricGpioControllerClass::attachS5InterruptContext(ULONG intNo, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, PVOID context, ULONG mode)
+{
+    HRESULT hr = S_OK;
+
+    hr = mapS5IfNeeded();
+
+    // Tell the driver to attach the interrupt.
+    if (SUCCEEDED(hr))
+    {
+        hr = m_gpioInterrupts.attachInterruptContext(intNo, func, context, mode, m_hS5Controller);
     }
 
     return hr;
@@ -188,6 +224,25 @@ HRESULT BcmGpioControllerClass::attachInterruptEx(ULONG intNo, std::function<voi
     if (SUCCEEDED(hr))
     {
         hr = m_gpioInterrupts.attachInterruptEx(intNo, func, mode, m_hController);
+    }
+
+    return hr;
+}
+#endif // defined(_M_ARM)
+
+
+#if defined(_M_ARM)
+/// Method to attach to an interrupt on a GPIO port bit with informaton return and context.
+HRESULT BcmGpioControllerClass::attachInterruptContext(ULONG intNo, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, PVOID context, ULONG mode)
+{
+    HRESULT hr = S_OK;
+
+    hr = mapIfNeeded();
+
+    // Tell the driver to attach the interrupt.
+    if (SUCCEEDED(hr))
+    {
+        hr = m_gpioInterrupts.attachInterruptContext(intNo, func, context, mode, m_hController);
     }
 
     return hr;
