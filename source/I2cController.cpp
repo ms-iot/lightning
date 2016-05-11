@@ -2,6 +2,8 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+#include "pch.h"
+
 #include "I2c.h"
 #include "BoardPins.h"
 #include "HiResTimer.h"
@@ -36,4 +38,18 @@ HRESULT I2cControllerClass::revertPinsToGpio()
     }
 
     return hr;
+}
+
+
+// This method maps the I2C controller if needed.
+HRESULT I2cControllerClass::mapIfNeeded()
+{
+    if (m_hController == INVALID_HANDLE_VALUE)
+    {
+        return _mapController();
+    }
+    else
+    {
+        return S_OK;
+    }
 }

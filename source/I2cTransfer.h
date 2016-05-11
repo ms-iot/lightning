@@ -5,8 +5,8 @@
 #ifndef _I2C_TRANSFER_H_
 #define _I2C_TRANSFER_H_
 
-#include <Windows.h>
 #include <functional>
+#include "Lightning.h"
 
 //
 // Here, "transfer" is used to mean reading or writing one or more bytes within a

@@ -57,14 +57,14 @@ public:
     static DCB dcbArray[24];
 
     /// \brief Hardware serial constructor
-    HardwareSerial();
+    LIGHTNING_DLL_API HardwareSerial();
 
     virtual ~HardwareSerial();
 
     /// \brief Indicates if the specified Serial port is ready.
     /// \return True if the specified serial port is available.
     /// \see <a href="http://arduino.cc/en/Serial/IfSerial" target="_blank">origin: Arduino::Serial::available</a>
-    explicit operator bool(void);
+    LIGHTNING_DLL_API explicit operator bool(void);
 
     /// \brief Get the number of bytes (characters) available for reading
     /// from the serial port.
@@ -73,7 +73,7 @@ public:
     ///   receive buffer.
     /// \return The number of bytes available to read
     /// \see <a href="http://arduino.cc/en/Serial/Available" target="_blank">origin: Arduino::Serial::available</a>
-    virtual int available(void);
+    LIGHTNING_DLL_API virtual int available(void);
 
     /// \brief Sets the data rate in bits per second (baud) for serial data transmission.
     /// \details
@@ -109,18 +109,18 @@ public:
     /// \arg SERIAL_7O2
     /// \arg SERIAL_8O2
     /// \see <a href="http://arduino.cc/en/Serial/Begin" target="_blank">origin: Arduino::Serial::begin</a>
-    void begin(unsigned long baud, uint8_t config = SERIAL_8N1);
+    LIGHTNING_DLL_API void begin(unsigned long baud, uint8_t config = SERIAL_8N1);
 
     /// \brief Disables serial communication, allowing the RX and TX pins to be
     /// used for general input and output.
     /// \details
     ///    To re-enable serial communication, call Serial.begin().
     /// \see <a href="http://arduino.cc/en/Serial/End" target="_blank">origin: Arduino::Serial::end</a>
-    void end(void);
+    LIGHTNING_DLL_API void end(void);
 
     /// \brief Waits for the transmission of outgoing serial data to complete.
     /// \see <a href="http://arduino.cc/en/Serial/Flush" target="_blank">origin: Arduino::Serial::flush</a>
-    virtual void flush(void);
+    LIGHTNING_DLL_API virtual void flush(void);
 
     /// \brief View the next byte
     /// \details Returns the next byte (character) of incoming serial data
@@ -131,13 +131,13 @@ public:
     /// \return The first byte of incoming serial data available (or -1
     ///   if no data is available)
     /// \see <a href="http://arduino.cc/en/Serial/Peek" target="_blank">origin: Arduino::Serial::peek</a>
-    virtual int peek(void);
+    LIGHTNING_DLL_API virtual int peek(void);
 
     /// \brief Reads incoming serial data.
     /// \return The first byte of incoming serial data available (or -1
     ///   if no data is available)
     /// \see <a href="http://arduino.cc/en/Serial/Read" target="_blank">origin: Arduino::Serial::read</a>
-    virtual int read(void);
+    LIGHTNING_DLL_API virtual int read(void);
 
     /// \details Sets the maximum milliseconds to wait for serial data
     /// \param [in] milliseconds Timeout duration in milliseconds
@@ -148,7 +148,7 @@ public:
     /// \see Serial::readBytes
     /// \see Serial::readBytesUntil
     /// \see <a href="http://arduino.cc/en/Serial/SetTimeout" target="_blank">origin: Arduino::Serial::setTimeout</a>
-    virtual void setTimeout(unsigned long timeout);
+    LIGHTNING_DLL_API virtual void setTimeout(unsigned long timeout);
 
     /// \brief Writes binary data to the serial port.
     /// \details
@@ -159,8 +159,8 @@ public:
     /// \return The number of bytes written
     /// \see HardwareSerial::print
     /// \see <a href="http://arduino.cc/en/Serial/Write" target="_blank">origin: Arduino::Serial::write</a>
-    virtual size_t write(const uint8_t *buffer, size_t size);
-    virtual size_t write(uint8_t c);
+    LIGHTNING_DLL_API virtual size_t write(const uint8_t *buffer, size_t size);
+    LIGHTNING_DLL_API virtual size_t write(uint8_t c);
 
     inline size_t write(char c)
      {
@@ -243,7 +243,7 @@ private:
 
 };
 
-extern HardwareSerial Serial;    ///< This variable provides global access to this
+LIGHTNING_DLL_API extern HardwareSerial Serial;    ///< This variable provides global access to this
                                  /// pseudo-static class, which is instantiated in
                                  /// the .cpp file.
 

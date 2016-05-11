@@ -2,7 +2,7 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-#include <ppltasks.h>
+#include "pch.h"
 
 #include "GpioInterrupt.h"
 #include "DmapSupport.h"

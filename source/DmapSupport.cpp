@@ -2,7 +2,8 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-#include <ppltasks.h>
+#include "pch.h"
+
 #include <concrt.h>
 #include "ErrorCodes.h"
 #include "DmapSupport.h"
@@ -301,7 +302,7 @@ void DmapCloseController(HANDLE & handle)
         if ((handle >= &g_devices[0]) && (handle < &g_devices[MAX_OPEN_DEVICES]))
         {
             *(CustomDevice^*)handle = nullptr;                  // Close device handle
-            UINT32 i = ((CustomDevice^*)handle - g_devices);    // Get index of device in array
+            UINT32 i = (UINT32)((CustomDevice^*)handle - g_devices);    // Get index of device in array
             g_openDeviceMask &= ~(1 << i);                      // Indicate device slot is free
         }
 #endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
@@ -436,7 +437,8 @@ HRESULT GetControllerLock(HANDLE & handle)
 {
     static IOControlCode^ LockCode = ref new IOControlCode(0x423, 0x103, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
 
-    return SendIOControlCodeToController(handle, LockCode, nullptr, nullptr, WAIT_TIME_MILLIS);
+    // return SendIOControlCodeToController(handle, LockCode, nullptr, nullptr, WAIT_TIME_MILLIS);
+    return S_OK;
 }
 
 /**
@@ -448,6 +450,7 @@ HRESULT ReleaseControllerLock(HANDLE & handle)
 {
     static IOControlCode^ UnlockCode = ref new IOControlCode(0x423, 0x104, IOControlAccessMode::Any, IOControlBufferingMethod::Neither);
 
-    return SendIOControlCodeToController(handle, UnlockCode, nullptr, nullptr, WAIT_TIME_MILLIS);
+    // return SendIOControlCodeToController(handle, UnlockCode, nullptr, nullptr, WAIT_TIME_MILLIS);
+    return S_OK;
 }
 #endif  // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)

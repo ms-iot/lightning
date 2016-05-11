@@ -265,7 +265,7 @@ private:
 };
 
 /// The global object used to interact with the BayTrail Fabric GPIO hardware.
-__declspec (selectany) BtFabricGpioControllerClass g_btFabricGpio;
+LIGHTNING_DLL_API extern BtFabricGpioControllerClass g_btFabricGpio;
 
 #endif // defined(_M_IX86) || defined(_M_X64)
 
@@ -292,17 +292,7 @@ public:
     /**
     \return HRESULT error or success code.
     */
-    inline HRESULT mapIfNeeded()
-    {
-        HRESULT hr = S_OK;
-
-        if (m_hController == INVALID_HANDLE_VALUE)
-        {
-            hr = _mapController();
-        }
-
-        return hr;
-    }
+    LIGHTNING_DLL_API HRESULT mapIfNeeded();
 
     /// Method to set the state of a GPIO port bit.
     inline HRESULT setPinState(ULONG gpioNo, ULONG state);
@@ -423,7 +413,7 @@ private:
 };
 
 /// The global object used to interact with the BayTrail Fabric GPIO hardware.
-__declspec (selectany) BcmGpioControllerClass g_bcmGpio;
+LIGHTNING_DLL_API extern BcmGpioControllerClass g_bcmGpio;
 
 #endif // defined(_M_ARM)
 

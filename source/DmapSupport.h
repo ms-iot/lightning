@@ -2,10 +2,7 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-#ifndef _DMAP_SUPPORT_H_
-#define _DMAP_SUPPORT_H_
-
-#include <Windows.h>
+#pragma once
 
 #include "DMap.h"
 
@@ -32,7 +29,7 @@ HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & bas
 HRESULT GetControllerBaseAddress(PWCHAR deviceName, HANDLE & handle, PVOID & baseAddress, DWORD shareMode);
 
 /// Routine to close a controller that has previously been opened.
-void DmapCloseController(HANDLE & handle);
+LIGHTNING_DLL_API void DmapCloseController(HANDLE & handle);
 
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
 /// Routine to open a controller device in the SOC.
@@ -49,5 +46,3 @@ HRESULT SendIOControlCodeToController(
 HRESULT GetControllerLock(HANDLE & handle);
 HRESULT ReleaseControllerLock(HANDLE & handle);
 #endif
-
-#endif // _DMAP_SUPPORT_H_

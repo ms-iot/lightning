@@ -2,6 +2,8 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+#include "pch.h"
+
 #include "ErrorCodes.h"
 #include "BoardPins.h"
 #include "I2c.h"
@@ -12,6 +14,11 @@
 // setting the PWM chip address to 0x41, for example).  If you change the PWM chip address
 // by modifying the hardware, change the following #define to match.
 #define IKA_LURE_PWM_I2C_ADR 0x41
+
+// 
+// Global extern exports
+//
+BoardPinsClass g_pins;
 
 // GPIO type values.
 const UCHAR GPIO_S0 = 1;        ///< GPIO is from the MBM SOC S0 sub-system

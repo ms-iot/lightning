@@ -28,10 +28,10 @@ public:
     }
 
     // Initialize the specified I2C bus for use.
-    HRESULT begin(ULONG busNumber) override;
+    LIGHTNING_DLL_API HRESULT begin(ULONG busNumber) override;
 
     // This method returns the external I2C bus pins to their default configurations.
-    inline void end() override
+    void end() override
     {
         revertPinsToGpio();
 
@@ -43,44 +43,44 @@ public:
     }
 
     // This method configures the pins to be used for this I2C bus.
-    HRESULT configurePins(ULONG sdaPin, ULONG sclPin) override;
+    LIGHTNING_DLL_API HRESULT configurePins(ULONG sdaPin, ULONG sclPin) override;
 
     // Method to initialize the I2C Controller at the start of a transaction.
-    HRESULT _initializeForTransaction(ULONG slaveAddress, BOOL useHighSpeed) override;
+    LIGHTNING_DLL_API HRESULT _initializeForTransaction(ULONG slaveAddress, BOOL useHighSpeed) override;
 
     //
     // I2C Controller accessor methods.  These methods assume the I2C Controller
     // has already been mapped using mapIfNeeded().
     //
 
-    inline BOOL txFifoFull() const override
+    BOOL txFifoFull() const override
     {
         return (m_registers->S.TXD == 0);
     }
 
-    inline BOOL txFifoEmpty() const override
+    BOOL txFifoEmpty() const override
     {
         return (m_registers->S.TXE == 1);
     }
 
-    inline BOOL rxFifoNotEmtpy() const override
+    BOOL rxFifoNotEmtpy() const override
     {
         return (m_registers->S.RXD == 1);
     }
 
-    inline BOOL rxFifoEmpty() const override
+    BOOL rxFifoEmpty() const override
     {
         return (m_registers->S.RXD == 0);
     }
 
-    HRESULT _performContiguousTransfers(I2cTransferClass* & pXfr) override;
+    LIGHTNING_DLL_API HRESULT _performContiguousTransfers(I2cTransferClass* & pXfr) override;
 
-    inline UCHAR readByte() override
+    UCHAR readByte() override
     {
         return (m_registers->FIFO.DATA);
     }
 
-    inline BOOL isActive() const override
+    BOOL isActive() const override
     {
         return (m_registers->S.TA == 1);
     }
@@ -91,12 +91,11 @@ public:
     an address or write data.
     \return TRUE, an error occured.  FALSE, no error has occured.
     */
-    inline BOOL errorOccurred() override
+    BOOL errorOccurred() override
     {
         _S sReg;
         sReg.ALL_BITS = m_registers->S.ALL_BITS;
         return (sReg.ERR == 1);
-//        return (m_registers->S.ERR == 1);
     }
 
     /// Determine if an I2C address was sent but not acknowledged by any slave.
@@ -106,7 +105,7 @@ public:
     \return TRUE, an I2C address was not acknowdged.  FALSE, all addresses sent
     have been acknowledged by at least one slave.
     */
-    inline BOOL addressWasNacked() override
+    BOOL addressWasNacked() override
     {
         return (m_registers->S.ERR == 1);
     }
@@ -118,7 +117,7 @@ public:
     \return TRUE, I2C data was not acknowdged.  FALSE, all data sent has
     been acknowledged by a slave.
     */
-    inline BOOL dataWasNacked() override
+    BOOL dataWasNacked() override
     {
         return FALSE;
     }
@@ -130,7 +129,7 @@ public:
     \param[out] error The wiring error or success code for the transaction result.
     \return HRESULT success or error code.
     */
-    inline HRESULT _handleErrors() override
+    HRESULT _handleErrors() override
     {
         HRESULT hr = S_OK;
 
@@ -166,7 +165,7 @@ public:
     /**
     The actul error condition is cleard by reading the IC_CLR_TX_ABRT register.
     */
-    inline void clearErrors() override
+    void clearErrors() override
     {
         _S statusReg;
         statusReg.ALL_BITS = 0;
@@ -311,7 +310,7 @@ private:
     PI2C_CONTROLLER m_registers;
 
     // Method to map the I2C controller into this process' virtual address space.
-    HRESULT _mapController() override;
+    LIGHTNING_DLL_API HRESULT _mapController() override;
 
     // Perform one or more contiguous write transfers.
     HRESULT _performWrites(I2cTransferClass* &pXfr);

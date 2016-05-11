@@ -2,6 +2,8 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+#include "pch.h"
+
 #include "BtSpiController.h"
 #include "BoardPins.h"
 
@@ -362,5 +364,35 @@ HRESULT BtSpiControllerClass::setClock(ULONG clockKhz)
         m_registersUpper->PRV_CLOCK_PARAMS.ALL_BITS = prvClockParams.ALL_BITS;
     }
     
+    return hr;
+}
+
+
+/**
+This method transfers a buffer of data on the bus.
+\param[in] dataOut The data to send on the SPI bus. If the parameter is NULL, 0's will be sent
+\param[in] datIn The data received on the SPI bus. If this parameter is NULL, data in will be ignored
+\param[in] bufferBytes the size of each of the buffers
+\return HRESULT success or error code.
+*/
+HRESULT BtSpiControllerClass::transferBuffer(PBYTE dataOut, PBYTE dataIn, size_t bufferBytes)
+{
+    ULONG tempDataIn = 0;
+    HRESULT hr;
+    for (size_t i = 0; i < bufferBytes; i++)
+    {
+        hr = _transfer(dataOut ? dataOut[i] : 0, tempDataIn, 8);
+
+        if (FAILED(hr))
+        {
+            break;
+        }
+
+        if (dataIn)
+        {
+            dataIn[i] = (BYTE)tempDataIn;
+        }
+    }
+
     return hr;
 }

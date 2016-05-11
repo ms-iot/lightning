@@ -2,6 +2,8 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+#include "pch.h"
+
 #include "BcmSpiController.h"
 #include "BoardPins.h"
 
@@ -86,7 +88,7 @@ BcmSpiControllerClass::BcmSpiControllerClass()
 HRESULT BcmSpiControllerClass::begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits)
 {
     HRESULT hr = S_OK;
-    
+
     PWCHAR deviceName = nullptr;
     PVOID baseAddress = nullptr;
     _CS cs;
@@ -178,7 +180,7 @@ The SPI mode specifies the clock polarity and phase.
 HRESULT BcmSpiControllerClass::setMode(ULONG mode)
 {
     HRESULT hr = S_OK;
-    
+
     // Determine the clock phase and polarity settings for the requested mode.
     switch (mode)
     {
@@ -225,7 +227,7 @@ HRESULT BcmSpiControllerClass::setClock(ULONG clockKhz)
     if (SUCCEEDED(hr))
     {
         // Round down to the closest clock rate we support.
-        if (clockKhz >= 10000)
+        if (clockKhz >= 9500)
         {
             speed = spiSpeed10mhz;
         }
@@ -294,6 +296,127 @@ HRESULT BcmSpiControllerClass::setClock(ULONG clockKhz)
         clk.CDIV = speed & 0xFFFF;
         m_registers->CLK.ALL_BITS = clk.ALL_BITS;
     }
-    
+
+    return hr;
+}
+
+/**
+Transfer a number of bits on the SPI bus.
+\param[in] dataOut Data to send on the SPI bus
+\param[out] datIn The data reaceived on the SPI bus
+\param[in] bits The number of bits to transfer in each direction on the bus.  This must agree with
+the data width set previously.
+\return HRESULT success or error code.
+\note The BCM2836 only supports byte transfers in polled mode.  If an attempt is made to transfer
+a number of bits that is not divisible by eight, this method returns an error.
+*/
+inline HRESULT BcmSpiControllerClass::_transfer(ULONG dataOut, ULONG & dataIn, ULONG bits)
+{
+    HRESULT hr = S_OK;
+    _CS cs;
+    BYTE* oneByte;
+    int bytesRemaining;
+
+
+    if (m_registers == nullptr)
+    {
+        hr = DMAP_E_DMAP_INTERNAL_ERROR;
+    }
+
+    // Make sure the transfer is composed of 1-4 whole bytes.
+    if (SUCCEEDED(hr) && (((bits & 0x07) != 0) || (bits == 0) || (bits > 32)))
+    {
+        hr = DMAP_E_SPI_DATA_WIDTH_SPECIFIED_IS_INVALID;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        bytesRemaining = bits / 8;
+        oneByte = (BYTE*)&dataOut;
+        dataIn = 0;
+
+        while (bytesRemaining > 0)
+        {
+            // Wait for an available space in the TX FIFO.
+            do { cs.ALL_BITS = m_registers->CS.ALL_BITS; } while (cs.TXD == 0);
+
+            // Send a byte of the data.
+            m_registers->FIFO.DATA_BYTE0 = oneByte[bytesRemaining - 1];
+
+            // Wait for the RX FIFO to have data.
+            do { cs.ALL_BITS = m_registers->CS.ALL_BITS; } while (cs.RXD == 0);
+
+            // Read the received data.
+            dataIn = (dataIn << 8) | (m_registers->FIFO.ALL_BITS & 0x000000FF);
+
+            bytesRemaining--;
+        }
+    }
+
+    return hr;
+}
+
+/**
+This method transfers a buffer of data on the bus.
+\param[in] dataOut The data to send on the SPI bus. If the parameter is NULL, 0's will be sent
+\param[in] datIn The data received on the SPI bus. If this parameter is NULL, data in will be ignored
+\param[in] bufferBytes the size of each of the buffers
+\return HRESULT success or error code.
+*/
+HRESULT BcmSpiControllerClass::transferBuffer(PBYTE dataOut, PBYTE dataIn, size_t bufferBytes)
+{
+    HRESULT hr = S_OK;
+    size_t i = 0;
+    size_t bytesRead = 0;
+    _CS cs;
+    volatile ULONG tempDataIn = 0;
+
+    if (m_registers == nullptr)
+    {
+        hr = DMAP_E_DMAP_INTERNAL_ERROR;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        for (i = 0; i < bufferBytes; i++)
+        {
+            // Wait for an available space in the TX FIFO.
+            do {
+                cs.ALL_BITS = m_registers->CS.ALL_BITS;
+                // If buffer is not empty, clear it
+                if (cs.RXD != 0)
+                {
+                    // Read one byte from the buffer
+                    tempDataIn = m_registers->FIFO.ALL_BITS;
+                    if (dataIn)
+                    {
+                        dataIn[bytesRead] = (BYTE)(tempDataIn & 0x000000FF);
+                    }
+                    bytesRead++;
+                }
+            } while (cs.TXD == 0);
+
+            // Send a byte of the data.
+            m_registers->FIFO.DATA_BYTE0 = dataOut ? dataOut[i] : 0;
+        }
+
+        // Read any remaining bytes in the buffer
+        while (bytesRead < bufferBytes)
+        {
+            // Wait for the RX FIFO to have data.
+            do {
+                cs.ALL_BITS = m_registers->CS.ALL_BITS;
+            } while (cs.RXD == 0);
+
+            // Read the received data.
+            tempDataIn = m_registers->FIFO.ALL_BITS;
+            if (dataIn)
+            {
+                dataIn[bytesRead] = (BYTE)(tempDataIn & 0x000000FF);
+            }
+            bytesRead++;
+        }
+    }
+
     return hr;
 }

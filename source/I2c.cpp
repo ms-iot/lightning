@@ -2,11 +2,20 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+#include "pch.h"
+
 #include "I2c.h"
 #include "BoardPins.h"
 #include "BcmI2cController.h"
 #include "BtI2cController.h"
 #include "HiResTimer.h"
+
+
+// 
+// Global extern exports
+//
+I2cClass g_i2c(EXTERNAL_I2C_BUS);
+I2cClass g_i2c2nd(SECOND_EXTERNAL_I2C_BUS);
 
 //
 // I2cClass methods.

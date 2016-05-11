@@ -5,7 +5,6 @@
 #ifndef _I2C_TRANSACTION_H_
 #define _I2C_TRANSACTION_H_
 
-#include <Windows.h>
 #include <functional>
 
 #include "I2cTransfer.h"
@@ -52,53 +51,53 @@ public:
 
     // Prepare this transaction for re-use.
     // Any previously set slave address is not affected by this method.
-    void reset();
+    LIGHTNING_DLL_API void reset();
 
     // Sets the 7-bit address of the slave for this transaction.
-    HRESULT setAddress(ULONG slaveAdr);
+    LIGHTNING_DLL_API HRESULT setAddress(ULONG slaveAdr);
 
     // Gets the 7-bit address of the slave for this transaction.
-    inline ULONG getAddress()
+     ULONG getAddress()
     {
         return m_slaveAddress;
     }
 
     // Add a write transfer to the transaction.
-    inline HRESULT queueWrite(PUCHAR buffer, const ULONG bufferBytes)
+    HRESULT queueWrite(PUCHAR buffer, const ULONG bufferBytes)
     {
         return queueWrite(buffer, bufferBytes, FALSE);
     }
 
-    HRESULT queueWrite(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
+    LIGHTNING_DLL_API HRESULT queueWrite(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
 
     // Add a read transfer to the transaction.
-    inline HRESULT queueRead(PUCHAR buffer, const ULONG bufferBytes)
+    HRESULT queueRead(PUCHAR buffer, const ULONG bufferBytes)
     {
         return queueRead(buffer, bufferBytes, FALSE);
     }
 
-    HRESULT queueRead(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
+    LIGHTNING_DLL_API HRESULT queueRead(PUCHAR buffer, const ULONG bufferBytes, const BOOL preRestart);
 
     // Method to queue a callback routine at the current point in the transaction.
-    HRESULT queueCallback(const std::function<HRESULT()> callBack);
+    LIGHTNING_DLL_API HRESULT queueCallback(const std::function<HRESULT()> callBack);
 
     // Method to perform the transfers associated with this transaction.
-    HRESULT execute(I2cControllerClass* controller);
+    LIGHTNING_DLL_API HRESULT execute(I2cControllerClass* controller);
 
     // Method to get the number of 1 mSec ticks that occurred while waiting for outstanding reads.
-    inline void getReadWaitTicks(ULONG & waits) const
+    void getReadWaitTicks(ULONG & waits) const
     {
         waits = m_maxWaitTicks;
     }
 
     // Method to determine if a transfer is the last transfer in the transaction.
-    inline BOOL isLastTransfer(I2cTransferClass* pXfr) const
+    BOOL isLastTransfer(I2cTransferClass* pXfr) const
     {
         return (pXfr == m_pXfrQueueTail);
     }
 
     /// Method to abort any remaining transfers.
-    inline void abort()
+    void abort()
     {
         m_abort = TRUE;
     }
@@ -112,25 +111,25 @@ public:
     };
 
     /// Get the current error code for this transaction.
-    inline ERROR_CODE getError()
+    ERROR_CODE getError()
     {
         return m_error;
     }
 
     /// Method to determine if an error occured during this transaction.
-    inline BOOL errorOccured()
+    BOOL errorOccured()
     {
         return (m_error != SUCCESS);
     }
 
     /// Method to determine if this transaction has been completed or not.
-    inline BOOL isIncomplete()
+    BOOL isIncomplete()
     {
         return m_isIncomplete;
     }
 
     /// Method to signal high speed can be used for this transaction.
-    inline void useHighSpeed()
+    void useHighSpeed()
     {
         m_useHighSpeed = TRUE;
     }
