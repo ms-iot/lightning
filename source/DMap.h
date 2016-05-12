@@ -18,6 +18,7 @@ user and kernel
 #define _DMAP_H_
 
 #include <stdint.h>
+#include "Lightning.h"
 
 #define DMAP_NAME L"DmapGpio"
 

@@ -10,6 +10,7 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
+#include <Lightning.h>
 #include <windows.h>
 #include <devioctl.h>
 
@@ -20,8 +21,8 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <map>
 #include <memory>
+#include <map>
 #include <vector>
 
 #ifndef _USE_MATH_DEFINES
@@ -40,10 +41,6 @@
 #include "pins_arduino.h"
 #include "PulseIn.h"
 
-#include <memory>
-#include <map>
-#include <vector>
-#include <algorithm>
 #include "avr/macros.h"
 
 #define NUM_ARDUINO_PINS 20
@@ -84,7 +81,7 @@ inline int Log(const char *format, ...)
         {
             OutputDebugStringA(buffer);
         }
-        delete [](buffer);
+        delete[](buffer);
     }
     else
     {
@@ -110,7 +107,7 @@ inline int Log(const wchar_t *format, ...)
         {
             OutputDebugStringW(buffer);
         }
-        delete [](buffer);
+        delete[](buffer);
     }
     else
     {
@@ -132,35 +129,21 @@ inline long map(long x, long in_min, long in_max, long out_min, long out_max)
 // Pauses the program for the amount of time (in microseconds) 
 // specified as parameter.
 //
-inline void delayMicroseconds(unsigned int us)
-{
-    LARGE_INTEGER us64;
-    us64.QuadPart = us;
-    _WindowsTime.delayMicroseconds(us64);
-}
+LIGHTNING_DLL_API void delayMicroseconds(unsigned int us);
 
 //
 // Pauses the program for the amount of time (in miliseconds) 
 // specified as parameter.
 //
-inline void delay(unsigned long ms)
-{
-    _WindowsTime.delay(ms);
-}
+LIGHTNING_DLL_API void delay(unsigned long ms);
 
 // Returns the number of milliseconds since the currently running program started. 
 // This number will overflow (go back to zero), after approximately 50 days.
-inline unsigned long millis(void)
-{
-    return _WindowsTime.millis();
-}
+LIGHTNING_DLL_API unsigned long millis(void);
 
 // Returns the number of microseconds since the currently running program started. 
 // This number will overflow (go back to zero), after approximately 70 minutes.
-inline unsigned long micros(void)
-{
-    return _WindowsTime.micros();
-}
+LIGHTNING_DLL_API unsigned long micros(void);
 
 //
 // Returns true if an Arduino pin number is also an analog input
@@ -184,30 +167,7 @@ inline bool _IsAnalogPin(int num)
 //  // set A1 low
 //  digitalWrite(15, 0);
 //
-inline void digitalWrite(unsigned int pin, unsigned int state)
-{
-    HRESULT hr;
-
-    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
-
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
-    }
-
-    if (state != LOW)
-    {
-        // Emulate Arduino behavior here. Code like firmata uses bitmasks to set
-        // ports, and will pass something like value & 0x20 and expect that to be high.
-        state = HIGH;
-    }
-
-    hr = g_pins.setPinState(pin, state);
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred setting pin: %d to state: %d, Error: %08x", pin, state, hr);
-    }
-}
+LIGHTNING_DLL_API void digitalWrite(unsigned int pin, unsigned int state);
 
 //
 // Reads the value from the digital pin (IO0 - IO13).
@@ -222,27 +182,10 @@ inline void digitalWrite(unsigned int pin, unsigned int state)
 //  // read IO4.
 //  int val = digitalRead(4);
 //
-inline int digitalRead(int pin)
-{
-    HRESULT hr;
-    ULONG readData = 0;
-
-    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
-    if (SUCCEEDED(hr))
-    {
-        hr = g_pins.getPinState(pin, readData);
-    }
-    if (FAILED(hr))
-    {
-        // On error return LOW per docs.
-        readData = LOW;
-    }
-
-    return readData;
-}
+LIGHTNING_DLL_API int digitalRead(int pin);
 
 /// The number of bits used to return digitized analog values.
-__declspec (selectany) ULONG g_analogValueBits = 10;
+LIGHTNING_DLL_API extern ULONG g_analogValueBits;
 
 /// Perform an analog to digital conversion on one of the analog inputs.
 /**
@@ -252,72 +195,7 @@ __declspec (selectany) ULONG g_analogValueBits = 10;
 analogReadResolution() API.  By default ten bits are returned (0-1023 for 0-5v pin voltage).
 \sa analogReadResolution
 */
-inline int analogRead(int pin)
-{
-    HRESULT hr;
-    ULONG value;
-    ULONG bits;
-    ULONG ioPin = pin;
-    BoardPinsClass::BOARD_TYPE board;
-
-    hr = g_pins.getBoardType(board);
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error getting board type.  Error: 0x%08x", hr);
-    }
-
-    switch (board)
-    {
-    case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
-        // Translate the pin number passed in to an Arduino GPIO Pin number.
-        if ((pin >= 0) && (pin < NUM_ANALOG_PINS))
-        {
-            ioPin = A0 + pin;
-        }
- 
-        // Make sure the pin is configured as an analog input.
-        hr = g_pins.verifyPinFunction(ioPin, FUNC_AIN, BoardPinsClass::NO_LOCK_CHANGE);
-
-        // If we failed to set the pin as an analog input and it is in the range of board pins.
-        if (FAILED(hr))
-        {
-            ThrowError(hr, "Error occurred verifying pin: %d function: ANALOG_IN, Error: 0x%08x", ioPin, hr);
-        }
-        break;
-
-    case BoardPinsClass::BOARD_TYPE::MBM_BARE:
-    case BoardPinsClass::BOARD_TYPE::PI2_BARE:
-        // Translate the pin number to a fake pin number.
-        if (pin < A0)
-        {
-            ioPin = A0 + pin;
-        }
-        break;
-
-    default:
-        ThrowError(hr, "Unrecognized board type: 0x%08x", board);
-    }
-
-    // Perform the read.
-    hr = g_adc.readValue(ioPin, value, bits);
-
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error performing analogRead on pin: %d, Error: 0x%08x", pin, hr);
-    }
-
-    // Scale the digitized analog value to the currently set analog read resolution.
-    if (g_analogValueBits > bits)
-    {
-        value = value << (g_analogValueBits - bits);
-    }
-    else if (bits > g_analogValueBits)
-    {
-        value = value >> (bits - g_analogValueBits);
-    }
-
-    return value;
-}
+LIGHTNING_DLL_API int analogRead(int pin);
 
 /// Analog reference value.
 #define DEFAULT 0
@@ -329,14 +207,7 @@ inline int analogRead(int pin)
 the digitized analog values are padded with zeros.  If fewer bits are specified, analog
 values truncated to the desired length.
 */
-inline void analogReadResolution(int bits)
-{
-    if ((bits < 1) || (bits > 32))
-    {
-        ThrowError(E_INVALIDARG, "Attempt to set analog read resolution to %d bits.  Supported range: 1-32.", bits);
-    }
-    g_analogValueBits = bits;
-}
+LIGHTNING_DLL_API void analogReadResolution(int bits);
 
 /// Set the reference voltage used for analog inputs.
 /**
@@ -345,16 +216,10 @@ reference than DEFAULT throws an error.
 \param[in] type The type of analong reference desired.
 \note DEFAULT - ok, INTERNAL, INTERNAL1V1, INTERNAL2V56 or EXTERNAL - error.
 */
-inline void analogReference(int type)
-{
-    if (type != DEFAULT)
-    {
-        ThrowError(E_INVALIDARG, "The only supported analog reference is DEFAULT.");
-    }
-}
+LIGHTNING_DLL_API void analogReference(int type);
 
 /// The number of bits used to specify PWM duty cycles.
-__declspec (selectany) ULONG g_pwmResolutionBits = 8;
+LIGHTNING_DLL_API extern ULONG g_pwmResolutionBits;
 
 /// Set the PWM duty cycle for a pin.
 /**
@@ -366,159 +231,24 @@ to a count of 255, for 8-bit PWM resolution.)
 \Note: This call throws an error if the pin number is outside the range supported
 on the board, or if a pin that does not support PWM is specified.
 */
-inline void analogWrite(unsigned int pin, unsigned int dutyCycle)
-{
-    HRESULT hr;
-    ULONG ioPin = pin;
-    BoardPinsClass::BOARD_TYPE board;
-    ULONGLONG scaledDutyCycle;
-
-    hr = g_pins.getBoardType(board);
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error getting board type.  Error: 0x%08x", hr);
-    }
-
-    switch (board)
-    {
-    case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
-
-        // Verify the pin is in PWM mode, and configure it for PWM use if not.
-        hr = g_pins.verifyPinFunction(ioPin, FUNC_PWM, BoardPinsClass::NO_LOCK_CHANGE);
-
-        if (FAILED(hr))
-        {
-            ThrowError(hr, "Error occurred verifying pin: %d function: PWM, Error: %08x", ioPin, hr);
-        }
-        break;
-
-    case BoardPinsClass::BOARD_TYPE::MBM_BARE:
-    case BoardPinsClass::BOARD_TYPE::PI2_BARE:
-        // Translate the PWM channel numbers to fake pin numbers.
-        if (pin < PWM0)
-        {
-            ioPin = PWM0 + pin;
-        }
-        break;
-
-    default:
-        ThrowError(E_INVALIDARG, "Unrecognized board type: 0x%08x", board);
-    }
-
-    // Scale the duty cycle passed in using the current analog write resolution.
-    if ((g_pwmResolutionBits < 32) && (dutyCycle >= (1UL << g_pwmResolutionBits)))
-    {
-        ThrowError(E_INVALIDARG, "Specified duty cycle: %d is greater than PWM resolution: %d bits.", dutyCycle, g_pwmResolutionBits);
-    }
-    scaledDutyCycle = (((ULONGLONG)dutyCycle * (1ULL << 32)) + (1ULL << (g_pwmResolutionBits - 1))) / (1ULL << g_pwmResolutionBits);
-
-    // Set the PWM duty cycle.
-    hr = g_pins.setPwmDutyCycle(ioPin, (ULONG)scaledDutyCycle);
-
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred setting pin: %d PWM duty cycle to: %d, Error: %08x", ioPin, dutyCycle, hr);
-    }
-}
+LIGHTNING_DLL_API void analogWrite(unsigned int pin, unsigned int dutyCycle);
 
 /// Set the number of bits used to specify PWM duty cycles to analogWrite().
 /**
 \param[in] bits The number of bits to use for analogWrite() duty cycle values.
 */
-inline void analogWriteResolution(int bits)
-{
-    if ((bits < 1) || (bits > 32))
-    {
-        ThrowError(E_INVALIDARG, "Attempt to set analog write resolution to %d bits.  Supported range: 1-32.", bits);
-    }
-    g_pwmResolutionBits = bits;
-}
+LIGHTNING_DLL_API void analogWriteResolution(int bits);
 
 /// Configure a pin for input or output duty.
 /**
 \param[in] pin The number of the pin (D0-D13, A0, A5)
 \param[in] mode The desired pin mode (INPUT, OUTPUT, INPUT_PULLUP)
 */
-inline void pinMode(unsigned int pin, unsigned int mode)
-{
-    HRESULT hr;
+LIGHTNING_DLL_API void pinMode(unsigned int pin, unsigned int mode);
 
-    // Make sure this pin is not already locked for a conflicting use.
-    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
+LIGHTNING_DLL_API uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_);
 
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
-    }
-
-    switch (mode)
-    {
-    case INPUT:
-        hr = g_pins.setPinMode(pin, DIRECTION_IN, false);
-
-        if (FAILED(hr))
-        {
-            ThrowError(hr, "Error setting mode: INPUT for pin: %d, Error: 0x%08x", pin, hr);
-        }
-        break;
-    case OUTPUT:
-        hr = g_pins.setPinMode(pin, DIRECTION_OUT, false);
-
-        if (FAILED(hr))
-        {
-            ThrowError(hr, "Error setting mode: OUTPUT for pin: %d, Error: 0x%08x", pin, hr);
-        }
-        break;
-    case INPUT_PULLUP:
-        hr = g_pins.setPinMode(pin, DIRECTION_IN, true);
-
-        if (FAILED(hr))
-        {
-            ThrowError(hr, "Error setting mode: INPUT_PULLUP for pin: %d, Error: 0x%08x", pin, hr);
-        }
-        break;
-    default:
-        ThrowError(E_INVALIDARG, "Invalid mode: %d specified for pin: %d.", mode, pin);
-    }
-}
-
-inline uint8_t shiftIn(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_)
-{
-    uint8_t buffer(0);
-
-    for (uint8_t loop_count = 0, bit_index = 0; loop_count < 8; ++loop_count) {
-        if (bit_order_ == LSBFIRST) {
-            bit_index = loop_count;
-        }
-        else {
-            bit_index = (7 - loop_count);
-        }
-
-        digitalWrite(clock_pin_, HIGH);
-        buffer |= (digitalRead(data_pin_) << bit_index);
-        digitalWrite(clock_pin_, LOW);
-    }
-
-    return buffer;
-}
-
-inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, uint8_t byte_)
-{
-    for (uint8_t loop_count = 0, bit_mask = 0; loop_count < 8; ++loop_count) {
-        if (bit_order_ == LSBFIRST) {
-            bit_mask = (1 << loop_count);
-        }
-        else {
-            bit_mask = (1 << (7 - loop_count));
-        }
-
-        digitalWrite(data_pin_, (byte_ & bit_mask));
-        digitalWrite(clock_pin_, HIGH);
-        digitalWrite(clock_pin_, LOW);
-    }
-
-    return;
-}
+LIGHTNING_DLL_API void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, uint8_t byte_);
 
 ///
 /// \brief Performs a tone operation.
@@ -528,7 +258,7 @@ inline void shiftOut(uint8_t data_pin_, uint8_t clock_pin_, uint8_t bit_order_, 
 ///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
 /// \param [in] frequency - in Hertz
 ///
-void tone(int pin, unsigned int frequency);
+LIGHTNING_DLL_API void tone(int pin, unsigned int frequency);
 
 ///
 /// \brief Performs a tone operation.
@@ -540,7 +270,7 @@ void tone(int pin, unsigned int frequency);
 /// \param [in] frequency - in Hertz
 /// \param [in] duration - in milliseconds
 ///
-void tone(int pin, unsigned int frequency, unsigned long duration);
+LIGHTNING_DLL_API void tone(int pin, unsigned int frequency, unsigned long duration);
 
 ///
 /// \brief Performs a noTone operation.
@@ -549,7 +279,7 @@ void tone(int pin, unsigned int frequency, unsigned long duration);
 /// \param [in] pin - The Arduino GPIO pin on which to generate the pulse train.
 ///        This can be pin 3, 5, 6, 7, 8, 9, 10, or 11.
 ///
-void noTone(int pin);
+LIGHTNING_DLL_API void noTone(int pin);
 
 //
 // Interrupt functions.
@@ -561,23 +291,7 @@ void noTone(int pin);
 \param[in] fund The function to be called when an interrupt occurs for the specified pin.
 \param[in] mode The type of pin state changes that should cause interrupts.
 */
-inline void attachInterrupt(uint8_t pin, std::function<void(void)> func, int mode)
-{
-    HRESULT hr;
-
-    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
-
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
-    }
-
-    hr = g_pins.attachInterrupt(pin, func, mode);
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred attaching interrupt to pin: %d", pin);
-    }
-}
+LIGHTNING_DLL_API void attachInterrupt(uint8_t pin, std::function<void(void)> func, int mode);
 
 /// Attach a callback routine to a GPIO interrupt, with return of interrupt information.
 /**
@@ -585,23 +299,7 @@ inline void attachInterrupt(uint8_t pin, std::function<void(void)> func, int mod
 \param[in] fund The function to be called when an interrupt occurs for the specified pin.
 \param[in] mode The type of pin state changes that should cause interrupts.
 */
-inline void attachInterruptEx(uint8_t pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, int mode)
-{
-    HRESULT hr;
-
-    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
-
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
-    }
-
-    hr = g_pins.attachInterruptEx(pin, func, mode);
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred attaching interrupt to pin: %d", pin);
-    }
-}
+LIGHTNING_DLL_API void attachInterruptEx(uint8_t pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, int mode);
 
 /// Attach a callback routine to a GPIO interrupt, with return of interrupt information.
 /**
@@ -610,62 +308,19 @@ inline void attachInterruptEx(uint8_t pin, std::function<void(PDMAP_WAIT_INTERRU
 \param[in] mode The type of pin state changes that should cause interrupts.
 \param[in] context An optional parameter to pass to the callback function.
 */
-inline void attachInterruptContext(uint8_t pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, void* context, int mode)
-{
-    HRESULT hr;
-
-    hr = g_pins.verifyPinFunction(pin, FUNC_DIO, BoardPinsClass::NO_LOCK_CHANGE);
-
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred verifying pin: %d function: DIGITAL_IO, Error: %08x", pin, hr);
-    }
-
-    hr = g_pins.attachInterruptContext(pin, func, context, mode);
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred attaching interrupt to pin: %d", pin);
-    }
-}
+LIGHTNING_DLL_API void attachInterruptContext(uint8_t pin, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, void* context, int mode);
 
 /// Indicate GPIO interrupt callbacks are no longer wanted for a pin.
 /**
 \param[in] pin The number of the board pin for which interrupts are to be detached.
 */
-inline void detachInterrupt(uint8_t pin)
-{
-    HRESULT hr;
-
-    hr = g_pins.detachInterrupt(pin);
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred detaching interrupt for pin: %d", pin);
-    }
-}
+LIGHTNING_DLL_API void detachInterrupt(uint8_t pin);
 
 /// Turn back on interrupt callbacks that have previously been disabled.
-inline void interrupts()
-{
-    HRESULT hr;
-
-    hr = g_pins.enableInterrupts();
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred enabling interrupts.");
-    }
-}
+LIGHTNING_DLL_API void interrupts();
 
 /// Temporarily disable delivery of all interrupt callbacks.
-inline void noInterrupts()
-{
-    HRESULT hr;
-
-    hr = g_pins.disableInterrupts();
-    if (FAILED(hr))
-    {
-        ThrowError(hr, "Error occurred disabling interrupts.");
-    }
-}
+LIGHTNING_DLL_API void noInterrupts();
 
 // Translate a board pin number to an interrupt number.  We use the same value
 // for both (lower software layers translate the pin number to a SOC GPIO number).
@@ -688,6 +343,8 @@ void loop();
 void serialEvent();
 #endif
 
+// Arduino Sketch Plumbing
+//
 inline int RunArduinoSketch()
 {
     int ret = 0;
@@ -704,18 +361,18 @@ inline int RunArduinoSketch()
             SleepEx(0, TRUE);
 
             loop();
-            #ifdef SERIAL_EVENT
+#ifdef SERIAL_EVENT
             if (Serial && Serial.available() > 0)
             {
                 serialEvent();
             }
-            #endif
-            #ifdef SERIAL_EVENT1
+#endif
+#ifdef SERIAL_EVENT1
             if (Serial1 && Serial1.available() > 0)
             {
                 serialEvent1();
             }
-            #endif
+#endif
         }
     }
 
@@ -733,38 +390,21 @@ inline int RunArduinoSketch()
     return ret;
 }
 
+
 //
 // Initialize pseudo random number generator with seed
 //
-inline void randomSeed(unsigned int seed)
-{
-    if (seed != 0) {
-        _WindowsRandom.Seed(seed);
-    }
-}
+LIGHTNING_DLL_API void randomSeed(unsigned int seed);
 
 //
 // Generate pseudo random number with upper bound max
 //
-inline long random(long max)
-{
-    if (max == 0) {
-        return 0;
-    }
-    return _WindowsRandom.Next() % max;
-}
+LIGHTNING_DLL_API long random(long max);
 
 //
 // Generate pseudo random number in the range min - max
 //
-inline long random(long min, long max)
-{
-    if (min >= max) {
-        return min;
-    }
-    long diff = max - min;
-    return random(diff) + min;
-}
+LIGHTNING_DLL_API long random(long min, long max);
 
 inline uint16_t makeWord(uint8_t h, uint8_t l) { return (h << 8) | l; }
 #define word(x, y) makeWord(x, y)

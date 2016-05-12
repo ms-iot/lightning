@@ -6,6 +6,7 @@
 #define EEPROM_H
 
 #include <inttypes.h> 
+#include "Lightning.h"
 
 /// \brief A pseudo static class to support EEPROM usage
 /// \details EEPROM is a type of non-volatile memory used in computers
@@ -20,7 +21,7 @@ class EEPROMClass
     /// \param [in] address The location to read from, starting from 0 (int)
     /// \returns the value stored in that location (byte)
     /// \note Locations that have never been written to have the value of 255.
-    uint8_t
+    LIGHTNING_DLL_API uint8_t
     read (
         const int address
     ) const;
@@ -31,14 +32,14 @@ class EEPROMClass
     /// \note An EEPROM write takes 3.3 ms to complete. The EEPROM memory has
     /// a specified life of 100,000 write/erase cycles, so you may need to be
     /// careful about how often you write to it.
-    void
+    LIGHTNING_DLL_API  void
     write (
         const int address,
         const uint8_t value
     ) const;
 };
 
-extern EEPROMClass EEPROM;  ///< This variable will provide global access to
+LIGHTNING_DLL_API  extern EEPROMClass EEPROM;  ///< This variable will provide global access to
                             /// this pseudo-static class, and will be instantiated
                             /// in the .cpp file.
 

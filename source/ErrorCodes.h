@@ -8,10 +8,12 @@
 #include <Windows.h>
 #include <map>
 
+#include "Lightning.h"
+
 //
 // A map of DMap error codes and related messages.
 //
-extern std::map<HRESULT, LPCWSTR> DmapErrors;
+LIGHTNING_DLL_API extern std::map<HRESULT, LPCWSTR> DmapErrors;
 
 //
 // Locally defined error HRESULT codes.

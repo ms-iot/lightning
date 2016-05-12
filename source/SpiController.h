@@ -39,7 +39,7 @@ public:
     virtual HRESULT configurePins(ULONG misoPin, ULONG mosiPin, ULONG sckPin) = 0;
 
     /// Revert the pins used by this SPI controller to GPIO use.
-    HRESULT revertPinsToGpio();
+    LIGHTNING_DLL_API HRESULT revertPinsToGpio();
 
     /// Initialize the specified SPI bus, using the default mode and clock for the controller.
     /**
@@ -55,16 +55,10 @@ public:
     virtual void end() = 0;
 
     /// Method to set the default bit order: MSB First.
-    void setMsbFirstBitOrder()
-    {
-        m_flipBitOrder = FALSE;
-    }
+    LIGHTNING_DLL_API void setMsbFirstBitOrder();
 
     /// Method to set the alternate bit order: LSB First.
-    void setLsbFirstBitOrder()
-    {
-        m_flipBitOrder = TRUE;
-    }
+    LIGHTNING_DLL_API void setLsbFirstBitOrder();
 
     /// Set the SPI clock rate.
     virtual HRESULT setClock(ULONG clockKhz) = 0;
@@ -81,27 +75,7 @@ public:
     \param[out] datIn The byte of data received on the SPI bus
     \return HRESULT success or error code.
     */
-    inline HRESULT transfer8(ULONG dataOut, ULONG & dataIn)
-    {
-        HRESULT hr = S_OK;
-        ULONG tmpData = dataOut & 0xFF;
-
-        if (m_flipBitOrder)
-        {
-            tmpData = m_byteFlips[tmpData];
-        }
-
-        hr = _transfer(tmpData, tmpData, 8);
-
-        tmpData = tmpData & 0xFF;
-        if (m_flipBitOrder)
-        {
-            tmpData = m_byteFlips[tmpData];
-        }
-        dataIn = tmpData;
-
-        return hr;
-    }
+    LIGHTNING_DLL_API HRESULT transfer8(ULONG dataOut, ULONG & dataIn);
 
     /// Transfer a word of data on the SPI bus.
     /**
@@ -109,31 +83,7 @@ public:
     \param[out] datIn The word of data received on the SPI bus
     \return HRESULT success or error code.
     */
-    inline HRESULT transfer16(ULONG dataOut, ULONG & dataIn)
-    {
-        HRESULT hr = S_OK;
-        ULONG tmpData = dataOut & 0xFFFF;
-
-        if (m_flipBitOrder)
-        {
-            tmpData = m_byteFlips[dataOut & 0xFF];
-            tmpData = (tmpData << 8) | m_byteFlips[(dataOut >> 8) & 0xFF];
-        }
-
-        hr = _transfer(tmpData, tmpData, 16);
-
-        if (m_flipBitOrder)
-        {
-            dataIn = m_byteFlips[tmpData & 0xFF];
-            dataIn = (dataIn << 8) | m_byteFlips[(tmpData >> 8) & 0xFF];
-        }
-        else
-        {
-            dataIn = tmpData & 0xFFFF;
-        }
-
-        return hr;
-    }
+    LIGHTNING_DLL_API HRESULT transfer16(ULONG dataOut, ULONG & dataIn);
 
     /// Transfer three bytes of data on the SPI bus.
     /**
@@ -141,33 +91,7 @@ public:
     \param[out] datIn The three bytes of data received on the SPI bus
     \return HRESULT success or error code.
     */
-    inline HRESULT transfer24(ULONG dataOut, ULONG & dataIn)
-    {
-        HRESULT hr = S_OK;
-        ULONG tmpData = dataOut & 0xFFFFFF;
-
-        if (m_flipBitOrder)
-        {
-            tmpData = m_byteFlips[dataOut & 0xFF];
-            tmpData = (tmpData << 8) | m_byteFlips[(dataOut >> 8) & 0xFF];
-            tmpData = (tmpData << 8) | m_byteFlips[(dataOut >> 16) & 0xFF];
-        }
-
-        hr = _transfer(tmpData, tmpData, 24);
-
-        if (m_flipBitOrder)
-        {
-            dataIn = m_byteFlips[tmpData & 0xFF];
-            dataIn = (dataIn << 8) | m_byteFlips[(tmpData >> 8) & 0xFF];
-            dataIn = (dataIn << 8) | m_byteFlips[(tmpData >> 16) & 0xFF];
-        }
-        else
-        {
-            dataIn = tmpData & 0xFFFFFF;
-        }
-
-        return hr;
-    }
+    LIGHTNING_DLL_API HRESULT transfer24(ULONG dataOut, ULONG & dataIn);
 
     /// Transfer a longword of data on the SPI bus.
     /**
@@ -175,35 +99,7 @@ public:
     \param[out] datIn The longword of data received on the SPI bus
     \return HRESULT success or error code.
     */
-    inline HRESULT transfer32(ULONG dataOut, ULONG & dataIn)
-    {
-        HRESULT hr = S_OK;
-        ULONG tmpData = dataOut;
-
-        if (m_flipBitOrder)
-        {
-            tmpData = m_byteFlips[dataOut & 0xFF];
-            tmpData = (tmpData << 8) | m_byteFlips[(dataOut >> 8) & 0xFF];
-            tmpData = (tmpData << 8) | m_byteFlips[(dataOut >> 16) & 0xFF];
-            tmpData = (tmpData << 8) | m_byteFlips[(dataOut >> 24) & 0xFF];
-        }
-
-        hr = _transfer(tmpData, tmpData, 32);
-
-        if (m_flipBitOrder)
-        {
-            dataIn = m_byteFlips[tmpData & 0xFF];
-            dataIn = (dataIn << 8) | m_byteFlips[(tmpData >> 8) & 0xFF];
-            dataIn = (dataIn << 8) | m_byteFlips[(tmpData >> 16) & 0xFF];
-            dataIn = (dataIn << 8) | m_byteFlips[(tmpData >> 24) & 0xFF];
-        }
-        else
-        {
-            dataIn = tmpData;
-        }
-
-        return hr;
-    }
+    LIGHTNING_DLL_API HRESULT transfer32(ULONG dataOut, ULONG & dataIn);
 
     /// Perform a non-bytesized transfer on the SPI bus.
     /**
@@ -212,50 +108,7 @@ public:
     \param[in] bits The number of bits to transfer
     \return HRESULT success or error code.
     */
-    inline HRESULT transferN(ULONG dataOut, ULONG & dataIn, ULONG bits)
-    {
-        HRESULT hr = S_OK;
-        ULONG tmpData = dataOut;
-        ULONG txData = dataOut;
-        ULONG rxData = 0;
-        ULONG i;
-
-        if (bits > 32)
-        {
-            hr = DMAP_E_SPI_DATA_WIDTH_SPECIFIED_IS_INVALID;
-        }
-
-        if (SUCCEEDED(hr))
-        {
-            // Flip the bit order if needed.
-            if (m_flipBitOrder)
-            {
-                for (i = 0; i < (bits - 1); i++)
-                {
-                    txData = txData << 1;
-                    tmpData = tmpData >> 1;
-                    txData = txData | (tmpData & 0x01);
-                }
-            }
-
-            hr = _transfer(tmpData, rxData, bits);
-
-            tmpData = rxData;
-            // Flip the received data bit order if needed.
-            if (m_flipBitOrder)
-            {
-                for (i = 0; i < (bits - 1); i++)
-                {
-                    tmpData = tmpData << 1;
-                    rxData = rxData >> 1;
-                    tmpData = tmpData | (rxData & 0x01);
-                }
-            }
-            dataIn = tmpData & (0xFFFFFFFF >> (32 - bits));
-        }
-
-        return hr;
-    }
+    LIGHTNING_DLL_API HRESULT transferN(ULONG dataOut, ULONG & dataIn, ULONG bits);
 
     /// Transfer a buffer of data on the SPI bus.
     /**

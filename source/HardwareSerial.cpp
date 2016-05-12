@@ -2,6 +2,8 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+#include "pch.h"
+
 #include "arduino.h"
 
 #ifndef USE_NETWORKSERIAL
@@ -348,7 +350,10 @@ void HardwareSerial::OpenUart(HRESULT& hr, std::shared_ptr<Concurrency::event>& 
 /// </summary
 void HardwareSerial::CloseUart(void)
 {
-    m_cancellationTokenSource->cancel();
+    if (m_cancellationTokenSource != nullptr)
+    {
+        m_cancellationTokenSource->cancel();
+    }
 
     while (m_readThreadCount > 0)
     {
@@ -599,8 +604,11 @@ size_t HardwareSerial::write(uint8_t c)
 
 size_t HardwareSerial::write(const uint8_t *buffer, size_t size)
 {
-    Platform::Array<uint8_t>^ dataArray = ref new Platform::Array<uint8_t>(size);
-    for (size_t i = 0; i < size; i++) { dataArray[i] = buffer[i]; }
+    Platform::Array<uint8_t>^ dataArray = ref new Platform::Array<uint8_t>((UINT)size);
+    for (size_t i = 0; i < size; i++)
+    {
+        dataArray[(UINT)i] = buffer[i]; 
+    }
 
     m_dataWriter->WriteBytes(dataArray);
 

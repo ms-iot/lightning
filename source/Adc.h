@@ -137,6 +137,6 @@ private:
 };
 
 /// Global object used to access the A-to-D converter.
-__declspec (selectany) AdcClass g_adc;
+LIGHTNING_DLL_API extern AdcClass g_adc;
 
 #endif  // _ADC_H_

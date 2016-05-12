@@ -168,7 +168,6 @@ public:
         }
     }
 
- 
     /// Set the SPI clock speed.
     /**
     \param[in] clockKhz The SPI bit clock rate in Khz
@@ -370,6 +369,6 @@ private:
 };
 
 /// The global SPI bus object.
-__declspec(selectany) SPIClass SPI;
+LIGHTNING_DLL_API extern SPIClass SPI;
 
 #endif  // _SPI_H_

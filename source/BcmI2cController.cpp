@@ -2,6 +2,8 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+#include "pch.h"
+
 #include "I2c.h"
 #include "BcmI2cController.h"
 #include "BoardPins.h"

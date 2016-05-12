@@ -3,6 +3,8 @@
 // See License.txt in the project root for license information.
 
 
+#include "pch.h"
+
 #ifdef USE_NETWORKSERIAL
 #include "arduino.h"
 #include "NetworkSerial.h"

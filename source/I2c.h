@@ -5,8 +5,6 @@
 #ifndef _I2C_H_
 #define _I2C_H_
 
-#include <Windows.h>
-
 #include "I2cController.h"
 
 
@@ -32,13 +30,13 @@ public:
     }
     
     /// Prepare to use the I2C controller associated with this object.
-    HRESULT begin();
+    LIGHTNING_DLL_API HRESULT begin();
 
     /// Finish using the I2C controller associated with this object.
-    void end();
+    LIGHTNING_DLL_API void end();
 
     /// Method to get the address of the I2C Controller object.
-    inline I2cControllerClass* getController()
+    I2cControllerClass* getController()
     {
         if (m_controller == nullptr)
         {
@@ -75,9 +73,9 @@ private:
 };
 
 /// The global object for the main I2C bus.
-__declspec(selectany) I2cClass g_i2c(EXTERNAL_I2C_BUS);
+LIGHTNING_DLL_API extern I2cClass g_i2c;
 
 /// The global object for the secondary I2C bus.
-__declspec(selectany) I2cClass g_i2c2nd(SECOND_EXTERNAL_I2C_BUS);
+LIGHTNING_DLL_API extern I2cClass g_i2c2nd;
 
 #endif // _I2C_H_

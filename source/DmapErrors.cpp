@@ -2,7 +2,10 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
+#include "pch.h"
+
 #include "ErrorCodes.h"
+#include <strsafe.h>
 
 std::map<HRESULT, LPCWSTR> DmapErrors = {
 
@@ -38,3 +41,102 @@ std::map<HRESULT, LPCWSTR> DmapErrors = {
     { DMAP_E_SPI_DATA_WIDTH_SPECIFIED_IS_INVALID, L"The specified number of bits per transfer is not supported by the SPI controller." },
     { DMAP_E_GPIO_PIN_IS_SET_TO_PWM             , L"A GPIO operation was performed on a pin configured as a PWM output." }
 };
+
+LIGHTNING_DLL_API void ThrowError(_In_ HRESULT hr, _In_ _Printf_format_string_ STRSAFE_LPCSTR pszFormat, ...)
+{
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a Win32 app:
+    HRESULT hr;
+    char buf[BUFSIZ];
+
+    va_list argList;
+
+    va_start(argList, pszFormat);
+
+    hr = StringCbVPrintfA(buf,
+        ARRAYSIZE(buf),
+        pszFormat,
+        argList);
+
+    va_end(argList);
+
+    if (SUCCEEDED(hr))
+    {
+        throw _arduino_fatal_error(buf);
+    }
+    else
+    {
+        throw _arduino_fatal_error("StringCbVPrintfA() failed while attempting to print exception message");
+    }
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+    int result;
+    char buf[BUFSIZ];
+    wchar_t wbuf[BUFSIZ];
+    va_list argList;
+    va_start(argList, pszFormat);
+    result = vsprintf_s(buf, BUFSIZ, pszFormat, argList);
+
+    va_end(argList);
+
+    if (result > 0)
+    {
+        MultiByteToWideChar(CP_ACP, 0, buf, _countof(buf), wbuf, _countof(wbuf));
+        auto it = DmapErrors.find(hr);
+        Platform::String^ exceptionString;
+        if (it != DmapErrors.end())
+        {
+            std::wstring exceptionSz(wbuf);
+            exceptionSz.append(L": ");
+            exceptionSz.append(it->second);
+            exceptionString = ref new Platform::String(exceptionSz.c_str());
+        }
+        else
+        {
+            exceptionString = ref new Platform::String(wbuf);
+        }
+        throw ref new Platform::Exception(hr, exceptionString);
+    }
+    else
+    {
+        throw ref new Platform::Exception(hr);
+    }
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+}
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)   // If building a UWP app:
+LIGHTNING_DLL_API void ThrowError(_In_ HRESULT hr, _In_ _Printf_format_string_ STRSAFE_LPCWSTR pszFormat, ...)
+{
+    int result;
+    wchar_t wbuf[BUFSIZ];
+    va_list argList;
+    va_start(argList, pszFormat);
+    result = vswprintf_s(wbuf, BUFSIZ, pszFormat, argList);
+
+    va_end(argList);
+
+    if (result > 0)
+    {
+        auto it = DmapErrors.find(hr);
+        Platform::String^ exceptionString;
+        if (it != DmapErrors.end())
+        {
+            std::wstring exceptionSz(wbuf);
+            exceptionSz.append(L"\n");
+            exceptionSz.append(it->second);
+            exceptionString = ref new Platform::String(exceptionSz.c_str());
+        }
+        else
+        {
+            exceptionString = ref new Platform::String(wbuf);
+        }
+        throw ref new Platform::Exception(hr, exceptionString);
+    }
+    else
+    {
+        throw ref new Platform::Exception(hr);
+    }
+}
+#endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)

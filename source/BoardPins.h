@@ -28,7 +28,7 @@ const UCHAR FUNC_SPK = 0X80;   ///< Hardware 8254 speaker function
 class BoardPinsClass
 {
 public:
-    BoardPinsClass();
+    LIGHTNING_DLL_API BoardPinsClass();
 
     virtual ~BoardPinsClass()
     {
@@ -118,55 +118,55 @@ public:
     };
 
     /// Method to set an I/O pin to a state (HIGH or LOW).
-    HRESULT setPinState(ULONG pin, ULONG state);
+    LIGHTNING_DLL_API HRESULT setPinState(ULONG pin, ULONG state);
 
     /// Method to read the state of an I/O pin.
-    HRESULT getPinState(ULONG pin, ULONG & state);
+    LIGHTNING_DLL_API HRESULT getPinState(ULONG pin, ULONG & state);
 
     /// Method to set the direction of a pin (DIRECTION_IN or DIRECTION_OUT).
-    HRESULT setPinMode(ULONG pin, ULONG mode, BOOL pullUp);
+    LIGHTNING_DLL_API HRESULT setPinMode(ULONG pin, ULONG mode, BOOL pullUp);
 
     /// Method to verify that a pin is configured for the desired function.
-    HRESULT verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction);
+    LIGHTNING_DLL_API HRESULT verifyPinFunction(ULONG pin, ULONG function, FUNC_LOCK_ACTION lockAction);
 
     /// Method to set the PWM duty cycle for a pin.
-    HRESULT setPwmDutyCycle(ULONG pin, ULONG dutyCycle);
+    LIGHTNING_DLL_API HRESULT setPwmDutyCycle(ULONG pin, ULONG dutyCycle);
 
     /// Method to set the PWM pulse repetition frequency.
-    HRESULT setPwmFrequency(ULONG pin, ULONG frequency);
+    LIGHTNING_DLL_API HRESULT setPwmFrequency(ULONG pin, ULONG frequency);
 
     // Method to get the actual PWM pulse repetition frequncy that is set.
-    ULONG getActualPwmFrequency(ULONG pin);
+    LIGHTNING_DLL_API ULONG getActualPwmFrequency(ULONG pin);
 
     /// Method to override auto-detection of board type.
-    HRESULT setBoardType(BOARD_TYPE board);
+    LIGHTNING_DLL_API HRESULT setBoardType(BOARD_TYPE board);
 
     /// Method to get the board type.
-    inline HRESULT getBoardType(BOARD_TYPE & board);
+    LIGHTNING_DLL_API HRESULT getBoardType(BOARD_TYPE & board);
 
     /// Method to test whether a pin number is safe to use as an array index.
-    inline BOOL pinNumberIsSafe(ULONG pin);
+    LIGHTNING_DLL_API BOOL pinNumberIsSafe(ULONG pin);
 
     /// Method to get the number of GPIO pins present on the current board
-    inline HRESULT getGpioPinCount(ULONG & pinCount);
+    LIGHTNING_DLL_API HRESULT getGpioPinCount(ULONG & pinCount);
 
     /// Attach a callback routine to a GPIO interrupt.
-    HRESULT attachInterrupt(uint8_t intNo, std::function<void(void)> func, int mode);
+    LIGHTNING_DLL_API HRESULT attachInterrupt(uint8_t intNo, std::function<void(void)> func, int mode);
 
     /// Attach a callback routine to a GPIO interrupt, with interrupt information provided.
-    HRESULT attachInterruptEx(uint8_t intNo, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, int mode);
+    LIGHTNING_DLL_API HRESULT attachInterruptEx(uint8_t intNo, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER)> func, int mode);
 
     /// Attach a callback routine to a GPIO interrupt, with interrupt information provided and context.
-    HRESULT attachInterruptContext(uint8_t intNo, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, void* context, int mode);
+    LIGHTNING_DLL_API HRESULT attachInterruptContext(uint8_t intNo, std::function<void(PDMAP_WAIT_INTERRUPT_NOTIFY_BUFFER, PVOID)> func, void* context, int mode);
 
     /// Indicate GPIO interrupt callbacks are no longer wanted for a intNo.
-    HRESULT detachInterrupt(uint8_t intNo);
+    LIGHTNING_DLL_API HRESULT detachInterrupt(uint8_t intNo);
 
     /// Turn back on interrupt callbacks that have previously been disabled.
-    inline HRESULT enableInterrupts();
+    LIGHTNING_DLL_API HRESULT enableInterrupts();
 
     /// Temporarily disable delivery of all interrupt callbacks.
-    inline HRESULT disableInterrupts();
+    LIGHTNING_DLL_API HRESULT disableInterrupts();
 
 private:
 
@@ -241,7 +241,7 @@ private:
 };
 
 /// Global object used to configure and use the I/O pins.
-__declspec (selectany) BoardPinsClass g_pins;
+LIGHTNING_DLL_API extern BoardPinsClass g_pins;
 
 /**
 Method to get the number of GPIO pins present on the current board.

@@ -2,11 +2,10 @@
 // Licensed under the BSD 2-Clause License.  
 // See License.txt in the project root for license information.
 
-#include <Windows.h>
-#include <ppltasks.h>
+
+#include "pch.h"
 
 #include "ErrorCodes.h"
-
 #include "GpioController.h"
 #include "DmapSupport.h"
 
@@ -14,6 +13,14 @@ using namespace Windows::Devices::Custom;
 using namespace Windows::Storage::Streams;
 
 #if defined(_M_IX86) || defined(_M_X64)
+
+// 
+// Global extern exports
+//
+
+/// The global object used to interact with the BayTrail Fabric GPIO hardware.
+BtFabricGpioControllerClass g_btFabricGpio;
+
 /**
 \return HRESULT success or error code.
 */
@@ -63,6 +70,11 @@ HRESULT BtFabricGpioControllerClass::_mapS5Controller()
 #endif // defined(_M_IX86) || defined(_M_X64)
 
 #if defined(_M_ARM)
+// 
+// Global extern exports
+//
+BcmGpioControllerClass g_bcmGpio;
+
 /**
 \return HRESULT success or error code.
 */
@@ -80,6 +92,18 @@ HRESULT BcmGpioControllerClass::_mapController()
     if (SUCCEEDED(hr))
     {
         m_registers = (PBCM_GPIO)baseAddress;
+    }
+
+    return hr;
+}
+
+HRESULT BcmGpioControllerClass::mapIfNeeded()
+{
+    HRESULT hr = S_OK;
+
+    if (m_hController == INVALID_HANDLE_VALUE)
+    {
+        hr = _mapController();
     }
 
     return hr;

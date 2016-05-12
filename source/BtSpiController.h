@@ -16,7 +16,7 @@ class BtSpiControllerClass : public SpiControllerClass
 {
 public:
     /// Constructor.
-    BtSpiControllerClass();
+    LIGHTNING_DLL_API BtSpiControllerClass();
 
     /// Destructor.
     virtual ~BtSpiControllerClass()
@@ -25,7 +25,7 @@ public:
     }
 
     /// Initialize the pin assignments for this SPI controller.
-    HRESULT configurePins(ULONG misoPin, ULONG mosiPin, ULONG sckPin) override;
+    LIGHTNING_DLL_API HRESULT configurePins(ULONG misoPin, ULONG mosiPin, ULONG sckPin) override;
 
     /// Initialize the specified SPI bus, using the default mode and clock rate.
     /**
@@ -38,16 +38,16 @@ public:
     }
 
     /// Initialize the specified SPI bus for use.
-    HRESULT begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits) override;
+    LIGHTNING_DLL_API HRESULT begin(ULONG busNumber, ULONG mode, ULONG clockKhz, ULONG dataBits) override;
 
     /// Finish using an SPI controller.
-    void end() override;
+    LIGHTNING_DLL_API void end() override;
 
     /// Set the SPI clock rate to one of the values we support on this SPI controller.
-    HRESULT setClock(ULONG clockKhz) override;
+    LIGHTNING_DLL_API HRESULT setClock(ULONG clockKhz) override;
 
     /// Set the SPI mode (clock polarity and phase).
-    HRESULT setMode(ULONG mode) override;
+    LIGHTNING_DLL_API HRESULT setMode(ULONG mode) override;
 
     /// Set the number of bits in an SPI transfer.
     HRESULT setDataWidth(ULONG bits) override
@@ -66,13 +66,16 @@ public:
     \param[out] datIn The data received on the SPI bus
     \return HRESULT success or error code.
     */
-    HRESULT _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits) override;
+    LIGHTNING_DLL_API HRESULT _transfer(ULONG dataOut, ULONG & dataIn, ULONG bits) override;
 
     /// Transfer a buffer of data on the SPI bus.
-    inline HRESULT transferBuffer(PBYTE dataOut, PBYTE dataIn, size_t bufferBytes) override
-    {
-        return DMAP_E_SPI_BUFFER_TRANSFER_NOT_IMPLEMENTED;
-    }
+    /**
+    \param[in] dataOut The data to send on the SPI bus. If the parameter is NULL, 0's will be sent
+    \param[in] datIn The data received on the SPI bus. If this parameter is NULL, data in will be ignored
+    \param[in] bufferBytes the size of each of the buffers
+    \return HRESULT success or error code.
+    */
+    LIGHTNING_DLL_API HRESULT transferBuffer(PBYTE dataOut, PBYTE dataIn, size_t bufferBytes) override;
 
 private:
 

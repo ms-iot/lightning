@@ -5,7 +5,6 @@
 #ifndef _I2C_CONTROLLER_H_
 #define _I2C_CONTROLLER_H_
 
-#include <Windows.h>
 #include <functional>
 
 #include "I2cTransfer.h"
@@ -41,7 +40,7 @@ public:
     virtual HRESULT configurePins(ULONG sdaPin, ULONG sclPin) = 0;
 
     /// Revert the pins used by this I2C controller to GPIO use.
-    HRESULT revertPinsToGpio();
+    LIGHTNING_DLL_API HRESULT revertPinsToGpio();
 
     /// Initialize the specified I2C bus.
     /**
@@ -54,17 +53,7 @@ public:
     virtual inline void end() = 0;
 
     // This method maps the I2C controller if needed.
-    inline HRESULT mapIfNeeded()
-    {
-        if (m_hController == INVALID_HANDLE_VALUE)
-        {
-            return _mapController();
-        }
-        else
-        {
-            return S_OK;
-        }
-    }
+    LIGHTNING_DLL_API HRESULT mapIfNeeded();
 
     // Method to initialize the I2C Controller at the start of a transaction.
     virtual HRESULT _initializeForTransaction(ULONG slaveAddress, BOOL useHighSpeed) = 0;
@@ -84,9 +73,9 @@ public:
 
     virtual HRESULT _performContiguousTransfers(I2cTransferClass* & pXfr) = 0;
 
-    inline HRESULT calculateCurrentCounts(I2cTransferClass* pXfr, LONG& byteCount, LONG& readCount);
+    LIGHTNING_DLL_API HRESULT calculateCurrentCounts(I2cTransferClass* pXfr, LONG& byteCount, LONG& readCount);
 
-    inline I2cTransactionClass::ERROR_CODE getTransfersError()
+    I2cTransactionClass::ERROR_CODE getTransfersError()
     {
         return m_error;
     }
