@@ -13,6 +13,7 @@
 
 using namespace Windows::Devices::Enumeration;
 using namespace Windows::Devices::Custom;
+using namespace Windows::Devices::SerialCommunication;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Storage::Streams;
@@ -22,6 +23,15 @@ using namespace Concurrency;
 #define SERIAL_READ_LENGTH 1024
 #define REQUEST_TIMED_OUT -1
 #define NO_PEEK_BYTE REQUEST_TIMED_OUT
+#define NUM_READ_OPERATIONS 8
+#define RX_TIMEOUT_DURATION 1000000L   // 0.1 seconds
+#define TX_TIMEOUT_DURATION 10000000L  // 1 second
+
+#if defined(_M_ARM)
+#define UART_DEVICE_NAME "UART0"
+#elif defined(_M_IX86) || defined(_M_X64)
+#define UART_DEVICE_NAME "UART1"
+#endif
 
 #endif // !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
@@ -124,13 +134,13 @@ void HardwareSerial::begin(unsigned long baud, uint8_t config)
     std::shared_ptr<Concurrency::event> findCompleted = std::make_shared<Concurrency::event>();
 
     auto workItem = ref new WorkItemHandler(
-    [this, &hr, &findCompleted]
+        [this, &hr, &findCompleted]
     (IAsyncAction^ workItem)
     {
         OpenUart(hr, findCompleted);
     }); // workItem
 
-    // Run the async operation to open the UART.
+        // Run the async operation to open the UART.
     auto asyncAction = ThreadPool::RunAsync(workItem);
 
     // Wait for the UART open operation to complete.
@@ -142,14 +152,10 @@ void HardwareSerial::begin(unsigned long baud, uint8_t config)
         m_dataWriter = ref new Windows::Storage::Streams::DataWriter(m_serialDevice->OutputStream);
 
         // Queue up 8 read operations.
-        Listen(cToken);
-        Listen(cToken);
-        Listen(cToken);
-        Listen(cToken);
-        Listen(cToken);
-        Listen(cToken);
-        Listen(cToken);
-        Listen(cToken);
+        for (int i = 0; i < NUM_READ_OPERATIONS; i++)
+        {
+            Listen(cToken);
+        }
     }
 
     if (FAILED(hr))
@@ -173,7 +179,7 @@ void HardwareSerial::Listen(Concurrency::cancellation_token cToken)
     LeaveCriticalSection(&m_readBufferListLock);
 
     concurrency::create_task(m_serialDevice->InputStream->ReadAsync(newBuffer, SERIAL_READ_LENGTH, InputStreamOptions::None), cToken)
-    .then([this, serialNo, cToken](IBuffer^ buffer)
+        .then([this, serialNo, cToken](IBuffer^ buffer)
     {
         if (!cToken.is_canceled())
         {
@@ -197,7 +203,7 @@ void HardwareSerial::Listen(Concurrency::cancellation_token cToken)
 
         }
     })
-    .then([this, cToken](concurrency::task<void> t)
+        .then([this, cToken](concurrency::task<void> t)
     {
         // This block of code executes whenever the ReadAsync() operation goes away--whether it
         // completed or was cancelled.
@@ -228,7 +234,7 @@ void HardwareSerial::OpenUart(HRESULT& hr, std::shared_ptr<Concurrency::event>& 
     // Get a list of serial devices available on this device
     //
     Concurrency::create_task(ListAvailableSerialDevicesAsync(), m_cancellationTokenSource->get_token())
-    .then([this, &hr, &findCompleted](DeviceInformationCollection ^serialDeviceCollection)
+        .then([this, &hr, &findCompleted](DeviceInformationCollection ^serialDeviceCollection)
     {
         if (m_cancellationTokenSource->get_token().is_canceled())
         {
@@ -237,33 +243,12 @@ void HardwareSerial::OpenUart(HRESULT& hr, std::shared_ptr<Concurrency::event>& 
         }
         else
         {
-            //
-            // Search the list of serial devices for the one we want.
-            //
-            BOOL foundDevice = FALSE;
-
             IIterator<DeviceInformation^>^ devIter = serialDeviceCollection->First();
-
-            while (devIter->HasCurrent && !foundDevice)
+            if (devIter->HasCurrent)
             {
-                std::wstring devId = devIter->Current->Id->Data();
-#if defined(_M_ARM)
-                if (devId.find(L"UART0") != std::string::npos)
-#endif // defined(_M_ARM)
-#if defined(_M_IX86) || defined(_M_X64)
-                if (devId.find(L"UART1") != std::string::npos)
-#endif // defined(_M_IX86) || defined(_M_X64)
-                {
-                    foundDevice = TRUE;
-                    m_deviceInformation = devIter->Current;
-                }
-                else
-                {
-                    devIter->MoveNext();
-                }
+                m_deviceInformation = devIter->Current;
             }
-
-            if (!foundDevice)
+            else
             {
                 hr = E_NOINTERFACE;
                 findCompleted->set();
@@ -272,7 +257,7 @@ void HardwareSerial::OpenUart(HRESULT& hr, std::shared_ptr<Concurrency::event>& 
 
         return;
     })
-    .then([this, &hr, &findCompleted]()
+        .then([this, &hr, &findCompleted]()
     {
         if (SUCCEEDED(hr))
         {
@@ -287,9 +272,9 @@ void HardwareSerial::OpenUart(HRESULT& hr, std::shared_ptr<Concurrency::event>& 
                 // Open the serial device we found.
                 //
                 Concurrency::create_task(
-                    Windows::Devices::SerialCommunication::SerialDevice::FromIdAsync(m_deviceInformation->Id),
+                    SerialDevice::FromIdAsync(m_deviceInformation->Id),
                     m_cancellationTokenSource->get_token())
-                    .then([this, &hr, &findCompleted](Windows::Devices::SerialCommunication::SerialDevice ^serial_device)
+                    .then([this, &hr, &findCompleted](SerialDevice ^serial_device)
                 {
                     if (m_cancellationTokenSource->get_token().is_canceled())
                     {
@@ -303,8 +288,8 @@ void HardwareSerial::OpenUart(HRESULT& hr, std::shared_ptr<Concurrency::event>& 
                         //
                         Windows::Foundation::TimeSpan _rxTimeOut;
                         Windows::Foundation::TimeSpan _txTimeOut;
-                        _rxTimeOut.Duration = 1000000L;     // 0.1 seconds
-                        _txTimeOut.Duration = 10000000L;    // 1.0 seconds
+                        _rxTimeOut.Duration = RX_TIMEOUT_DURATION;
+                        _txTimeOut.Duration = TX_TIMEOUT_DURATION;
                         m_serialDevice = serial_device;
 
                         hr = ConfigureSerialSettings(m_serialConfig, m_serialDevice);
@@ -320,7 +305,7 @@ void HardwareSerial::OpenUart(HRESULT& hr, std::shared_ptr<Concurrency::event>& 
                                 m_serialDevice->WriteTimeout = _txTimeOut;
                                 m_serialDevice->ReadTimeout = _rxTimeOut;
                                 m_serialDevice->BaudRate = m_baudRate;
-                                m_serialDevice->Handshake = Windows::Devices::SerialCommunication::SerialHandshake::None;
+                                m_serialDevice->Handshake = SerialHandshake::None;
                             }
                             catch (Platform::Exception ^ex)
                             {
@@ -381,14 +366,14 @@ void HardwareSerial::CloseUart(void)
 Windows::Foundation::IAsyncOperation<Windows::Devices::Enumeration::DeviceInformationCollection ^> ^HardwareSerial::ListAvailableSerialDevicesAsync(void)
 {
     // Construct AQS String for all serial devices on system
-    Platform::String ^serialDevices_aqs = Windows::Devices::SerialCommunication::SerialDevice::GetDeviceSelector();
+    Platform::String ^serialDevices_aqs = SerialDevice::GetDeviceSelector(UART_DEVICE_NAME);
 
     // Identify all paired devices satisfying query
     return Windows::Devices::Enumeration::DeviceInformation::FindAllAsync(serialDevices_aqs);
 }
 
 /// Configure the serial port with the desired data format settings.
-HRESULT HardwareSerial::ConfigureSerialSettings(SerialConfigs configs, Windows::Devices::SerialCommunication::SerialDevice^ device)
+HRESULT HardwareSerial::ConfigureSerialSettings(SerialConfigs configs, SerialDevice^ device)
 {
     HRESULT hr = S_OK;
 
@@ -396,123 +381,123 @@ HRESULT HardwareSerial::ConfigureSerialSettings(SerialConfigs configs, Windows::
     {
     case SERIAL_5N1:
         m_serialDevice->DataBits = 5;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::None;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_6N1:
         m_serialDevice->DataBits = 6;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::None;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_7N1:
         m_serialDevice->DataBits = 7;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::None;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_8N1:
         m_serialDevice->DataBits = 8;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::None;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_5N2:
         m_serialDevice->DataBits = 5;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::None;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_6N2:
         m_serialDevice->DataBits = 6;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::None;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_7N2:
         m_serialDevice->DataBits = 7;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::None;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_8N2:
         m_serialDevice->DataBits = 8;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::None;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::None;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_5E1:
         m_serialDevice->DataBits = 5;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::Even;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_6E1:
         m_serialDevice->DataBits = 6;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::Even;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_7E1:
         m_serialDevice->DataBits = 7;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::Even;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_8E1:
         m_serialDevice->DataBits = 8;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::Even;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_5E2:
         m_serialDevice->DataBits = 5;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::Even;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_6E2:
         m_serialDevice->DataBits = 6;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::Even;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_7E2:
         m_serialDevice->DataBits = 7;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::Even;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_8E2:
         m_serialDevice->DataBits = 8;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Even;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::Even;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_5O1:
         m_serialDevice->DataBits = 5;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::Odd;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_6O1:
         m_serialDevice->DataBits = 6;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::Odd;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_7O1:
         m_serialDevice->DataBits = 7;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::Odd;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_8O1:
         m_serialDevice->DataBits = 8;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::One;
+        m_serialDevice->Parity = SerialParity::Odd;
+        m_serialDevice->StopBits = SerialStopBitCount::One;
         break;
     case SERIAL_5O2:
         m_serialDevice->DataBits = 5;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::Odd;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_6O2:
         m_serialDevice->DataBits = 6;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::Odd;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_7O2:
         m_serialDevice->DataBits = 7;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::Odd;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     case SERIAL_8O2:
         m_serialDevice->DataBits = 8;
-        m_serialDevice->Parity = Windows::Devices::SerialCommunication::SerialParity::Odd;
-        m_serialDevice->StopBits = Windows::Devices::SerialCommunication::SerialStopBitCount::Two;
+        m_serialDevice->Parity = SerialParity::Odd;
+        m_serialDevice->StopBits = SerialStopBitCount::Two;
         break;
     default:
         hr = E_INVALIDARG;
@@ -547,7 +532,7 @@ int HardwareSerial::peek(void)
     LeaveCriticalSection(&m_readBufferListLock);
 
     return returnByte;
-}    
+}
 
 int HardwareSerial::read(void)
 {
@@ -591,13 +576,13 @@ int HardwareSerial::read(void)
 
     return returnByte;
 }
-    
+
 size_t HardwareSerial::write(uint8_t c)
 {
     m_dataWriter->WriteByte(c);
 
     concurrency::create_task(m_dataWriter->StoreAsync())
-    .wait();
+        .wait();
 
     return 1;
 }
@@ -607,13 +592,13 @@ size_t HardwareSerial::write(const uint8_t *buffer, size_t size)
     Platform::Array<uint8_t>^ dataArray = ref new Platform::Array<uint8_t>((UINT)size);
     for (size_t i = 0; i < size; i++)
     {
-        dataArray[(UINT)i] = buffer[i]; 
+        dataArray[(UINT)i] = buffer[i];
     }
 
     m_dataWriter->WriteBytes(dataArray);
 
     concurrency::create_task(m_dataWriter->StoreAsync(), m_cancellationTokenSource->get_token())
-    .wait();
+        .wait();
 
     return size;
 }
