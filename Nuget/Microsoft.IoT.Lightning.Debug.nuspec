@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>Microsoft.IoT.Lightning</id>
+    <version>1.1.0</version>
+    <title>Microsoft IoT Lightning SDK</title>
+    <authors>Microsoft Open Technologies, Inc.</authors>
+    <owners>Microsoft Open Technologies, Inc.</owners>
+    <licenseUrl>http://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx</licenseUrl>
+    <projectUrl>https://github.com/ms-iot/lightning</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The Lightning SDK allows rapid creation of applications for Windows Iot Core devices using the familiar Arduino interface.</description>
+    <summary>Microsoft IoT Lightning SDK</summary>
+    <releaseNotes />
+    <copyright>Copyright 2015</copyright>
+    <tags>lightning arduino microsoft native nativepackage</tags>
+  </metadata>
+
+  <files>
+
+    <file target="build\native\Microsoft.IoT.Lightning.targets"                      src="Microsoft.IoT.Lightning.targets" />
+    <file target="lib\uap10.0\Microsoft.IoT.Lightning.Providers.winmd"               src="..\Library\Debug\Microsoft.Iot.Lightning.Providers\Microsoft.IoT.Lightning.Providers.winmd" />
+
+    <file target="runtimes\win10-x86\native\Lightning.dll"                           src="..\Library\Debug\Lightning\Lightning.dll" />
+    <file target="runtimes\win10-arm\native\Lightning.dll"                           src="..\Library\ARM\Debug\Lightning\Lightning.dll" />
+    <file target="runtimes\win10-x64\native\Lightning.dll"                           src="..\Library\x64\Debug\Lightning\Lightning.dll" />
+
+    <file target="runtimes\win10-x86\native\Microsoft.IoT.Lightning.Providers.dll"   src="..\Library\Debug\Microsoft.Iot.Lightning.Providers\Microsoft.IoT.Lightning.Providers.dll" />
+    <file target="runtimes\win10-arm\native\Microsoft.IoT.Lightning.Providers.dll"   src="..\Library\ARM\Debug\Microsoft.Iot.Lightning.Providers\Microsoft.IoT.Lightning.Providers.dll" />
+    <file target="runtimes\win10-x64\native\Microsoft.IoT.Lightning.Providers.dll"   src="..\Library\x64\Debug\Microsoft.Iot.Lightning.Providers\Microsoft.IoT.Lightning.Providers.dll" />
+
+    <file target="lib\win10-x86\native\Lightning.lib"                                src="..\Library\Debug\Lightning\Lightning.lib" />
+    <file target="lib\win10-arm\native\Lightning.lib"                                src="..\Library\ARM\Debug\Lightning\Lightning.lib" />
+    <file target="lib\win10-x64\native\Lightning.lib"                                src="..\Library\x64\Debug\Lightning\Lightning.lib" />
+
+    <file target="include"                                                           src="..\Source\*.h" />
+    <file target="include\avr"                                                       src="..\Source\avr\*.h" />
+    <file target="include"                                                           src="..\SDKFromArduino\include\*.h" />
+
+  </files>
+
+</package>
+
+
+
+
+
+

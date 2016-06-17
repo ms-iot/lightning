@@ -114,7 +114,7 @@
       <CompileAsWinRT>true</CompileAsWinRT>
       <AdditionalIncludeDirectories>..\Source;$(ProjectDir);$(DesktopExtSdkDir)INCLUDE\WinRT;$(DesktopExtSdkDir)INCLUDE\UM;..\SDKFromArduino\include;$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WINAPI_PARTITION_PC_APP=1;LIGHTNING_DLL_EXPORTS;_ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WINAPI_PARTITION_PC_APP=1;LIGHTNING_DLL_EXPORTS;_ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

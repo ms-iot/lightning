@@ -4,6 +4,12 @@
     <Filter Include="Dependencies">
       <UniqueIdentifier>{8e086a04-3e6f-4b05-8632-aa6778921990}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lightning">
+      <UniqueIdentifier>{fce8ddb6-24fb-4dbc-af5c-69a964538bbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDKFromArduino">
+      <UniqueIdentifier>{4f3c2e96-909d-45b7-ab2f-d62797f00765}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -15,6 +21,87 @@
     <ClCompile Include="PwmDeviceProvider.cpp" />
     <ClCompile Include="ApiSupport.cpp">
       <Filter>Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\arduino.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\BcmI2cController.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\BcmSpiController.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\BoardPins.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\BtI2cController.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\BtSpiController.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\DmapErrors.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\DmapSupport.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\eeprom.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\GpioController.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\GpioInterrupt.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\HardwareSerial.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\I2c.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\I2cController.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\I2cTransaction.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\NetworkSerial.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\PCA9685Support.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\PulseIn.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Servo.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Spi.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\SpiController.cpp">
+      <Filter>Lightning</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDKFromArduino\source\IPAddress.cpp">
+      <Filter>SDKFromArduino</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDKFromArduino\source\LiquidCrystal.cpp">
+      <Filter>SDKFromArduino</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDKFromArduino\source\Print.cpp">
+      <Filter>SDKFromArduino</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDKFromArduino\source\Stepper.cpp">
+      <Filter>SDKFromArduino</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDKFromArduino\source\Stream.cpp">
+      <Filter>SDKFromArduino</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SDKFromArduino\source\WString.cpp">
+      <Filter>SDKFromArduino</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
