@@ -23,17 +23,17 @@
 
 typedef const char* PGM_P;
 typedef const void* PGM_VOID_P;
-typedef void PROGMEM prog_void;
-typedef char PROGMEM prog_char;
-typedef unsigned char PROGMEM prog_uchar;
-typedef int8_t PROGMEM prog_int8_t;
-typedef uint8_t PROGMEM prog_uint8_t;
-typedef int16_t PROGMEM prog_int16_t;
-typedef uint16_t PROGMEM prog_uint16_t;
-typedef int32_t PROGMEM rog_int32_t;
-typedef uint32_t PROGMEM prog_uint32_t;
-typedef int64_t PROGMEM prog_int64_t;
-typedef uint64_t PROGMEM prog_uint64_t;
+typedef void prog_void;
+typedef char prog_char;
+typedef unsigned char prog_uchar;
+typedef int8_t prog_int8_t;
+typedef uint8_t prog_uint8_t;
+typedef int16_t prog_int16_t;
+typedef uint16_t prog_uint16_t;
+typedef int32_t rog_int32_t;
+typedef uint32_t prog_uint32_t;
+typedef int64_t prog_int64_t;
+typedef uint64_t prog_uint64_t;
 typedef char* uint_farptr_t;
 
 inline uint8_t pgm_read_byte(PGM_P address)
@@ -86,7 +86,7 @@ inline void* pgm_read_ptr(PGM_VOID_P address)
 	return const_cast<void*>(reinterpret_cast<const void*>(address));
 }
 
-#define PSTR(s)  ((const PROGMEM char *)(s)
+#define PSTR(s)  ((const char *)(s)
 #define pgm_read_byte_near(address)  pgm_read_byte(address)
 #define pgm_read_word_near(address)  pgm_read_word(address)
 #define pgm_read_dword_near(address) pgm_read_dword(address)
