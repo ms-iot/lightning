@@ -108,9 +108,6 @@
   <PropertyGroup>
     <PackageCertificateKeyFile>ArduinoWiringTestSuite_TemporaryKey.pfx</PackageCertificateKeyFile>
   </PropertyGroup>
-  <PropertyGroup>
-    <IncludePath>$(SolutionDir)packages\Microsoft.IoT.Lightning.1.1.0-alpha\include;$(IncludePath)</IncludePath>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
       <PreprocessorDefinitions>_WINRT_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -131,6 +128,7 @@
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>..\source;..\SDKFromArduino\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,6 +142,7 @@
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>..\source;..\SDKFromArduino\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -157,6 +156,7 @@
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>..\source;..\SDKFromArduino\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -170,6 +170,7 @@
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>..\source;..\SDKFromArduino\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -184,6 +185,7 @@
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>..\source;..\SDKFromArduino\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
