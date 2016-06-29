@@ -87,7 +87,7 @@ set config=Release
 
 :msbuild
 @rem Skip project generation if requested.
-if defined nobuild goto exit
+if defined nobuild goto pack
 
 @rem Check if VS build env is available
 if defined VCINSTALLDIR goto msbuild-found
@@ -104,18 +104,25 @@ if errorlevel 1 exit /b 1
 msbuild Library\Lightning.sln /m /t:%target% /p:Configuration=%config% /p:Platform=x64 /clp:NoSummary;NoItemAndPropertyList;Verbosity=minimal /nologo
 if errorlevel 1 exit /b 1
 
+:pack
 cd Nuget
+
+if not "%config%"=="Debug" goto releasebuild
+CALL build-nupkg.cmd /debug
+cd ..
+goto exit
+
+:releasebuild
 CALL build-nupkg.cmd
 cd ..
-
 goto :exit
 
 :help
-echo vcbuild.bat [debug/release] [clean] [nobuild]
+echo build.bat [debug/release] [clean] [nobuild]
 echo Examples:
-echo   vcbuild.bat              : builds debug build
-echo   vcbuild.bat test         : builds debug build and runs tests
-echo   vcbuild.bat release bench: builds release build and runs benchmarks
+echo   build.bat               : builds release build
+echo   build.bat debug         : builds debug build
+echo   build.bat nobuild       : Create nuget only
 goto exit
 
 :exit
