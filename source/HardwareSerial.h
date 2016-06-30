@@ -150,17 +150,6 @@ public:
     /// \see <a href="http://arduino.cc/en/Serial/SetTimeout" target="_blank">origin: Arduino::Serial::setTimeout</a>
     LIGHTNING_DLL_API virtual void setTimeout(unsigned long timeout);
 
-    /// \brief Enabled or disables printing to debug output.
-    /// \details
-    ///   Printing to debug output is enabled by default for Serial.
-    ///   Use enableWritetoDebugOutput(bool) to disable or re-enable
-    ///   it, if it has been disabled
-    /// \param [in] isEnabled Set to true to enable writing to debug output or false otherwise
-    /// \see HardwareSerial::print
-    /// \see HardwareSerial::println
-    /// \see HardwareSerial::write
-    LIGHTNING_DLL_API void enableDebugOutput(bool isEnabled);
-
     /// \brief Writes binary data to the serial port.
     /// \details
     ///   This data is sent as a byte or series of bytes; to send the
@@ -243,7 +232,6 @@ private:
     Concurrency::cancellation_token_source* m_cancellationTokenSource;
     Windows::Storage::Streams::DataReader^ m_reader;
     volatile int32_t m_readThreadCount;
-    bool m_debugOutputEnabled;
 
     HardwareSerial & operator= (HardwareSerial &);
 

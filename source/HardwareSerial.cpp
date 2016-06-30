@@ -60,8 +60,7 @@ HardwareSerial::HardwareSerial()
     m_peekByte(NO_PEEK_BYTE),
     m_reader(nullptr),
     m_readThreadCount(0),
-    m_cancellationTokenSource(nullptr),
-    m_debugOutputEnabled(true)
+    m_cancellationTokenSource(nullptr)
 {
     InitializeCriticalSection(&m_readBufferListLock);
 }
@@ -99,11 +98,6 @@ int HardwareSerial::available(void)
 void HardwareSerial::setTimeout(unsigned long timeout)
 {
     m_timeout = timeout;
-}
-
-LIGHTNING_DLL_API void HardwareSerial::enableDebugOutput(bool isEnabled)
-{
-    m_debugOutputEnabled = isEnabled;
 }
 
 void HardwareSerial::begin(unsigned long baud, uint8_t config)
@@ -596,38 +590,18 @@ size_t HardwareSerial::write(uint8_t c)
     concurrency::create_task(m_dataWriter->StoreAsync())
         .wait();
 
-    if (m_debugOutputEnabled && IsDebuggerPresent())
-    {
-        char outputString[2];
-        outputString[0] = c;
-        outputString[1] = '\0';
-        OutputDebugStringA(outputString);
-    }
-
     return 1;
 }
 
 size_t HardwareSerial::write(const uint8_t *buffer, size_t size)
 {
     Platform::Array<uint8_t>^ dataArray = ref new Platform::Array<uint8_t>((UINT)size);
-    for (size_t i = 0; i < size; i++)
-    {
-        dataArray[(UINT)i] = buffer[i];
-    }
+    memcpy_s(dataArray->Data, size, buffer, size);
 
     m_dataWriter->WriteBytes(dataArray);
 
     concurrency::create_task(m_dataWriter->StoreAsync(), m_cancellationTokenSource->get_token())
         .wait();
-    
-    if (m_debugOutputEnabled && IsDebuggerPresent())
-    {
-        char* outputString = new char[size + 1];
-        memcpy_s(outputString, size + 1, buffer, size);
-        outputString[size] = '\0';
-        OutputDebugStringA(outputString);
-        delete[] outputString;
-    }
 
     return size;
 }

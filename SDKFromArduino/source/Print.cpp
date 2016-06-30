@@ -66,7 +66,11 @@ size_t Print::print(const char str[])
 
 size_t Print::print(char c)
 {
-  return write(c);
+    if (write_debug_output) {
+        char str[2] = { c, '\0' };
+        writeStringToDebugOutput(str);
+    }
+    return write(c);
 }
 
 size_t Print::print(unsigned char b, int base)
@@ -262,4 +266,27 @@ size_t Print::printFloat(double number, uint8_t digits)
   } 
   
   return n;
+}
+
+void Print::writeStringToDebugOutput(const char *str)
+{
+    if (IsDebuggerPresent())
+    {
+        OutputDebugStringA(str);
+    }
+}
+
+void Print::writeBufferToDebugOutput(const uint8_t *buffer, size_t size)
+{
+    if (!IsDebuggerPresent())
+    {
+        return;
+    }
+
+    char* outputString = new char[size + 1];
+    memcpy_s(outputString, size, buffer, size);
+    // The buffer may not be null terminated, so append null
+    outputString[size] = '\0';
+    OutputDebugStringA(outputString);
+    delete[] outputString;
 }

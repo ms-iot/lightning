@@ -38,10 +38,12 @@ class Print
     int write_error;
     size_t printNumber(unsigned long, uint8_t);
     size_t printFloat(double, uint8_t);
-  protected:
+    void writeStringToDebugOutput(const char *str);
+protected:
+    bool write_debug_output;
     void setWriteError(int err = 1) { write_error = err; }
   public:
-    Print() : write_error(0) {}
+    Print() : write_error(0), write_debug_output(true) {}
   
     int getWriteError() { return write_error; }
     void clearWriteError() { setWriteError(0); }
@@ -49,13 +51,21 @@ class Print
     virtual size_t write(uint8_t) = 0;
     size_t write(const char *str) {
       if (str == NULL) return 0;
+      if (write_debug_output)
+          writeStringToDebugOutput(str);
       return write((const uint8_t *)str, strlen(str));
     }
     virtual size_t write(const uint8_t *buffer, size_t size);
     size_t write(const char *buffer, size_t size) {
-      return write((const uint8_t *)buffer, size);
+        if (write_debug_output)
+            writeBufferToDebugOutput((const uint8_t *)buffer, size);
+        return write((const uint8_t *)buffer, size);
     }
-    
+
+    void enablePrintDebugOutput(bool isEnabled) {
+        write_debug_output = isEnabled;
+    }
+
     LIGHTNING_DLL_API size_t print(const __FlashStringHelper *);
     LIGHTNING_DLL_API size_t print(const String &);
     LIGHTNING_DLL_API size_t print(const char[]);

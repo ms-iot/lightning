@@ -129,7 +129,7 @@ void Test_serialPrint_P(void) {
     //       End : Serial print to debug output test
 
     Serial.begin(115200);
-    Log("Start: Serial print to debug output test");
+    Log("Start: Serial print to debug output test\n");
 
     Serial.print(100, HEX);
     Serial.print('.');
@@ -145,14 +145,14 @@ void Test_serialPrint_P(void) {
     Serial.println((versiondata >> 8) & 0xFF, DEC);
 
     Serial.println("Disabling output to debug");
-    Serial.enableDebugOutput(false);
+    Serial.enablePrintDebugOutput(false);
     Serial.println("This string should NOT be printed to output debug!");
 
-    Serial.enableDebugOutput(true);
+    Serial.enablePrintDebugOutput(true);
     Serial.println("Re-enabled output to debug");
     Serial.println("Test string printed to debug output");
 
-    Log("End: Serial print to debug output test");
+    Log("End: Serial print to debug output test\n");
     Serial.end();
 
     ::success_count ++;
