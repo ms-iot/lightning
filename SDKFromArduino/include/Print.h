@@ -38,6 +38,7 @@ class Print
     int write_error;
     size_t printNumber(unsigned long, uint8_t);
     size_t printFloat(double, uint8_t);
+    void writeBufferToDebugOutput(const uint8_t *buffer, size_t size);
     void writeStringToDebugOutput(const char *str);
 protected:
     bool write_debug_output;
