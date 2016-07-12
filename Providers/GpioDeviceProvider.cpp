@@ -95,36 +95,34 @@ void LightningGpioPinProvider::SetDriveMode(
     ProviderGpioPinDriveMode value
     )
 {
-    SetDriveModeInternal(value);
+    if ((!_driveModeSet) || (_driveModeSet && _DriveMode != value))
+    {
+        SetDriveModeInternal(value);
+    }
 }
-
 
 void LightningGpioPinProvider::SetDriveModeInternal(
     ProviderGpioPinDriveMode value
     )
 {
     HRESULT hr = S_OK;
-    ULONG mode = 0;
+    ULONG direction = DIRECTION_IN;
     BOOL pullUp = FALSE;
     switch (value)
     {
     case ProviderGpioPinDriveMode::Input:
-        mode = DIRECTION_IN;
-        pullUp = FALSE;
         break;
     case ProviderGpioPinDriveMode::Output:
-        mode = DIRECTION_OUT;
-        pullUp = FALSE;
+        direction = DIRECTION_OUT;
         break;
     case ProviderGpioPinDriveMode::InputPullUp:
-        mode = DIRECTION_IN;
         pullUp = TRUE;
         break;
     default:
         throw ref new Platform::NotImplementedException(L"Pin drive mode not implemented");
     }
 
-    hr = g_pins.setPinMode(_MappedPinNumber, mode, pullUp);
+    hr = g_pins.setPinMode(_MappedPinNumber, direction, pullUp);
 
     if (FAILED(hr))
     {
@@ -133,6 +131,7 @@ void LightningGpioPinProvider::SetDriveModeInternal(
 
     // set the member variable
     _DriveMode = value;
+    _driveModeSet = true;
 }
 
 void LightningGpioPinProvider::Write(
@@ -144,7 +143,12 @@ void LightningGpioPinProvider::Write(
     //   ProviderGpioPinValue::High == 1 == HIGH
     ULONG state = safe_cast<ULONG>(value);
 
-    HRESULT  hr = g_pins.setPinState(_MappedPinNumber, state);
+    if (!_driveModeSet)
+    {
+        SetDriveModeInternal(ProviderGpioPinDriveMode::Output);
+    }
+
+    HRESULT hr = g_pins.setPinState(_MappedPinNumber, state);
     if (FAILED(hr))
     {
         LightningProvider::ThrowError(hr, L"Could not write pin value.");
@@ -154,6 +158,11 @@ void LightningGpioPinProvider::Write(
 ProviderGpioPinValue LightningGpioPinProvider::Read()
 {
     ULONG state = 0;
+
+    if (!_driveModeSet)
+    {
+        SetDriveModeInternal(ProviderGpioPinDriveMode::Input);
+    }
 
     HRESULT hr = g_pins.getPinState(_MappedPinNumber, state);
     if (FAILED(hr))
