@@ -88,7 +88,7 @@ namespace Microsoft {
                         _MappedPinNumber(mappedPin),
                         _PinNumber(pin),
                         _SharingMode(sharingMode),
-                        _DriveMode(ProviderGpioPinDriveMode::Input),
+                        _DriveMode(ProviderGpioPinDriveMode::Output),
                         _lastEventTime(0),
                         _lastEventState(0)
                     {
