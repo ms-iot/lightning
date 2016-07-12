@@ -6,6 +6,8 @@ The nuget package is also published periodically to nuget.org. For more informat
 
 Additionally, Microsoft.IoT.Lightning depends on [Microsoft.IoT.SDKFromArduino nuget package](https://www.nuget.org/packages/Microsoft.IoT.SDKFromArduino/), which contains source files written by the Arduino community. Together these packages ensure compatibility with existing sketches running on Microsoft Windows. For more information on the Arduino SDK, please visit the [arduino-sdk GittHub repository](https://github.com/ms-iot/arduino-sdk/).
 
+This project has adopted the [Microsoft Open Source Code of Conduct](http://microsoft.github.io/codeofconduct). For more information see the [Code of Conduct FAQ](http://microsoft.github.io/codeofconduct/faq.md) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments. 
+
 ##Build the Nuget package
 Please download the Nuget command line utility [nuget.exe](http://nuget.org/nuget.exe) into the lightning and arduino-sdk .\source folders.
 Run the Nuget package builder from the .\source folder:
