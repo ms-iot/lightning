@@ -88,18 +88,16 @@ namespace Microsoft {
                         _MappedPinNumber(mappedPin),
                         _PinNumber(pin),
                         _SharingMode(sharingMode),
-                        _DriveMode(ProviderGpioPinDriveMode::Input),
+                        _DriveMode(ProviderGpioPinDriveMode::Output),
                         _lastEventTime(0),
-                        _lastEventState(0)
+                        _lastEventState(0),
+                        _driveModeSet(false)
                     {
 
                         if (sharingMode != ProviderGpioSharingMode::Exclusive)
                         {
                             throw ref new Platform::NotImplementedException(L"Unsupported Gpio Pin SharingMode");
                         }
-
-                        // Default to output
-                        SetDriveModeInternal(ProviderGpioPinDriveMode::Output);
 
                         _DebounceTimeout.Duration = 0;
 
@@ -151,6 +149,7 @@ namespace Microsoft {
                     long long _lastEventTime;
                     unsigned short _lastEventState;
                     double _clockFrequency;
+                    bool _driveModeSet;
                 };
 
             }

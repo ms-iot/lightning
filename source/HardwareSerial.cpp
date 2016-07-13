@@ -281,6 +281,12 @@ void HardwareSerial::OpenUart(HRESULT& hr, std::shared_ptr<Concurrency::event>& 
                         hr = E_ABORT;
                         findCompleted->set();
                     }
+                    else if (serial_device == nullptr)
+                    {
+                        hr = E_NOINTERFACE;
+                        findCompleted->set();
+
+                    }
                     else
                     {
                         //
@@ -590,10 +596,7 @@ size_t HardwareSerial::write(uint8_t c)
 size_t HardwareSerial::write(const uint8_t *buffer, size_t size)
 {
     Platform::Array<uint8_t>^ dataArray = ref new Platform::Array<uint8_t>((UINT)size);
-    for (size_t i = 0; i < size; i++)
-    {
-        dataArray[(UINT)i] = buffer[i];
-    }
+    memcpy_s(dataArray->Data, size, buffer, size);
 
     m_dataWriter->WriteBytes(dataArray);
 

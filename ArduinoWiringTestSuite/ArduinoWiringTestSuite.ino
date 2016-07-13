@@ -114,12 +114,58 @@ void Test_strcasestr_P(void) {
     PostTestResult(success, __FUNCTIONW__);
 }
 
+void Test_serialPrint_P(void) {
+    ::test_count++;
+
+    // The following should be printed to the standard ouput
+    //       Start: Serial print to debug output test
+    //       64.100
+    //       Test string
+    //       v4E
+    //       Firmware ver. 17.78
+    //       Disabling output to debug
+    //       Re-enabled output to debug
+    //       Test string printed to debug output
+    //       End : Serial print to debug output test
+
+    Serial.begin(115200);
+    Log("Start: Serial print to debug output test\n");
+
+    Serial.print(100, HEX);
+    Serial.print('.');
+    Serial.println(100);
+    Serial.println("Test string");
+
+    uint32_t versiondata = 1134142;
+    Serial.print('v');
+    Serial.println((versiondata >> 8) & 0xFF, HEX);
+    Serial.print("Firmware ver. ");
+    Serial.print((versiondata >> 16) & 0xFF, DEC);
+    Serial.print('.');
+    Serial.println((versiondata >> 8) & 0xFF, DEC);
+
+    Serial.println("Disabling output to debug");
+    Serial.enablePrintDebugOutput(false);
+    Serial.println("This string should NOT be printed to output debug!");
+
+    Serial.enablePrintDebugOutput(true);
+    Serial.println("Re-enabled output to debug");
+    Serial.println("Test string printed to debug output");
+
+    Log("End: Serial print to debug output test\n");
+    Serial.end();
+
+    ::success_count ++;
+    PostTestResult(true, __FUNCTIONW__);
+}
+
 void setup(void) {
 
     Test_memchr_P();
     Test_memmem_P();
     Test_strchrnul_P();
     Test_strcasestr_P();
+    Test_serialPrint_P();
 
     Log(L"\n%u/%u TEST PASSED\n", ::success_count, ::test_count);
 }
