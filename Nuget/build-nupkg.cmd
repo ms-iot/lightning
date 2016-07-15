@@ -9,6 +9,7 @@ set NUSPEC="Microsoft.IoT.Lightning.nuspec"
  if /I "%~1" == "/clean" set CLEAN=1
  if /I "%~1" == "/nopack" set NOPACK=1
  if /I "%~1" == "/debug" set NUSPEC="Microsoft.IoT.Lightning.Debug.nuspec"
+ if /I "%~1" == "/public" set NUSPEC="Microsoft.IoT.Lightning.Public.nuspec"
  shift
 if not (%1)==() goto GETOPTS
 

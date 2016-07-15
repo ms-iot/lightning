@@ -12,7 +12,7 @@
     <description>The Lightning SDK allows rapid creation of applications for Windows Iot Core devices using the familiar Arduino interface.</description>
     <summary>Microsoft IoT Lightning SDK</summary>
     <releaseNotes />
-    <copyright>Copyright 2015</copyright>
+    <copyright>Copyright 2016</copyright>
     <tags>lightning arduino microsoft native nativepackage</tags>
   </metadata>
 
