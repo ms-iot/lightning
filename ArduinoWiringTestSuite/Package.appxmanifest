@@ -9,14 +9,14 @@
 
   <Identity
     Name="ArduinoWiringTestSuite-uwp"
-    Publisher="CN=msaleh"
+    Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="3b05ee84-209e-4156-a18d-b3a1297a61d0" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>ArduinoWiringTestSuite</DisplayName>
-    <PublisherDisplayName>msaleh</PublisherDisplayName>
+    <PublisherDisplayName>Microsoft</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
