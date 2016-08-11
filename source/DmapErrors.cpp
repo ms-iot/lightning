@@ -39,6 +39,7 @@ std::map<HRESULT, LPCWSTR> DmapErrors = {
     { DMAP_E_SPI_SPEED_SPECIFIED_IS_INVALID     , L"The SPI speed specified is not in the supported range." },
     { DMAP_E_SPI_BUFFER_TRANSFER_NOT_IMPLEMENTED, L"This SPI implementation does not support buffer transfers." },
     { DMAP_E_SPI_DATA_WIDTH_SPECIFIED_IS_INVALID, L"The specified number of bits per transfer is not supported by the SPI controller." },
+    { DMAP_E_SPI_CONTROLLER_NOT_SUPPORTED       , L"The specified SPI controller is not supported." },
     { DMAP_E_GPIO_PIN_IS_SET_TO_PWM             , L"A GPIO operation was performed on a pin configured as a PWM output." }
 };
 
