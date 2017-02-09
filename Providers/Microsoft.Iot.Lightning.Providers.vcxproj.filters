@@ -113,7 +113,4 @@
     <ClInclude Include="AdcDeviceProvider.h" />
     <ClInclude Include="PwmDeviceProvider.h" />
   </ItemGroup>
-  <ItemGroup>
-    <Xml Include="Microsoft.IoT.Lightning.Providers.targets" />
-  </ItemGroup>
 </Project>
