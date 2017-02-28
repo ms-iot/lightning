@@ -278,12 +278,5 @@
     <SDKReference Include="WindowsDesktop, Version=10.0.10586.0" />
     <SDKReference Include="WindowsIoT, Version=10.0.10586.0" />
   </ItemGroup>
-  <ItemGroup>
-    <Xml Include="Microsoft.IoT.Lightning.Providers.targets">
-      <DeploymentContent>true</DeploymentContent>
-      <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-    </Xml>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
