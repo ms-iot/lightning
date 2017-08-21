@@ -33,6 +33,10 @@
 #define LSBFIRST        0x00
 #define MSBFIRST        0x01
 
+// SPI controller values.
+#define SPI_CONTROLLER0        0x00
+#define SPI_CONTROLLER1        0x01
+
 class SPIClass
 {
 public:
@@ -58,6 +62,16 @@ public:
     */
     void begin()
     {
+        begin(SPI_CONTROLLER0);
+    }
+
+    /// Initialize the externally accessible SPI bus for use, specifying the SPI controller to use.
+    /**
+    \param[in] spiController The SPI controller to use. (SPI_CONTROLLER0 or SPI_CONTROLLER1 on Raspberry Pi, or SPI_CONTROLLER0 on Minnowboard Max)
+    \return None.
+    */
+    void begin(ULONG spiController)
+    {
         HRESULT hr;
         BoardPinsClass::BOARD_TYPE board;
 
@@ -74,17 +88,42 @@ public:
             if (board == BoardPinsClass::BOARD_TYPE::MBM_BARE)
             {
                 m_controller = new BtSpiControllerClass;
-                hr = m_controller->configurePins(MBM_PIN_MISO, MBM_PIN_MOSI, MBM_PIN_SCK);
+                if (spiController == SPI_CONTROLLER0)
+                {
+                    hr = m_controller->configurePins(MBM_PIN_MISO, MBM_PIN_MOSI, MBM_PIN_SCK);
+                }
+                else
+                {
+                    ThrowError(DMAP_E_SPI_CONTROLLER_NOT_SUPPORTED, "The specified SPI controller is not supported: %d", spiController);
+                }
             }
             else if (board == BoardPinsClass::BOARD_TYPE::PI2_BARE)
             {
                 m_controller = new BcmSpiControllerClass;
-                hr = m_controller->configurePins(PI2_PIN_SPI0_MISO, PI2_PIN_SPI0_MOSI, PI2_PIN_SPI0_SCK);
+                if (spiController == SPI_CONTROLLER0)
+                {
+                    hr = m_controller->configurePins(PI2_PIN_SPI0_MISO, PI2_PIN_SPI0_MOSI, PI2_PIN_SPI0_SCK);
+                }
+                else if (spiController == SPI_CONTROLLER1)
+                {
+                    hr = m_controller->configurePins(PI2_PIN_SPI1_MISO, PI2_PIN_SPI1_MOSI, PI2_PIN_SPI1_SCK);
+                }
+                else
+                {
+                    ThrowError(DMAP_E_SPI_CONTROLLER_NOT_SUPPORTED, "The specified SPI controller is not supported: %d", spiController);
+                }
             }
             else if (board == BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE)
             {
                 m_controller = new BtSpiControllerClass;
-                hr = m_controller->configurePins(ARDUINO_PIN_MISO, ARDUINO_PIN_MOSI, ARDUINO_PIN_SCK);
+                if (spiController == SPI_CONTROLLER0)
+                {
+                    hr = m_controller->configurePins(ARDUINO_PIN_MISO, ARDUINO_PIN_MOSI, ARDUINO_PIN_SCK);
+                }
+                else
+                {
+                    ThrowError(DMAP_E_SPI_CONTROLLER_NOT_SUPPORTED, "The specified SPI controller is not supported: %d", spiController);
+                }
             }
             else
             {

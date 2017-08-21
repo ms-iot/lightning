@@ -174,6 +174,10 @@ set the desired width, then call SPI.begin() to start the contrller again.
 /// The specified number of bits per transfer is not supported by the SPI controller.
 #define DMAP_E_SPI_DATA_WIDTH_SPECIFIED_IS_INVALID MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x9245)
 
+/// HexValue: 0x80049246
+/// The specified SPI controller is not supported.
+#define DMAP_E_SPI_CONTROLLER_NOT_SUPPORTED MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x9246)
+
 //
 // PWM related error codes.
 //

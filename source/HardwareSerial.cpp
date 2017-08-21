@@ -59,6 +59,8 @@ HardwareSerial::HardwareSerial()
     m_timeout(1000),
     m_peekByte(NO_PEEK_BYTE),
     m_reader(nullptr),
+    m_dataWriter(nullptr),
+    m_serialDevice(nullptr),
     m_readThreadCount(0),
     m_cancellationTokenSource(nullptr)
 {
@@ -351,16 +353,9 @@ void HardwareSerial::CloseUart(void)
         Sleep(0);
     }
 
-    delete(m_reader);
     m_reader = nullptr;
-
-    delete(m_dataWriter);
     m_dataWriter = nullptr;
-
-    delete(m_serialDevice);
     m_serialDevice = nullptr;
-
-    delete(m_cancellationTokenSource);
     m_cancellationTokenSource = nullptr;
 
     m_readBufferList.clear();
