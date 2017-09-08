@@ -124,7 +124,7 @@ namespace Microsoft {
                                 }
 
                                 auto eventTimeDiff = (InfoPtr->EventTime - pin->_lastEventTime) / pin->_clockFrequency;
-                                if (eventTimeDiff >= pin->_DebounceTimeout.Duration || (eventTimeDiff > 0 && InfoPtr->NewState != pin->_lastEventState))
+                                if (eventTimeDiff >= pin->_DebounceTimeout.Duration || pin->_DebounceTimeout.Duration == 0)
                                 {
 
                                     pin->_ValueChangedInternal(pin, ref new GpioPinProviderValueChangedEventArgs((InfoPtr->NewState == 0) ?
