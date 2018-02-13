@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 #pragma once
+#include "Provider.h"
 
 using namespace Windows::Devices::Gpio::Provider;
 
@@ -108,7 +109,7 @@ namespace Microsoft {
                         HRESULT hr = g_pins.getBoardType(_BoardType);
                         if (FAILED(hr))
                         {
-                            LightningProvider::ThrowError(hr, L"An error occurred determining board type.");
+                            Microsoft::IoT::Lightning::Providers::LightningProvider::ThrowError(hr, L"An error occurred determining board type.");
                         }
                     }
 
