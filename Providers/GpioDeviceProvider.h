@@ -104,8 +104,8 @@ namespace Microsoft {
                         LARGE_INTEGER li;
                         QueryPerformanceFrequency(&li);
                         _clockFrequency = double(li.QuadPart) / 100000.0; // Calaculate device clock freq in 100ns, same resolution as debounce
-
-						g_pins.getBoardType(_BoardType);
+                        
+                        g_pins.getBoardType(_BoardType);
                     }
 
                 private:
@@ -120,31 +120,31 @@ namespace Microsoft {
                                 Platform::Object^ o = reinterpret_cast<Platform::Object^>((IInspectable*)context);
                                 LightningGpioPinProvider^ pin = reinterpret_cast<LightningGpioPinProvider^>(o);
 
-								// The returned interrupt number is equal to the port bit of the pin on RPi, which is the same as the PinNumber.
-								// On MBM or Turbot, the returned interrupt number is equal to the mapped pin number.
-								switch (pin->_BoardType)
-								{
-								case BoardPinsClass::BOARD_TYPE::PI2_BARE:
-									if (pin == nullptr || InfoPtr->IntNo != pin->_PinNumber)
-									{
-										return;
-									}
-									break;
-								case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
-									if (pin == nullptr || InfoPtr->IntNo != pin->_MappedPinNumber)
-									{
-										return;
-									}
-									break;
-								case BoardPinsClass::BOARD_TYPE::MBM_BARE:
-									if (pin == nullptr || InfoPtr->IntNo != pin->_MappedPinNumber)
-									{
-										return;
-									}
-									break;
-								default:
-									return;
-								}
+                                // The returned interrupt number is equal to the port bit of the pin on RPi, which is the same as the PinNumber.
+                                // On MBM or Turbot, the returned interrupt number is equal to the mapped pin number.
+                                switch (pin->_BoardType)
+                                {
+                                case BoardPinsClass::BOARD_TYPE::PI2_BARE:
+                                    if (pin == nullptr || InfoPtr->IntNo != pin->_PinNumber)
+                                    {
+                                        return;
+                                    }
+                                    break;
+                                case BoardPinsClass::BOARD_TYPE::MBM_IKA_LURE:
+                                    if (pin == nullptr || InfoPtr->IntNo != pin->_MappedPinNumber)
+                                    {
+                                        return;
+                                    }
+                                    break;
+                                case BoardPinsClass::BOARD_TYPE::MBM_BARE:
+                                    if (pin == nullptr || InfoPtr->IntNo != pin->_MappedPinNumber)
+                                    {
+                                        return;
+                                    }
+                                    break;
+                                default:
+                                    return;
+                                }
                                 
                                 auto eventTimeDiff = (InfoPtr->EventTime - pin->_lastEventTime) / pin->_clockFrequency;
                                 if (eventTimeDiff >= pin->_DebounceTimeout.Duration || pin->_DebounceTimeout.Duration == 0)
@@ -167,7 +167,7 @@ namespace Microsoft {
                     ProviderGpioSharingMode _SharingMode;
                     ProviderGpioPinDriveMode _DriveMode;
                     TimeSpan _DebounceTimeout;
-					BoardPinsClass::BOARD_TYPE _BoardType;
+                    BoardPinsClass::BOARD_TYPE _BoardType;
 
                     // Used to keep track of interrupts
                     long long _lastEventTime;
