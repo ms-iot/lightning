@@ -75,7 +75,7 @@ IGpioPinProvider^ LightningGpioControllerProvider::OpenPinProviderNoMapping(int 
         LightningProvider::ThrowError(hr, L"Invalid function for pin.");
     }
 
-    return ref new LightningGpioPinProvider(pin, mappedPin, sharingMode);
+    return ref new LightningGpioPinProvider(pin, mappedPin, sharingMode, this->_boardType);
 }
 
 IVectorView<IGpioControllerProvider^>^ LightningGpioProvider::GetControllers(

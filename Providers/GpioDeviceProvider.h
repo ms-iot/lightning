@@ -84,10 +84,11 @@ namespace Microsoft {
                     virtual ~LightningGpioPinProvider() { }
 
                 internal:
-                    LightningGpioPinProvider(int pin, int mappedPin, ProviderGpioSharingMode sharingMode) :
+                    LightningGpioPinProvider(int pin, int mappedPin, ProviderGpioSharingMode sharingMode, BoardPinsClass::BOARD_TYPE boardType) :
                         _MappedPinNumber(mappedPin),
                         _PinNumber(pin),
                         _SharingMode(sharingMode),
+                        _BoardType(boardType),
                         _DriveMode(ProviderGpioPinDriveMode::Output),
                         _lastEventTime(0),
                         _lastEventState(0),
@@ -104,12 +105,6 @@ namespace Microsoft {
                         LARGE_INTEGER li;
                         QueryPerformanceFrequency(&li);
                         _clockFrequency = double(li.QuadPart) / 100000.0; // Calaculate device clock freq in 100ns, same resolution as debounce
-                        
-                        HRESULT hr = g_pins.getBoardType(_BoardType);
-                        if (FAILED(hr))
-                        {
-                            LightningProvider::ThrowError(hr, L"An error occurred determining board type.");
-                        }
                     }
 
                 private:
