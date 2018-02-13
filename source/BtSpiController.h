@@ -419,7 +419,7 @@ private:
 /**
 Transfer a number of bits on the SPI bus.
 \param[in] dataOut Data to send on the SPI bus
-\param[out] datIn The data reaceived on the SPI bus
+\param[out] datIn The data received on the SPI bus
 \param[in] bits The number of bits to transfer in each direction on the bus.  This must agree with
 the data width set previously.
 \return HRESULT success or error code.
