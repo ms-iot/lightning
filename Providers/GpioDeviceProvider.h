@@ -106,7 +106,6 @@ namespace Microsoft {
                         _clockFrequency = double(li.QuadPart) / 100000.0; // Calaculate device clock freq in 100ns, same resolution as debounce
                         
                         HRESULT hr = g_pins.getBoardType(_BoardType);
-
                         if (FAILED(hr))
                         {
                             LightningProvider::ThrowError(hr, L"An error occurred determining board type.");
