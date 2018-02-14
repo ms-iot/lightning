@@ -1,38 +1,43 @@
-## **Microsoft.IoT.Lightning Nuget package**
+# **Microsoft.IoT.Lightning Nuget package**
 
-This repository is for generating the Microsoft.IoT.Lightning Nuget package. This package contains code which is compiled into the maker's application which can be deployed to a board running Microsoft Windows IoT Core.
+This repository is for generating the Microsoft.IoT.Lightning Nuget package. This package contains code which is compiled into an application deployed to a board running Microsoft Windows IoT Core.
 
-The nuget package is also published periodically to nuget.org. For more information on installing the published nuget package, please refer to [https://www.nuget.org/packages/Microsoft.IoT.Lightning/](https://www.nuget.org/packages/Microsoft.IoT.Lightning/)
-
-Additionally, Microsoft.IoT.Lightning depends on [Microsoft.IoT.SDKFromArduino nuget package](https://www.nuget.org/packages/Microsoft.IoT.SDKFromArduino/), which contains source files written by the Arduino community. Together these packages ensure compatibility with existing sketches running on Microsoft Windows. For more information on the Arduino SDK, please visit the [arduino-sdk GittHub repository](https://github.com/ms-iot/arduino-sdk/).
+Also, the nuget package is periodically published to nuget.org. For more information on installing the published nuget package, please refer to [https://www.nuget.org/packages/Microsoft.IoT.Lightning/](https://www.nuget.org/packages/Microsoft.IoT.Lightning/)
 
 This project has adopted the [Microsoft Open Source Code of Conduct](http://microsoft.github.io/codeofconduct). For more information see the [Code of Conduct FAQ](http://microsoft.github.io/codeofconduct/faq.md) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments. 
 
-##Build the Nuget package
-Please download the Nuget command line utility [nuget.exe](http://nuget.org/nuget.exe) into the lightning and arduino-sdk .\source folders.
-Run the Nuget package builder from the .\source folder:
+## Build the Nuget package
+- nuget.exe is required to build the Nuget package, so please download the Nuget command line utility [nuget.exe](http://nuget.org/nuget.exe) and make sure it's in the PATH. 
+- Visual Studio 2017 is also required to build the sources ([Visual Studio Downloads](https://www.visualstudio.com/downloads/))
+- Clone or download this repository
+- Assuming F:\Github\lightning is your local repo root folder and all prerequisites above are met, run this command to both build the sources and create the Nuget package.
 
 ~~~
-build-nupkg.cmd
+F:\Github\lightning>build.cmd
 ~~~
 
-###Nuget Package sources
+- Alternatively, if the sources are already built, run this command from the <root>\Nuget folder to create the Nuget package only.
+  
+~~~
+F:\Github\lightning\Nuget>build-nupkg.cmd
+~~~
 
-In order to install nuget packages from your local builds, you'll need to add both the lightning nuget and arduino-sdk to the nuget package manager sources. Following the below instructions for each sdk source:
+### Set Nuget package source location
 
-For Visual Studio Express, nativate to *Tools -> Nuget Package Manager -> Package Manager Settings*
-For Other editions of Visual Studio, nativate to *Tools -> Library Package Manager -> Package Manager Settings*
+In order to install Nuget packages from your local builds, you'll need to add the folder where the Nuget package has been created (or copied) to the list of nuget package manager sources in Visual Studio. Following the below instructions for each sdk source:
+
+In Visual Studio 2017, nativate to *Tools -> Library Package Manager -> Package Manager Settings*
 
 ![Package Config](images/Nuget_PackageSourceConfig_VS2015.png)
 
 1. Click the "+" button to add a new source
 1. Set the name to something descriptive
-1. Click the "..." button and navigate to your local sources directory (.\source folder)
+1. Click the "..." button and navigate to your local folder where the Nuget package has been created; e.g. *F:\Github\lightning\Nuget*
 1. Click the "Update" button to save the Package Sources changes
 
-###Nuget Package Manager
+### Including prerelease Lightning packages
 
-In order to install prerelease (current) version of Lightning as well as receive prerelease updates to the Lightning package, make sure to set the "Include prerelease" option in the Nuget Package Manager.
+In order to install the latest prerelease version of Lightning as well as receive prerelease updates to the Lightning package, make sure to set the "Include prerelease" option in the Nuget Package Manager.
 
 ![Package Config](images/Nuget_PackageManager.png)
 
@@ -42,7 +47,7 @@ In order to install prerelease (current) version of Lightning as well as receive
 1. Click "Include prerelease".
 1. Click "Install" to install the nuget package to your project
 
-###Add required UWP Extensions
+### Add required UWP Extensions
 
 The IOT and Desktop UWP SDK Extensions are both required for building Lightning applications.
 
@@ -53,7 +58,7 @@ The IOT and Desktop UWP SDK Extensions are both required for building Lightning 
 1. Open Universal Windows | Extensions
 1. Choose Both "Windows Desktop Extensions for the UWP" and "Windows IoT Extensions for the UWP".
 
-###Update Application Package manifest
+### Update Application Package manifest
 
 Also, you need to update the Application Package manifest manually to reference the Lightning device interface.
 
