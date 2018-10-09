@@ -86,7 +86,7 @@ inline void* pgm_read_ptr(PGM_VOID_P address)
 	return const_cast<void*>(reinterpret_cast<const void*>(address));
 }
 
-#define PSTR(s)  ((const char *)(s)
+#define PSTR(s)  ((const char *)(s))
 #define pgm_read_byte_near(address)  pgm_read_byte(address)
 #define pgm_read_word_near(address)  pgm_read_word(address)
 #define pgm_read_dword_near(address) pgm_read_dword(address)
